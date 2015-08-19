@@ -97,3 +97,5 @@ xcuserdata
 ##
 GRDB Tests/Carthage/Carthage
 GRDB Tests/Carthage/Cartfile.resolved
+GRDB Tests/CocoaPods/iOS/Pods
+GRDB Tests/CocoaPods/iOS/Podfile.lock

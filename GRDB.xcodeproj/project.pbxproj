@@ -14,7 +14,6 @@
 		565E191E1B42B2B600D32814 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 565E191D1B42B2B600D32814 /* Database.swift */; };
 		56691D421B591FA100F6A9A6 /* PrimaryKeySingleWithReplaceConflictResolutionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56691D411B591FA100F6A9A6 /* PrimaryKeySingleWithReplaceConflictResolutionTests.swift */; };
 		56691D431B591FA100F6A9A6 /* PrimaryKeySingleWithReplaceConflictResolutionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56691D411B591FA100F6A9A6 /* PrimaryKeySingleWithReplaceConflictResolutionTests.swift */; };
-		5683C2691B4D445E00296494 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5683C2681B4D445E00296494 /* libsqlite3.dylib */; };
 		56997A351B539038005EBEED /* DatabaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 569979671B539038005EBEED /* DatabaseTests.swift */; };
 		56997A361B539038005EBEED /* DatabaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 569979671B539038005EBEED /* DatabaseTests.swift */; };
 		56997A371B539038005EBEED /* InMemoryDatabaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 569979681B539038005EBEED /* InMemoryDatabaseTests.swift */; };
@@ -74,6 +73,9 @@
 		56CC3C931B43BF0100A9A534 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CC3C921B43BF0100A9A534 /* Configuration.swift */; };
 		56CC3C951B43C0E600A9A534 /* DatabaseMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CC3C941B43C0E600A9A534 /* DatabaseMigrator.swift */; };
 		56CC3C9B1B4464AE00A9A534 /* RowModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CC3C9A1B4464AE00A9A534 /* RowModel.swift */; };
+		56D8F7451B8461140078C85A /* sqlite3.h in Headers */ = {isa = PBXBuildFile; fileRef = 56D8F7441B8461140078C85A /* sqlite3.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		56D8F7461B8461140078C85A /* sqlite3.h in Headers */ = {isa = PBXBuildFile; fileRef = 56D8F7441B8461140078C85A /* sqlite3.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		56D8F7471B84954B0078C85A /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DC37744219C8DC91004FCF85 /* libsqlite3.dylib */; };
 		56E4BB811B45373600FD324B /* QueryArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E4BB801B45373600FD324B /* QueryArguments.swift */; };
 		56E5D7D41B4D3FEE00430942 /* GRDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56E5D7CA1B4D3FED00430942 /* GRDB.framework */; };
 		56E5D7FE1B4D422E00430942 /* GRDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC3773F319C8CBB3004FCF85 /* GRDB.framework */; };
@@ -127,7 +129,6 @@
 		564E0B151B4D901300EBC9F6 /* DatabaseValue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseValue.swift; sourceTree = "<group>"; };
 		565E191D1B42B2B600D32814 /* Database.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		56691D411B591FA100F6A9A6 /* PrimaryKeySingleWithReplaceConflictResolutionTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PrimaryKeySingleWithReplaceConflictResolutionTests.swift; sourceTree = "<group>"; };
-		5683C2681B4D445E00296494 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.4.sdk/usr/lib/libsqlite3.dylib; sourceTree = DEVELOPER_DIR; };
 		569979671B539038005EBEED /* DatabaseTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseTests.swift; sourceTree = "<group>"; };
 		569979681B539038005EBEED /* InMemoryDatabaseTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InMemoryDatabaseTests.swift; sourceTree = "<group>"; };
 		5699796A1B539038005EBEED /* DatabaseErrorTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseErrorTests.swift; sourceTree = "<group>"; };
@@ -157,12 +158,11 @@
 		5699AE5A1B42D3DC00C35172 /* SelectStatement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectStatement.swift; sourceTree = "<group>"; };
 		5699AE5C1B42D49C00C35172 /* UpdateStatement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UpdateStatement.swift; sourceTree = "<group>"; };
 		5699AE5E1B42E59F00C35172 /* DatabaseValueConvertible.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseValueConvertible.swift; sourceTree = "<group>"; };
-		56B8F49A1B4E2F3600C24296 /* GRDB.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = GRDB.xcconfig; sourceTree = "<group>"; };
-		56B8F49B1B4E2F3600C24296 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		56CC3C8E1B43A5A700A9A534 /* DatabaseQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseQueue.swift; sourceTree = "<group>"; };
 		56CC3C921B43BF0100A9A534 /* Configuration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
 		56CC3C941B43C0E600A9A534 /* DatabaseMigrator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseMigrator.swift; sourceTree = "<group>"; };
 		56CC3C9A1B4464AE00A9A534 /* RowModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RowModel.swift; sourceTree = "<group>"; };
+		56D8F7441B8461140078C85A /* sqlite3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sqlite3.h; path = usr/include/sqlite3.h; sourceTree = SDKROOT; };
 		56E1524B1B43FD5B00EE27AA /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
 		56E4BB801B45373600FD324B /* QueryArguments.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueryArguments.swift; sourceTree = "<group>"; };
 		56E5D7CA1B4D3FED00430942 /* GRDB.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = GRDB.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -185,7 +185,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5683C2691B4D445E00296494 /* libsqlite3.dylib in Frameworks */,
+				56D8F7471B84954B0078C85A /* libsqlite3.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -328,22 +328,6 @@
 			path = Row;
 			sourceTree = "<group>";
 		};
-		56E5D7BF1B4D3DC900430942 /* GRDBiOS */ = {
-			isa = PBXGroup;
-			children = (
-				5683C2681B4D445E00296494 /* libsqlite3.dylib */,
-			);
-			path = GRDBiOS;
-			sourceTree = "<group>";
-		};
-		56E5D7C11B4D3DC900430942 /* GRDBOSX */ = {
-			isa = PBXGroup;
-			children = (
-				DC37744219C8DC91004FCF85 /* libsqlite3.dylib */,
-			);
-			path = GRDBOSX;
-			sourceTree = "<group>";
-		};
 		56F0B98C1B6001C600A2F135 /* DatabaseDate */ = {
 			isa = PBXGroup;
 			children = (
@@ -424,12 +408,10 @@
 		DC37743319C8CFCE004FCF85 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				56B8F49A1B4E2F3600C24296 /* GRDB.xcconfig */,
-				56B8F49B1B4E2F3600C24296 /* module.modulemap */,
-				56E5D7BF1B4D3DC900430942 /* GRDBiOS */,
-				56E5D7C11B4D3DC900430942 /* GRDBOSX */,
 				DC3773F819C8CBB3004FCF85 /* GRDB.h */,
 				DC2393C61ABE35F8003FF113 /* GRDB-Bridging.h */,
+				56D8F7441B8461140078C85A /* sqlite3.h */,
+				DC37744219C8DC91004FCF85 /* libsqlite3.dylib */,
 				DC3773F719C8CBB3004FCF85 /* Info.plist */,
 			);
 			name = "Supporting Files";
@@ -443,6 +425,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				56E5D82C1B4D437600430942 /* GRDB.h in Headers */,
+				56D8F7461B8461140078C85A /* sqlite3.h in Headers */,
 				56E5D82D1B4D438800430942 /* GRDB-Bridging.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -452,6 +435,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DC3773F919C8CBB3004FCF85 /* GRDB.h in Headers */,
+				56D8F7451B8461140078C85A /* sqlite3.h in Headers */,
 				DC2393C81ABE35F8003FF113 /* GRDB-Bridging.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -851,9 +835,9 @@
 		};
 		DC37740719C8CBB3004FCF85 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 56B8F49A1B4E2F3600C24296 /* GRDB.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -895,9 +879,9 @@
 		};
 		DC37740819C8CBB3004FCF85 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 56B8F49A1B4E2F3600C24296 /* GRDB.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
