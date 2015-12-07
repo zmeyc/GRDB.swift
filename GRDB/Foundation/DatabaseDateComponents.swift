@@ -257,7 +257,8 @@ public struct DatabaseDateComponents : DatabaseValueConvertible {
         
         // SSS
         var millisecondDigits: NSString? = nil
-        if scanner.scanCharactersFromSet(NSCharacterSet.decimalDigitCharacterSet(), intoString: &millisecondDigits), var millisecondDigits = millisecondDigits {
+        if scanner.scanCharactersFromSet(NSCharacterSet.decimalDigitCharacterSet(), intoString: &millisecondDigits), let millisecondDigits = millisecondDigits {
+            var millisecondDigits = millisecondDigits
             if millisecondDigits.length > 3 {
                 millisecondDigits = millisecondDigits.substringToIndex(3)
             }

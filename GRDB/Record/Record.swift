@@ -220,7 +220,7 @@ public class Record : RowConvertible, DatabaseTableMapping, DatabaseStorable {
     private func generateDatabaseChanges() -> AnyGenerator<(column: String, old: DatabaseValue?, new: DatabaseValue)> {
         let oldRow = referenceRow
         var newValueGenerator = storedDatabaseDictionary.generate()
-        return anyGenerator {
+        return AnyGenerator {
             // Loop until we find a change, or exhaust columns:
             while let (column, newValue) = newValueGenerator.next() {
                 let new = newValue?.databaseValue ?? .Null

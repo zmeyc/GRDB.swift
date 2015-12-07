@@ -22,7 +22,7 @@ public final class DatabaseQueue {
     /// - parameter path: The path to the database file.
     /// - parameter configuration: A configuration
     /// - throws: A DatabaseError whenever a SQLite error occurs.
-    public convenience init(path: String, var configuration: Configuration = Configuration()) throws {
+    public convenience init(path: String, configuration: Configuration = Configuration()) throws {
         // IMPLEMENTATION NOTE
         //
         // According to https://www.sqlite.org/threadsafe.html:
@@ -38,6 +38,7 @@ public final class DatabaseQueue {
         //
         // Since our database connection is only used via our serial dispatch
         // queue, there is no purpose using the default serialized mode.
+        var configuration = configuration
         configuration.threadingMode = .MultiThread
         try self.init(database: Database(path: path, configuration: configuration))
     }
@@ -49,7 +50,8 @@ public final class DatabaseQueue {
     /// Database memory is released when the database queue gets deallocated.
     ///
     /// - parameter configuration: A configuration
-    public convenience init(var configuration: Configuration = Configuration()) {
+    public convenience init(configuration: Configuration = Configuration()) {
+        var configuration = configuration
         configuration.threadingMode = .MultiThread  // See IMPLEMENTATION NOTE in init(_:configuration:)
         self.init(database: Database(configuration: configuration))
     }
