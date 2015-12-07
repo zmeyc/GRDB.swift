@@ -1,3 +1,5 @@
+import CSQLite
+
 /// When a type adopts both DatabaseValueConvertible and
 /// SQLiteStatementConvertible, it is granted with faster access to the SQLite
 /// database values.

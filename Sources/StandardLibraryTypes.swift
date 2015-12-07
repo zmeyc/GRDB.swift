@@ -1,3 +1,5 @@
+import CSQLite
+
 /// Bool adopts DatabaseValueConvertible and SQLiteStatementConvertible.
 extension Bool: DatabaseValueConvertible, SQLiteStatementConvertible {
     

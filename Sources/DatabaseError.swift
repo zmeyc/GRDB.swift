@@ -1,3 +1,5 @@
+import CSQLite
+
 /// DatabaseError wraps a SQLite error.
 public struct DatabaseError : ErrorType {
     

@@ -1,3 +1,5 @@
+import CSQLite
+
 /// A subclass of Statement that executes SQL queries.
 ///
 /// You create UpdateStatement with the Database.updateStatement() method:

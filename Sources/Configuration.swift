@@ -1,4 +1,5 @@
 import Foundation
+import CSQLite
 
 /// Configuration are arguments to the DatabaseQueue initializers.
 public struct Configuration {

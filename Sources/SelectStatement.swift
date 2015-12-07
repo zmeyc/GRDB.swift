@@ -1,3 +1,5 @@
+import CSQLite
+
 /// A subclass of Statement that fetches database rows.
 ///
 /// You create SelectStatement with the Database.selectStatement() method:

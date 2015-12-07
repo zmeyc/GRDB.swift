@@ -1,4 +1,5 @@
 import Foundation
+import CSQLite
 
 /// A database row.
 public final class Row: CollectionType {
