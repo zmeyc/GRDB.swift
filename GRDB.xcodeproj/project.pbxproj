@@ -178,7 +178,6 @@
 		56E5D8041B4D424400430942 /* GRDBTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5623E0901B4AFACC00B20B7F /* GRDBTestCase.swift */; };
 		56E5D8181B4D435D00430942 /* GRDBTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5623E0901B4AFACC00B20B7F /* GRDBTestCase.swift */; };
 		56E5D82C1B4D437600430942 /* GRDB.h in Headers */ = {isa = PBXBuildFile; fileRef = DC3773F819C8CBB3004FCF85 /* GRDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		56E5D82D1B4D438800430942 /* GRDB-Bridging.h in Headers */ = {isa = PBXBuildFile; fileRef = DC2393C61ABE35F8003FF113 /* GRDB-Bridging.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		56E8CE0D1BB4FA5600828BEC /* DatabaseValueConvertibleFetchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E8CE0C1BB4FA5600828BEC /* DatabaseValueConvertibleFetchTests.swift */; };
 		56E8CE0E1BB4FA5600828BEC /* DatabaseValueConvertibleFetchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E8CE0C1BB4FA5600828BEC /* DatabaseValueConvertibleFetchTests.swift */; };
 		56E8CE101BB4FE5B00828BEC /* SQLiteStatementConvertibleFetchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E8CE0F1BB4FE5B00828BEC /* SQLiteStatementConvertibleFetchTests.swift */; };
@@ -199,7 +198,6 @@
 		56FC78691BBAEB8C00CA1285 /* ManagedDataControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FC78651BBAEB8C00CA1285 /* ManagedDataControllerTests.swift */; };
 		56FDECE21BB32DFD009AD709 /* MetalRowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDECE11BB32DFD009AD709 /* MetalRowTests.swift */; };
 		56FDECE31BB32DFD009AD709 /* MetalRowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDECE11BB32DFD009AD709 /* MetalRowTests.swift */; };
-		DC2393C81ABE35F8003FF113 /* GRDB-Bridging.h in Headers */ = {isa = PBXBuildFile; fileRef = DC2393C61ABE35F8003FF113 /* GRDB-Bridging.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		DC3773F919C8CBB3004FCF85 /* GRDB.h in Headers */ = {isa = PBXBuildFile; fileRef = DC3773F819C8CBB3004FCF85 /* GRDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		DC70AC991AC2331000371524 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DC37744219C8DC91004FCF85 /* libsqlite3.dylib */; };
 /* End PBXBuildFile section */
@@ -388,7 +386,6 @@
 		56BB86201BA988F2001F9168 /* FMDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FMDB.h; sourceTree = "<group>"; };
 		56BB86211BA988F2001F9168 /* FMResultSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FMResultSet.h; sourceTree = "<group>"; };
 		56BB86221BA988F2001F9168 /* FMResultSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FMResultSet.m; sourceTree = "<group>"; };
-		56BB862D1BA98933001F9168 /* GRDBPerformanceTests-Bridging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GRDBPerformanceTests-Bridging.h"; sourceTree = "<group>"; };
 		56BB862E1BA98AA9001F9168 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.0.sdk/usr/lib/libsqlite3.tbd; sourceTree = DEVELOPER_DIR; };
 		56BB86301BA98AB0001F9168 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		56CA0D401BF5D8E20019C023 /* DatabaseValue+Foundation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DatabaseValue+Foundation.swift"; sourceTree = "<group>"; };
@@ -413,7 +410,6 @@
 		56FC78641BBAEB8C00CA1285 /* MappingTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MappingTests.swift; sourceTree = "<group>"; };
 		56FC78651BBAEB8C00CA1285 /* ManagedDataControllerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ManagedDataControllerTests.swift; sourceTree = "<group>"; };
 		56FDECE11BB32DFD009AD709 /* MetalRowTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetalRowTests.swift; sourceTree = "<group>"; };
-		DC2393C61ABE35F8003FF113 /* GRDB-Bridging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GRDB-Bridging.h"; sourceTree = "<group>"; };
 		DC3773F319C8CBB3004FCF85 /* GRDB.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = GRDB.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DC3773F719C8CBB3004FCF85 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../GRDB/Info.plist; sourceTree = "<group>"; };
 		DC3773F819C8CBB3004FCF85 /* GRDB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GRDB.h; path = ../GRDB/GRDB.h; sourceTree = "<group>"; };
@@ -543,7 +539,7 @@
 				565B0FF71BBC7FE90098DE03 /* RowConvertible+Foundation.swift */,
 				56A238A91B9C7E540082EB20 /* StatementArguments+Foundation.swift */,
 			);
-			path = Foundation;
+			name = Foundation;
 			sourceTree = "<group>";
 		};
 		56A238071B9C6DAD0082EB20 /* Swift */ = {
@@ -552,7 +548,7 @@
 				56A238081B9C6DD20082EB20 /* StandardLibraryTypes.swift */,
 				56A2380E1B9C74460082EB20 /* RawRepresentable.swift */,
 			);
-			path = Swift;
+			name = Swift;
 			sourceTree = "<group>";
 		};
 		56A238111B9C74A90082EB20 /* Core */ = {
@@ -685,7 +681,7 @@
 				56A238791B9C75030082EB20 /* StatementArguments.swift */,
 				56A2387A1B9C75030082EB20 /* UpdateStatement.swift */,
 			);
-			path = Core;
+			name = Core;
 			sourceTree = "<group>";
 		};
 		56A238911B9C750B0082EB20 /* Migrations */ = {
@@ -694,7 +690,7 @@
 				56A238921B9C750B0082EB20 /* DatabaseMigrator.swift */,
 				56B7F4391BEB42D500E39BBF /* Migration.swift */,
 			);
-			path = Migrations;
+			name = Migrations;
 			sourceTree = "<group>";
 		};
 		56A238951B9C752B0082EB20 /* Protocols */ = {
@@ -705,7 +701,7 @@
 				56A238981B9C752B0082EB20 /* RowConvertible.swift */,
 				5614DEEF1BA9DA15003163B3 /* SQLiteStatementConvertible.swift */,
 			);
-			path = Protocols;
+			name = Protocols;
 			sourceTree = "<group>";
 		};
 		56A2389F1B9C753B0082EB20 /* Record */ = {
@@ -714,7 +710,7 @@
 				56A238A01B9C753B0082EB20 /* DatabaseStorable.swift */,
 				56A238A11B9C753B0082EB20 /* Record.swift */,
 			);
-			path = Record;
+			name = Record;
 			sourceTree = "<group>";
 		};
 		56AC8CCC1BA3F267009E4319 /* Concurrency */ = {
@@ -725,12 +721,21 @@
 			path = Concurrency;
 			sourceTree = "<group>";
 		};
+		56B45FA81C15C07F00A18DAD /* GRDB */ = {
+			isa = PBXGroup;
+			children = (
+				DC37742D19C8CC90004FCF85 /* Sources */,
+				DC37743319C8CFCE004FCF85 /* Supporting Files */,
+			);
+			name = GRDB;
+			sourceTree = "<group>";
+		};
 		56B7F4251BE148FE00E39BBF /* CoreGraphics */ = {
 			isa = PBXGroup;
 			children = (
 				56B7F4261BE1491700E39BBF /* CGFloat.swift */,
 			);
-			path = CoreGraphics;
+			name = CoreGraphics;
 			sourceTree = "<group>";
 		};
 		56B7F4281BE149F600E39BBF /* CoreGraphics */ = {
@@ -836,7 +841,7 @@
 			path = Experimental;
 			sourceTree = "<group>";
 		};
-		DC10500F19C904DD00D8CA30 /* GRDB Tests */ = {
+		DC10500F19C904DD00D8CA30 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
 				5623E0901B4AFACC00B20B7F /* GRDBTestCase.swift */,
@@ -847,7 +852,7 @@
 				DC37740319C8CBB3004FCF85 /* Supporting Files */,
 				5614DEEE1BA9D6F9003163B3 /* Frameworks */,
 			);
-			path = "GRDB Tests";
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		DC3773E919C8CBB3004FCF85 = {
@@ -855,8 +860,8 @@
 			children = (
 				DC37744719C8F50B004FCF85 /* README.md */,
 				56E1524B1B43FD5B00EE27AA /* TODO.md */,
-				DC37742D19C8CC90004FCF85 /* GRDB */,
-				DC10500F19C904DD00D8CA30 /* GRDB Tests */,
+				56B45FA81C15C07F00A18DAD /* GRDB */,
+				DC10500F19C904DD00D8CA30 /* Tests */,
 				DC3773F419C8CBB3004FCF85 /* Products */,
 			);
 			indentWidth = 4;
@@ -880,13 +885,12 @@
 			isa = PBXGroup;
 			children = (
 				DC37740419C8CBB3004FCF85 /* Info.plist */,
-				56BB862D1BA98933001F9168 /* GRDBPerformanceTests-Bridging.h */,
 			);
 			name = "Supporting Files";
 			path = "../GRDB Tests";
 			sourceTree = "<group>";
 		};
-		DC37742D19C8CC90004FCF85 /* GRDB */ = {
+		DC37742D19C8CC90004FCF85 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
 				56A2386F1B9C75030082EB20 /* Core */,
@@ -895,9 +899,8 @@
 				56A238911B9C750B0082EB20 /* Migrations */,
 				56A2389F1B9C753B0082EB20 /* Record */,
 				56A238071B9C6DAD0082EB20 /* Swift */,
-				DC37743319C8CFCE004FCF85 /* Supporting Files */,
 			);
-			path = GRDB;
+			path = Sources;
 			sourceTree = "<group>";
 		};
 		DC37743319C8CFCE004FCF85 /* Supporting Files */ = {
@@ -908,7 +911,6 @@
 				56E5D7BF1B4D3DC900430942 /* GRDBiOS */,
 				56E5D7C11B4D3DC900430942 /* GRDBOSX */,
 				DC3773F819C8CBB3004FCF85 /* GRDB.h */,
-				DC2393C61ABE35F8003FF113 /* GRDB-Bridging.h */,
 				DC3773F719C8CBB3004FCF85 /* Info.plist */,
 			);
 			name = "Supporting Files";
@@ -922,7 +924,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				56E5D82C1B4D437600430942 /* GRDB.h in Headers */,
-				56E5D82D1B4D438800430942 /* GRDB-Bridging.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -931,7 +932,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				DC3773F919C8CBB3004FCF85 /* GRDB.h in Headers */,
-				DC2393C81ABE35F8003FF113 /* GRDB-Bridging.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1433,7 +1433,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "GRDB Tests/Info.plist";
+				INFOPLIST_FILE = Tests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBOSXTests;
@@ -1450,7 +1450,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "GRDB Tests/Info.plist";
+				INFOPLIST_FILE = Tests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBOSXTests;
@@ -1471,7 +1471,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = GRDB/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -1495,7 +1495,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = GRDB/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -1514,7 +1514,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "GRDB Tests/Info.plist";
+				INFOPLIST_FILE = Tests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBiOSTests;
@@ -1531,7 +1531,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "GRDB Tests/Info.plist";
+				INFOPLIST_FILE = Tests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBiOSTests;
@@ -1547,7 +1547,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "GRDB Tests/Info.plist";
+				INFOPLIST_FILE = Tests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBOSXTests;
@@ -1563,7 +1563,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "GRDB Tests/Info.plist";
+				INFOPLIST_FILE = Tests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.GRDBOSXTests;
@@ -1662,7 +1662,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = GRDB/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -1682,7 +1682,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = GRDB/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
