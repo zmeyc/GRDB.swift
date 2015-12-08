@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <Group
-      location = "group:Playgrounds"
+      location = "group:../Docs/Playgrounds"
       name = "Playgrounds">
       <FileRef
          location = "group:JSONSynchronization.playground">
@@ -15,12 +15,12 @@
       location = "group:GRDB.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:Tests/GRDBProfiling/GRDBProfiling.xcodeproj">
+      location = "group:../Tests/GRDBProfiling/GRDBProfiling.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:DemoApps/GRDBDemoiOS/GRDBDemoiOS.xcodeproj">
+      location = "group:../Docs/DemoApps/GRDBDemoiOS/GRDBDemoiOS.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:DemoApps/GRDBDemoiOS7/GRDBDemoiOS7.xcodeproj">
+      location = "group:../Docs/DemoApps/GRDBDemoiOS7/GRDBDemoiOS7.xcodeproj">
    </FileRef>
 </Workspace>
