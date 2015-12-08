@@ -51,17 +51,16 @@ public class Statement {
             code = sqlite3_prepare_v2(database.sqliteConnection, sqlHead, -1, &sqliteStatement, &sqlTail)
             consumedCharactersCount = sqlTail - sqlHead + 1
         }
-        
-        self.database = database
-        self.sql = sql
-        self.sqliteStatement = sqliteStatement
-        
         guard code == SQLITE_OK else {
             throw DatabaseError(code: code, message: database.lastErrorMessage, sql: sql)
         }
         guard consumedCharactersCount == sqlCodeUnits.count else {
             fatalError("Invalid SQL string: multiple statements found. To execute multiple statements, use Database.executeMultiStatement() instead.")
         }
+        
+        self.database = database
+        self.sql = sql
+        self.sqliteStatement = sqliteStatement
     }
     
     deinit {

@@ -614,16 +614,15 @@ public final class Database {
     var databaseQueueID: DatabaseQueueID = nil
     
     init(path: String, configuration: Configuration) throws {
-        self.configuration = configuration
-        
         // See https://www.sqlite.org/c3ref/open.html
         var sqliteConnection = SQLiteConnection()
         let code = sqlite3_open_v2(path, &sqliteConnection, configuration.sqliteOpenFlags, nil)
-        self.sqliteConnection = sqliteConnection
-        if code != SQLITE_OK {
+        guard code == SQLITE_OK else {
             throw DatabaseError(code: code, message: String.fromCString(sqlite3_errmsg(sqliteConnection)))
         }
         
+        self.configuration = configuration
+        self.sqliteConnection = sqliteConnection
         try setupForeignKeys()
         setupBusyMode()
         setupTransactionHooks()
