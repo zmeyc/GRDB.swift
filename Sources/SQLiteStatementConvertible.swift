@@ -1,4 +1,6 @@
-import CSQLite
+#if !OBJC
+    import CSQLite
+#endif
 
 /// When a type adopts both DatabaseValueConvertible and
 /// SQLiteStatementConvertible, it is granted with faster access to the SQLite

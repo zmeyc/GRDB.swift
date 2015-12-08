@@ -1,5 +1,7 @@
 import Foundation
-import CSQLite
+#if !OBJC
+    import CSQLite
+#endif
 
 /// A database row.
 public final class Row: CollectionType {

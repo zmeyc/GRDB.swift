@@ -1,5 +1,7 @@
 import Foundation
-import CSQLite
+#if !OBJC
+    import CSQLite
+#endif
 
 let SQLITE_TRANSIENT = unsafeBitCast(COpaquePointer(bitPattern: -1), sqlite3_destructor_type.self)
 typealias SQLiteValue = COpaquePointer

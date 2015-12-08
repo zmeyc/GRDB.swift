@@ -1,4 +1,6 @@
-import CSQLite
+#if !OBJC
+    import CSQLite
+#endif
 
 /// An internal struct that defines a migration.
 struct Migration {

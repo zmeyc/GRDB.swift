@@ -1,4 +1,6 @@
-import CSQLite
+#if !OBJC
+    import CSQLite
+#endif
 
 /// Bool adopts DatabaseValueConvertible and SQLiteStatementConvertible.
 extension Bool: DatabaseValueConvertible, SQLiteStatementConvertible {

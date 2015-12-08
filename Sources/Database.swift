@@ -1,5 +1,7 @@
 import Foundation
-import CSQLite
+#if !OBJC
+    import CSQLite
+#endif
 
 /// A raw SQLite connection, suitable for the SQLite C API.
 public typealias SQLiteConnection = COpaquePointer

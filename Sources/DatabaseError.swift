@@ -1,4 +1,6 @@
-import CSQLite
+#if !OBJC
+    import CSQLite
+#endif
 
 /// DatabaseError wraps a SQLite error.
 public struct DatabaseError : ErrorType {

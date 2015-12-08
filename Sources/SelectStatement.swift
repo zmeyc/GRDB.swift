@@ -1,4 +1,6 @@
-import CSQLite
+#if !OBJC
+    import CSQLite
+#endif
 
 /// A subclass of Statement that fetches database rows.
 ///
