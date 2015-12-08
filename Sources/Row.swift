@@ -1,5 +1,7 @@
 import Foundation
 #if !OBJC
+    // OBJC is defined by Xcode targets that link with SDK sqlite.
+    // When not there, we're a Swift Package and we need the CSQLite package.
     import CSQLite
 #endif
 
