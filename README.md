@@ -1,13 +1,15 @@
 GRDB.swift
 ==========
 
-GRDB.swift is an [SQLite](https://www.sqlite.org) toolkit for Swift 2, from the author of [GRMustache](https://github.com/groue/GRMustache).
+GRDB.swift is an [SQLite](https://www.sqlite.org) toolkit for Swift 2.2, from the author of [GRMustache](https://github.com/groue/GRMustache).
 
 It ships with a low-level database API, plus application-level tools.
 
 **December 3, 2015: GRDB.swift 0.32.2 is out** - [Release notes](CHANGELOG.md). Follow [@groue](http://twitter.com/groue) on Twitter for release announcements and usage tips.
 
-**Requirements**: iOS 7.0+ / OSX 10.9+, Xcode 7+
+**Requirements**: iOS 7.0+ / OSX 10.9+, Xcode 7.2+
+
+**The last release that supports Swift 2.1** is version 0.32.2 on the [Swift2.1 branch](https://github.com/groue/GRDB.swift/tree/Swift2.1).
 
 
 But Why?
@@ -76,7 +78,7 @@ Installation
 
 ### iOS7
 
-You can use GRDB.swift in a project targetting iOS7. See [GRDBDemoiOS7](DemoApps/GRDBDemoiOS7) for more information.
+You can use GRDB.swift in a project targetting iOS7. See [GRDBDemoiOS7](Docs/DemoApps/GRDBDemoiOS7) for more information.
 
 
 ### CocoaPods
@@ -104,14 +106,33 @@ github "groue/GRDB.swift" == 0.32.2
 ```
 
 
+### Swift Package Manager
+
+The [Swift Package Manager](https://swift.org/package-manager/) is the open source tool for managing the distribution of Swift code.
+
+To use GRDB.swift with the Swift Package Manager, add https://github.com/groue/GRDB.swift to the list of your package dependencies:
+
+```swift
+import PackageDescription
+
+let package = Package(
+    name: "MyPackage",
+    targets: [],
+    dependencies: [
+        .Package(url: "https://github.com/groue/GRDB.swift", majorVersion: 1, minor: 0),
+    ]
+)
+```
+
+
 ### Manually
 
 1. Download a copy of GRDB.swift.
-2. Embed the `GRDB.xcodeproj` project in your own project.
+2. Embed the `Xcode/GRDB.xcodeproj` project in your own project.
 3. Add the `GRDBOSX` or `GRDBiOS` target in the **Target Dependencies** section of the **Build Phases** tab of your application target.
 4. Add `GRDB.framework` to the **Embedded Binaries** section of the **General**  tab of your target.
 
-See [GRDBDemoiOS](DemoApps/GRDBDemoiOS) for an example of such integration.
+See [GRDBDemoiOS](Docs/DemoApps/GRDBDemoiOS) for an example of such integration.
 
 
 SQLite API
@@ -2070,9 +2091,9 @@ Sample Code
 ===========
 
 - The [Documentation](#documentation) is full of GRDB snippets.
-- [GRDBDemoiOS](DemoApps/GRDBDemoiOS): A sample iOS application.
-- [GRDBDemoiOS7](DemoApps/GRDBDemoiOS7): A sample iOS7 application.
-- Check `GRDB.xcworkspace`: it contains GRDB-enabled playgrounds to play with.
+- [GRDBDemoiOS](Docs/DemoApps/GRDBDemoiOS): A sample iOS application.
+- [GRDBDemoiOS7](Docs/DemoApps/GRDBDemoiOS7): A sample iOS7 application.
+- Check `Xcode/GRDB.xcworkspace`: it contains GRDB-enabled playgrounds to play with.
 - How to synchronize a database table with a JSON payload: https://gist.github.com/groue/dcdd3784461747874f41
 
 
