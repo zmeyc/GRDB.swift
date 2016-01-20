@@ -50,6 +50,8 @@
 		565D5D721BBC694D00DC9BD4 /* Row+FoundationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 565D5D701BBC694D00DC9BD4 /* Row+FoundationTests.swift */; };
 		565D5D741BBC70AE00DC9BD4 /* StatementArguments+FoundationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 565D5D731BBC70AE00DC9BD4 /* StatementArguments+FoundationTests.swift */; };
 		565D5D751BBC70AE00DC9BD4 /* StatementArguments+FoundationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 565D5D731BBC70AE00DC9BD4 /* StatementArguments+FoundationTests.swift */; };
+		567E3B3B1C4FAF1B00BD4E1A /* RowEquatableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 567E3B3A1C4FAF1B00BD4E1A /* RowEquatableTests.swift */; };
+		567E3B3C1C4FAF1B00BD4E1A /* RowEquatableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 567E3B3A1C4FAF1B00BD4E1A /* RowEquatableTests.swift */; };
 		5683C2691B4D445E00296494 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5683C2681B4D445E00296494 /* libsqlite3.dylib */; };
 		56A238021B9C6A650082EB20 /* DatabaseDateComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A238011B9C6A650082EB20 /* DatabaseDateComponents.swift */; };
 		56A238031B9C6A650082EB20 /* DatabaseDateComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A238011B9C6A650082EB20 /* DatabaseDateComponents.swift */; };
@@ -325,6 +327,7 @@
 		565D5D671BBC604000DC9BD4 /* Row+Foundation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Row+Foundation.swift"; sourceTree = "<group>"; };
 		565D5D701BBC694D00DC9BD4 /* Row+FoundationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Row+FoundationTests.swift"; sourceTree = "<group>"; };
 		565D5D731BBC70AE00DC9BD4 /* StatementArguments+FoundationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "StatementArguments+FoundationTests.swift"; sourceTree = "<group>"; };
+		567E3B3A1C4FAF1B00BD4E1A /* RowEquatableTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RowEquatableTests.swift; sourceTree = "<group>"; };
 		5683C2681B4D445E00296494 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.4.sdk/usr/lib/libsqlite3.dylib; sourceTree = DEVELOPER_DIR; };
 		56A238011B9C6A650082EB20 /* DatabaseDateComponents.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseDateComponents.swift; sourceTree = "<group>"; };
 		56A238041B9C6D670082EB20 /* NSDate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSDate.swift; sourceTree = "<group>"; };
@@ -538,6 +541,14 @@
 			path = Collation;
 			sourceTree = "<group>";
 		};
+		567E3B331C4FAF0200BD4E1A /* RowEquatable */ = {
+			isa = PBXGroup;
+			children = (
+				567E3B3A1C4FAF1B00BD4E1A /* RowEquatableTests.swift */,
+			);
+			path = RowEquatable;
+			sourceTree = "<group>";
+		};
 		569978D31B539038005EBEED /* Private */ = {
 			isa = PBXGroup;
 			children = (
@@ -599,6 +610,7 @@
 				56A238191B9C74A90082EB20 /* DatabaseValueConvertible */,
 				560C97BF1BFD0B5B00BF8471 /* Function */,
 				56A2381D1B9C74A90082EB20 /* Row */,
+				567E3B331C4FAF0200BD4E1A /* RowEquatable */,
 				56EE573B1BB317B7007A6A95 /* SQLiteStatementConvertible */,
 				56A238201B9C74A90082EB20 /* Statement */,
 				5607EFD11BB8253300605DE3 /* TransactionObserver */,
@@ -1366,6 +1378,7 @@
 				560C97C81BFD0B8400BF8471 /* FunctionTests.swift in Sources */,
 				56A2383A1B9C74A90082EB20 /* InMemoryDatabaseTests.swift in Sources */,
 				56A5E40A1BA2BCF900707640 /* RecordWithColumnNameManglingTests.swift in Sources */,
+				567E3B3C1C4FAF1B00BD4E1A /* RowEquatableTests.swift in Sources */,
 				56B7F42A1BE14A1900E39BBF /* CGFloatTests.swift in Sources */,
 				56E5D8181B4D435D00430942 /* GRDBTestCase.swift in Sources */,
 			);
@@ -1424,6 +1437,7 @@
 				560C97C71BFD0B8400BF8471 /* FunctionTests.swift in Sources */,
 				56A238391B9C74A90082EB20 /* InMemoryDatabaseTests.swift in Sources */,
 				56A5E4091BA2BCF900707640 /* RecordWithColumnNameManglingTests.swift in Sources */,
+				567E3B3B1C4FAF1B00BD4E1A /* RowEquatableTests.swift in Sources */,
 				56B7F42F1BE14CD700E39BBF /* CGFloatTests.swift in Sources */,
 				56E5D8041B4D424400430942 /* GRDBTestCase.swift in Sources */,
 			);
