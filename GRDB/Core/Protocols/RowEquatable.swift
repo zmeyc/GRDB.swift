@@ -1,20 +1,33 @@
 /// The general protocol for objects that can be compared by primary key.
 ///
-/// In order to adopt it, you can implement its two required functions.
+/// In order to adopt it, you have a few options:
 ///
-/// Another option is to adopt the simpler PrimaryKeyEquatable protocol, or to
-/// adopt MutableDatabasePersistable:
+/// - Implement its only required functions:
 ///
-///     struct Person1 : PrimaryKeyEquatable {
+///     struct RowEquatablePerson : RowEquatable {
 ///         let id: Int64?
-///
-///         func hasEqualPrimaryKey(other: Person) -> Bool {
-///             if case (let id?, let otherId?) = (id, other.id) { return id == otherId }
-///             return false
+///         func hasEqualPrimaryKey(other: RowEquatablePerson, inDatabase db: Database) -> Bool {
+///             return id != nil && id == other.id
 ///         }
 ///     }
 ///
-///     struct Person2 : MutableDatabasePersistable, RowEquatable {
+/// - Subclass Record.
+///
+///     class RecordPerson : Record { ... }
+///
+/// - Adopt Equatable, and declare RowEquatable adoption.
+///
+///     struct EquatablePerson : Equatable, RowEquatable {
+///         let id: Int64
+///     }
+///
+///     func ==(lhs: EquatablePerson, rhs: EquatablePerson) -> Bool {
+///         return lhs.id == rhs.id
+///     }
+///
+/// - Adopt MutableDatabasePersistable, and declare RowEquatable adoption.
+///
+///     struct PersistablePerson : MutableDatabasePersistable, RowEquatable {
 ///         let id: Int64?
 ///
 ///         static func databaseTableName() -> String { return "persons" }
@@ -23,7 +36,9 @@
 ///         }
 ///     }
 public protocol RowEquatable {
-    /// Returns a function that compares two objects.
+    /// Optional static method that returns a function that compares two
+    /// objects. Explicit implementations can provide an optimization
+    /// opportunity.
     static func primaryKeyComparator(db: Database) -> (Self, Self) -> Bool
     
     /// Compares the primary keys of *self* and *other*.
@@ -32,35 +47,16 @@ public protocol RowEquatable {
     func hasEqualPrimaryKey(other: Self, inDatabase db: Database) -> Bool
 }
 
-/// A simple protocol that makes it easy to adopt RowEquatable:
-///
-///     struct Person : PrimaryKeyEquatable {
-///         let id: Int64?
-///
-///         func hasEqualPrimaryKey(other: Person) -> Bool {
-///             if case (let id?, let otherId?) = (id, other.id) { return id == otherId }
-///             return false
-///         }
-///     }
-public protocol PrimaryKeyEquatable: RowEquatable {
-    // Returns true if self and *other* have the same non-null primary key.
-    func hasEqualPrimaryKey(other: Self) -> Bool
-}
-
-public extension PrimaryKeyEquatable {
+extension RowEquatable {
     static func primaryKeyComparator(db: Database) -> (Self, Self) -> Bool {
         return { $0.hasEqualPrimaryKey($1, inDatabase: db) }
-    }
-    
-    func hasEqualPrimaryKey(other: Self, inDatabase db: Database) -> Bool {
-        return hasEqualPrimaryKey(other)
     }
 }
 
 
 /// Free implementation of RowEquatable for MutableDatabasePersistable
 ///
-///     struct Person: MutableDatabasePersistable, RowEquatable {
+///     struct Person : MutableDatabasePersistable, RowEquatable {
 ///         let id: Int64?
 ///
 ///         static func databaseTableName() -> String { return "persons" }
@@ -68,7 +64,7 @@ public extension PrimaryKeyEquatable {
 ///             return ["id": id]
 ///         }
 ///     }
-extension MutableDatabasePersistable where Self: RowEquatable {
+public extension MutableDatabasePersistable where Self: RowEquatable {
     static func primaryKeyComparator(db: Database) -> (Self, Self) -> Bool {
         let tableName = databaseTableName()
         let primaryKey = db.primaryKey(tableName)
@@ -85,4 +81,57 @@ extension MutableDatabasePersistable where Self: RowEquatable {
     func hasEqualPrimaryKey(other: Self, inDatabase db: Database) -> Bool {
         return self.dynamicType.primaryKeyComparator(db)(self, other)
     }
+}
+
+/// Free implementation of RowEquatable for Equatable
+///
+///     struct EquatablePerson : Equatable, RowEquatable {
+///         let id: Int64
+///     }
+///
+///     func ==(lhs: EquatablePerson, rhs: EquatablePerson) -> Bool {
+///         return lhs.id == rhs.id
+///     }
+public extension Equatable where Self: RowEquatable {
+    static func primaryKeyComparator(db: Database) -> (Self, Self) -> Bool {
+        return { $0 == $1 }
+    }
+    
+    func hasEqualPrimaryKey(other: Self, inDatabase db: Database) -> Bool {
+        return self == other
+    }
+}
+
+
+struct RowEquatablePerson : RowEquatable {
+    let id: Int64?
+    func hasEqualPrimaryKey(other: RowEquatablePerson, inDatabase db: Database) -> Bool {
+        return id != nil && id == other.id
+    }
+}
+
+
+struct EquatablePerson : Equatable, RowEquatable {
+    let id: Int64
+}
+
+func ==(lhs: EquatablePerson, rhs: EquatablePerson) -> Bool {
+    return lhs.id == rhs.id
+}
+
+struct PersistablePerson : MutableDatabasePersistable, RowEquatable {
+    let id: Int64?
+
+    static func databaseTableName() -> String { return "persons" }
+    var persistentDictionary: [String: DatabaseValueConvertible?] {
+        return ["id": id]
+    }
+}
+
+
+class C: Equatable, RowEquatable {
+}
+
+func ==(lhs: C, rhs: C) -> Bool {
+    return false
 }
