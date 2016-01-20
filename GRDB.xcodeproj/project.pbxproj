@@ -10,6 +10,8 @@
 		5606AF911C0ED37000D20487 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 56BB86301BA98AB0001F9168 /* libsqlite3.tbd */; };
 		5607EFD31BB8254800605DE3 /* TransactionObserverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5607EFD21BB8254800605DE3 /* TransactionObserverTests.swift */; };
 		5607EFD41BB827FD00605DE3 /* TransactionObserverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5607EFD21BB8254800605DE3 /* TransactionObserverTests.swift */; };
+		560A90E31C4F830600B3562B /* RowEquatable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 560A90E21C4F830600B3562B /* RowEquatable.swift */; };
+		560A90E41C4F830600B3562B /* RowEquatable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 560A90E21C4F830600B3562B /* RowEquatable.swift */; };
 		560B3FAC1C19E01000C58EC7 /* DatabasePersistableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 560B3FAB1C19E01000C58EC7 /* DatabasePersistableTests.swift */; };
 		560B3FAD1C19E01000C58EC7 /* DatabasePersistableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 560B3FAB1C19E01000C58EC7 /* DatabasePersistableTests.swift */; };
 		560C97C71BFD0B8400BF8471 /* FunctionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 560C97C61BFD0B8400BF8471 /* FunctionTests.swift */; };
@@ -308,6 +310,7 @@
 
 /* Begin PBXFileReference section */
 		5607EFD21BB8254800605DE3 /* TransactionObserverTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TransactionObserverTests.swift; sourceTree = "<group>"; };
+		560A90E21C4F830600B3562B /* RowEquatable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RowEquatable.swift; sourceTree = "<group>"; };
 		560B3FAB1C19E01000C58EC7 /* DatabasePersistableTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabasePersistableTests.swift; sourceTree = "<group>"; };
 		560C97C61BFD0B8400BF8471 /* FunctionTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FunctionTests.swift; sourceTree = "<group>"; };
 		560C981A1C0E22D300BF8471 /* GRDBOSXPerformanceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GRDBOSXPerformanceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -731,6 +734,7 @@
 				56A238961B9C752B0082EB20 /* DatabaseTableMapping.swift */,
 				56A238971B9C752B0082EB20 /* DatabaseValueConvertible.swift */,
 				56A238981B9C752B0082EB20 /* RowConvertible.swift */,
+				560A90E21C4F830600B3562B /* RowEquatable.swift */,
 				5614DEEF1BA9DA15003163B3 /* SQLiteStatementConvertible.swift */,
 			);
 			path = Protocols;
@@ -1299,6 +1303,7 @@
 				56A2389C1B9C752B0082EB20 /* DatabaseValueConvertible.swift in Sources */,
 				565D5D691BBC604000DC9BD4 /* Row+Foundation.swift in Sources */,
 				56A238AE1B9C90090082EB20 /* NSNull.swift in Sources */,
+				560A90E41C4F830600B3562B /* RowEquatable.swift in Sources */,
 				56A2389A1B9C752B0082EB20 /* DatabaseTableMapping.swift in Sources */,
 				56A238881B9C75030082EB20 /* Row.swift in Sources */,
 				56A238841B9C75030082EB20 /* DatabaseQueue.swift in Sources */,
@@ -1452,6 +1457,7 @@
 				56A238B31B9C919D0082EB20 /* NSNumber.swift in Sources */,
 				56A238B01B9C90BB0082EB20 /* NSString.swift in Sources */,
 				565D5D681BBC604000DC9BD4 /* Row+Foundation.swift in Sources */,
+				560A90E31C4F830600B3562B /* RowEquatable.swift in Sources */,
 				56A238931B9C750B0082EB20 /* DatabaseMigrator.swift in Sources */,
 				56A2387D1B9C75030082EB20 /* Database.swift in Sources */,
 				56A238831B9C75030082EB20 /* DatabaseQueue.swift in Sources */,

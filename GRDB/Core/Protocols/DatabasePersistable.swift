@@ -18,7 +18,7 @@ extension PersistenceError : CustomStringConvertible {
     }
 }
 
-private func databaseValue(forColumn column: String, inDictionary dictionary: [String: DatabaseValueConvertible?]) -> DatabaseValue {
+func databaseValue(forColumn column: String, inDictionary dictionary: [String: DatabaseValueConvertible?]) -> DatabaseValue {
     if let value = dictionary[column] {
         return value?.databaseValue ?? .Null
     }
@@ -29,7 +29,7 @@ private func databaseValue(forColumn column: String, inDictionary dictionary: [S
     return .Null
 }
 
-private func databaseValues(forColumns columns: [String], inDictionary dictionary: [String: DatabaseValueConvertible?]) -> [DatabaseValue] {
+func databaseValues(forColumns columns: [String], inDictionary dictionary: [String: DatabaseValueConvertible?]) -> [DatabaseValue] {
     return columns.map { databaseValue(forColumn: $0, inDictionary: dictionary) }
 }
 
