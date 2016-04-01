@@ -155,7 +155,7 @@ import UIKit
 /// When you create a controller, you can give it a serial dispatch queue. The
 /// controller must then be used from this queue, and its delegate gets notified
 /// of record changes on this queue as well.
-public final class FetchedRecordsController<Record: RowConvertible> {
+public final class FetchedRecordsController<Record: FactoryRowConvertible> {
     
     // MARK: - Initialization
     
@@ -512,7 +512,7 @@ extension FetchedRecordsController where Record: MutablePersistable {
 
 /// FetchedRecordsController adopts TransactionObserverType so that it can
 /// monitor changes to its fetched records.
-private final class FetchedRecordsObserver<Record: RowConvertible> : TransactionObserverType {
+private final class FetchedRecordsObserver<Record: FactoryRowConvertible> : TransactionObserverType {
     weak var controller: FetchedRecordsController<Record>?  // If nil, self is invalidated.
     let observedTables: Set<String>
     let isSameRecord: (Record, Record) -> Bool
@@ -885,7 +885,7 @@ public extension FetchedRecordsControllerDelegate {
 // MARK: - FetchedRecordsSectionInfo
 
 /// A section given by a FetchedRecordsController.
-public struct FetchedRecordsSectionInfo<T: RowConvertible> {
+public struct FetchedRecordsSectionInfo<T: FactoryRowConvertible> {
     private let controller: FetchedRecordsController<T>
     
     /// The number of records (rows) in the section.
@@ -975,12 +975,12 @@ private enum DatabaseSource<T> {
 // =============================================================================
 // MARK: - Item
 
-private final class Item<T: RowConvertible> : RowConvertible, Equatable {
+private final class Item<T: FactoryRowConvertible> : RowConvertible, Equatable {
     let row: Row
     
     // TODO: Is is a good idea to lazily load records?
     lazy var record: T = {
-        var record = T(self.row)
+        var record = T.fromRow(self.row)
         record.awakeFromFetch(row: self.row)
         return record
     }()
@@ -998,7 +998,7 @@ private func ==<T>(lhs: Item<T>, rhs: Item<T>) -> Bool {
 // =============================================================================
 // MARK: - ItemChange
 
-private enum ItemChange<T: RowConvertible> {
+private enum ItemChange<T: FactoryRowConvertible> {
     case Insertion(item: Item<T>, indexPath: NSIndexPath)
     case Deletion(item: Item<T>, indexPath: NSIndexPath)
     case Move(item: Item<T>, indexPath: NSIndexPath, newIndexPath: NSIndexPath, changes: [String: DatabaseValue])

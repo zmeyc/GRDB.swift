@@ -193,9 +193,9 @@ extension FetchRequest {
 }
 
 
-extension FetchRequest where T: RowConvertible {
+extension FetchRequest where T: FactoryRowConvertible {
     
-    // MARK: Fetching Record and RowConvertible
+    // MARK: Fetching Record and FactoryRowConvertible
     
     /// Returns a sequence of values.
     ///
@@ -478,7 +478,7 @@ extension DatabaseValueConvertible where Self: StatementColumnConvertible {
 }
 
 
-extension RowConvertible {
+extension FactoryRowConvertible {
     
     // MARK: Fetching From FetchRequest
     
@@ -529,7 +529,7 @@ extension RowConvertible {
     }
 }
 
-extension RowConvertible where Self: TableMapping {
+extension FactoryRowConvertible where Self: TableMapping {
     
     // MARK: Fetching All
     

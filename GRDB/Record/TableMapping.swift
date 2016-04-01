@@ -1,7 +1,7 @@
 /// Types that adopt TableMapping declare a particular relationship with
 /// a database table.
 ///
-/// Types that adopt both TableMapping and RowConvertible are granted with
+/// Types that adopt both TableMapping and FactoryRowConvertible are granted with
 /// built-in methods that allow to fetch instances identified by key:
 ///
 ///     Person.fetchOne(db, key: 123)  // Person?
@@ -13,7 +13,7 @@ public protocol TableMapping {
     static func databaseTableName() -> String
 }
 
-extension RowConvertible where Self: TableMapping {
+extension FactoryRowConvertible where Self: TableMapping {
     
     // MARK: - Single-Column Primary Key
     

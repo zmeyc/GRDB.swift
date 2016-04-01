@@ -1,4 +1,5 @@
-/// Types that adopt RowConvertible can be initialized from a database Row.
+/// Types that adopt FactoryRowConvertible can be initialized from a
+/// database Row.
 ///
 ///     let row = Row.fetchOne(db, "SELECT ...")!
 ///     let person = Person(row)
@@ -16,14 +17,14 @@
 ///     Person.fetchOne(statement, arguments:...)        // Person?
 ///
 /// RowConvertible is adopted by Record.
-public protocol RowConvertible {
+public protocol FactoryRowConvertible {
     
-    /// Initializes a value from `row`.
+    /// Returns a value initialized from `row`.
     ///
     /// For performance reasons, the row argument may be reused during the
     /// iteration of a fetch query. If you want to keep the row for later use,
     /// make sure to store a copy: `self.row = row.copy()`.
-    init(_ row: Row)
+    static func fromRow(row: Row) -> Self
     
     /// Do not call this method directly.
     ///
@@ -35,7 +36,7 @@ public protocol RowConvertible {
     mutating func awakeFromFetch(row row: Row)
 }
 
-extension RowConvertible {
+extension FactoryRowConvertible {
     
     /// Default implementation, which does nothing.
     public func awakeFromFetch(row row: Row) { }
@@ -68,7 +69,7 @@ extension RowConvertible {
     public static func fetch(statement: SelectStatement, arguments: StatementArguments? = nil) -> DatabaseSequence<Self> {
         let row = Row(statement: statement)
         return statement.fetchSequence(arguments: arguments) {
-            var value = self.init(row)
+            var value = self.fromRow(row)
             value.awakeFromFetch(row: row)
             return value
         }
@@ -157,5 +158,42 @@ extension RowConvertible {
     @warn_unused_result
     public static func fetchOne(db: DatabaseReader, _ sql: String, arguments: StatementArguments? = nil) -> Self? {
         return db.nonIsolatedRead { db in fetchOne(try! db.selectStatement(sql), arguments: arguments) }
+    }
+}
+
+/// Types that adopt RowConvertible can be initialized from a database Row.
+///
+///     let row = Row.fetchOne(db, "SELECT ...")!
+///     let person = Person(row)
+///
+/// The protocol comes with built-in methods that allow to fetch sequences,
+/// arrays, or single values:
+///
+///     Person.fetch(db, "SELECT ...", arguments:...)    // DatabaseSequence<Person>
+///     Person.fetchAll(db, "SELECT ...", arguments:...) // [Person]
+///     Person.fetchOne(db, "SELECT ...", arguments:...) // Person?
+///
+///     let statement = db.selectStatement("SELECT ...")
+///     Person.fetch(statement, arguments:...)           // DatabaseSequence<Person>
+///     Person.fetchAll(statement, arguments:...)        // [Person]
+///     Person.fetchOne(statement, arguments:...)        // Person?
+///
+/// RowConvertible is adopted by Record.
+public protocol RowConvertible : FactoryRowConvertible {
+    
+    /// Initializes a value from `row`.
+    ///
+    /// For performance reasons, the row argument may be reused during the
+    /// iteration of a fetch query. If you want to keep the row for later use,
+    /// make sure to store a copy: `self.row = row.copy()`.
+    init(_ row: Row)
+}
+
+extension RowConvertible {
+    /// Returns a value initialized from `row`.
+    ///
+    /// The default implementation calls the Row initializer.
+    public static func fromRow(row: Row) -> Self {
+        return Self.init(row)
     }
 }

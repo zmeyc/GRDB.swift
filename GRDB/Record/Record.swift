@@ -324,6 +324,15 @@ public class Record : RowConvertible, TableMapping, Persistable {
     }
 }
 
+extension Record {
+    // Swift complains unless this method is added. The default implementation
+    // of RowConvertible is not enough, for some reason.
+    /// TODO: document
+    public class func fromRow(row: Row) -> Self {
+        return self.init(row)
+    }
+}
+
 
 // MARK: - CustomStringConvertible
 
