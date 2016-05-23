@@ -1538,7 +1538,7 @@ extension PointOfInterest : RowConvertible {
 }
 ```
 
-Occasionnally, you'll want to write a complex SQL query that uses different column names. In this case, [row adapters](#row-adapters) are there to help you mapping raw column names to the names expected by your RowConvertible types.
+Occasionnally, you'll want to write an SQL query that uses different column names. In this case, [row adapters](#row-adapters) are there to help you mapping raw column names to the names expected by your RowConvertible types.
 
 
 ### TableMapping Protocol
