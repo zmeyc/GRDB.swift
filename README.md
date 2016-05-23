@@ -1233,65 +1233,47 @@ let row = Row.fetchOne(db, "SELECT 'Hello' AS produced", adapter: adapter)!
 row.value(named: "consumed") // "Hello"
 ```
 
-**Row adapters can also define "row variants".** Variants help several consumers feed on a single row:
+**Row adapters can also define "row variants".** Variants help several consumers feed on a single row.
+
+For example, let build a joined query which loads books along with their author:
 
 ```swift
 let sql = "SELECT books.id, books.title, books.authorID, " +
           "       persons.name AS authorName " +
           "FROM books " +
           "JOIN persons ON books.authorID = persons.id"
+```
 
+The raw author columns are "authorID" and "authorName". Let's say that we prefer to consume them as "id" and "name". For that we define a row variant named "author":
+
+```swift
 // Define a variant named "author":
 let authorMapping = ["id": "authorID", "name": "authorName"]
 let adapter = RowAdapter(variantMappings: ["author": authorMapping])
+```
 
+Use the `Row.variant(named:)` method to load the "author" variant:
+
+```swift
 for row in Row.fetch(db, sql, adapter: adapter) {
-    // The fetched row is the original one:
-    row // <Row id:1 title:"Moby-Dick" authorID:10 authorName:"Melville">
+    // The fetched row, without mapping:
+    row.value(named: "id")    // 1
+    row.value(named: "title")  // Moby-Dick
     
-    // But it has an "author" variant, with mapped columns:
+    // The "author" variant, with mapped columns:
     if let authorRow = row.variant(named: "author") {
-        authorRow // <Row id:10 name:"Melville">
+        authorRow.value(named: "id")    // 10
+        authorRow.value(named: "name")  // Melville
     }
 }
 ```
 
-The last SQL and adapter can be very useful with [RowConvertible](#rowconvertible-protocol) types. For example:
+And now that we have nice "id" and "name" columns, we can leverage [RowConvertible](#rowconvertible-protocol) types. For example, assuming the Book class consumes the "author" variant in its row initializer and builds a Person from it:
 
 ```swift
 for book in Book.fetch(db, sql, adapter: adapter) {
-    book.title          // Moby-Dick
-    book.author?.name   // Melville
-}
-```
-
-All we need are two regular RowConvertible types:
-
-```swift
-class Person : RowConvertible {
-    var id: Int64?
-    var name: String
-    
-    init(_ row: Row) {
-        id = row.value(named: "id")
-        name = row.value(named: "name")
-    }
-}
-
-class Book : RowConvertible {
-    var id: Int64?
-    var title: String
-    var author: Person?
-    
-    init(_ row: Row) {
-        id = row.value(named: "id")
-        title = row.value(named: "title")
-        
-        // Consume the variant:
-        if let authorRow = row.variant(named: "author") {
-            author = Person(authorRow)
-        }
-    }
+    book.title        // Moby-Dick
+    book.author?.name // Melville
 }
 ```
 
