@@ -1233,7 +1233,7 @@ let row = Row.fetchOne(db, "SELECT 'Hello' AS produced", adapter: adapter)!
 row.value(named: "consumed") // "Hello"
 ```
 
-**Row adapters can also define "sub rows".** Sub rows help several consumers feed on a single row:
+**Row adapters can also define "row variants".** Variants help several consumers feed on a single row:
 
 ```swift
 let sql = "SELECT books.id, books.title, books.authorID, " +
@@ -1241,15 +1241,17 @@ let sql = "SELECT books.id, books.title, books.authorID, " +
           "FROM books " +
           "JOIN persons ON books.authorID = persons.id"
 
+// Define a variant named "author":
 let authorMapping = ["id": "authorID", "name": "authorName"]
-let adapter = RowAdapter(subrows: ["author": authorMapping])
+let adapter = RowAdapter(variantMappings: ["author": authorMapping])
 
 for row in Row.fetch(db, sql, adapter: adapter) {
     // No mapping is applied to the fetched row:
     // <Row id:1 title:"Moby-Dick" authorID:10 authorName:"Melville">
     print(row)
     
-    if let authorRow = row.subrow(named: "author") {
+    // Consume the "author" variant
+    if let authorRow = row.variant(named: "author") {
         // <Row id:10 name:"Melville">
         print(authorRow)
     }
@@ -1287,8 +1289,8 @@ class Book : RowConvertible {
         id = row.value(named: "id")
         title = row.value(named: "title")
         
-        // Consume the subrow:
-        if let authorRow = row.subrow(named: "author") {
+        // Consume the variant:
+        if let authorRow = row.variant(named: "author") {
             author = Person(authorRow)
         }
     }
@@ -1302,7 +1304,7 @@ let books = Book.fetchAll(db, "SELECT * FROM books")
 let persons = Person.fetchAll(db, "SELECT * FROM persons")
 ```
 
-**You can mix a main mapping with subrows:**
+**You can mix a main mapping with variant mappings:**
 
 ```swift
 let sql = "SELECT main.id AS mainID, main.name AS mainName, " +
@@ -1314,16 +1316,16 @@ let mainMapping = ["id": "mainID", "name": "mainName"]
 let bestFriendMapping = ["id": "friendID", "name": "friendName"]
 let adapter = RowAdapter(
     mapping: mainMapping,
-    subrows: ["bestFriend": bestFriendMapping])
+    variantMappings: ["bestFriend": bestFriendMapping])
 
 for row in Row.fetch(db, sql, adapter: adapter) {
     // <Row id:1 name:"Arthur">
     print(row)
     // <Row id:2 name:"Barbara">
-    print(row.subrow(named: "bestFriend"))
+    print(row.variant(named: "bestFriend"))
 }
 
-// Assuming Person.init(row) consumes the "bestFriend" subrow:
+// Assuming Person.init(row) consumes the "bestFriend" variant:
 for person in Person.fetch(db, sql, adapter: adapter) {
     person.name             // Arthur
     person.bestFriend?.name // Barbara
