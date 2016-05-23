@@ -1267,7 +1267,7 @@ for row in Row.fetch(db, sql, adapter: adapter) {
 }
 ```
 
-And now that we have nice "id" and "name" columns, we can leverage [RowConvertible](#rowconvertible-protocol) types. For example, assuming the Book class consumes the "author" variant in its row initializer and builds a Person from it:
+And now that we have nice "id" and "name" columns, we can leverage [RowConvertible](#rowconvertible-protocol) types such as [Record](#record-class) subclasses. For example, assuming the Book type consumes the "author" variant in its row initializer and builds a Person from it:
 
 ```swift
 for book in Book.fetch(db, sql, adapter: adapter) {
@@ -1276,7 +1276,7 @@ for book in Book.fetch(db, sql, adapter: adapter) {
 }
 ```
 
-Note that the Person and Book types can still be fetched without row adapters:
+Note that Person and Book can still be fetched without row adapters:
 
 ```swift
 let books = Book.fetchAll(db, "SELECT * FROM books")
