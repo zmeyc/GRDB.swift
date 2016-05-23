@@ -1247,7 +1247,6 @@ let sql = "SELECT books.id, books.title, books.authorID, " +
 The raw author columns are "authorID" and "authorName". Let's say that we prefer to consume them as "id" and "name". For that we define a row variant named "author":
 
 ```swift
-// Define a variant named "author":
 let authorMapping = ["id": "authorID", "name": "authorName"]
 let adapter = RowAdapter(variantMappings: ["author": authorMapping])
 ```
