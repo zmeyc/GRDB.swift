@@ -1298,10 +1298,8 @@ let adapter = RowAdapter(
     variantMappings: ["bestFriend": bestFriendMapping])
 
 for row in Row.fetch(db, sql, adapter: adapter) {
-    // <Row id:1 name:"Arthur">
-    print(row)
-    // <Row id:2 name:"Barbara">
-    print(row.variant(named: "bestFriend"))
+    row                              // <Row id:1 name:"Arthur">
+    row.variant(named: "bestFriend") // <Row id:2 name:"Barbara">
 }
 
 // Assuming Person.init(row) consumes the "bestFriend" variant:
