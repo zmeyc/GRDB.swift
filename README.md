@@ -1233,7 +1233,7 @@ let row = Row.fetchOne(db, "SELECT 'Hello' AS produced", adapter: adapter)!
 row.value(named: "consumed") // "Hello"
 ```
 
-**Row adapters can also define "row variants".** Variants define as many mappings as needed by the row consumers.
+**Row adapters can also define *row variants*.** Variants define as many mappings as needed by the row consumers.
 
 For example, let build a joined query which loads books along with their author:
 
