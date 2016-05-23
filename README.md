@@ -1247,13 +1247,11 @@ let adapter = RowAdapter(variantMappings: ["author": authorMapping])
 
 for row in Row.fetch(db, sql, adapter: adapter) {
     // The fetched row is the original one:
-    // <Row id:1 title:"Moby-Dick" authorID:10 authorName:"Melville">
-    print(row)
+    row // <Row id:1 title:"Moby-Dick" authorID:10 authorName:"Melville">
     
     // But it has an "author" variant, with mapped columns:
     if let authorRow = row.variant(named: "author") {
-        // <Row id:10 name:"Melville">
-        print(authorRow)
+        authorRow // <Row id:10 name:"Melville">
     }
 }
 ```
