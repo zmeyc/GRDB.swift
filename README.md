@@ -1297,11 +1297,6 @@ let adapter = RowAdapter(
     mapping: mainMapping,
     variantMappings: ["bestFriend": bestFriendMapping])
 
-for row in Row.fetch(db, sql, adapter: adapter) {
-    row                              // <Row id:1 name:"Arthur">
-    row.variant(named: "bestFriend") // <Row id:2 name:"Barbara">
-}
-
 // Assuming Person.init(row) consumes the "bestFriend" variant:
 for person in Person.fetch(db, sql, adapter: adapter) {
     person.name             // Arthur
