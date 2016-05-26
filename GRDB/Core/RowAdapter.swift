@@ -28,7 +28,7 @@
 //
 //      - private struct NestedRowAdapterImpl
 //          Implementation for RowAdapter that holds a "main" adapter and a
-//          dictionary of variant adapters.
+//          dictionary of named adapters.
 //
 // - struct ColumnsAdapter
 //
@@ -44,7 +44,7 @@
 // - struct AdapterRowImpl.Binding
 //
 //     A struct that holds a "main" column adapter, and a dictionary
-//     of variant adapters.
+//     of named adapters.
 
 /// Row adapters help two incompatible row interfaces to work together.
 ///
@@ -71,20 +71,20 @@
 ///
 ///     let adapter = RowAdapter(
 ///         mapping: ["id": "id", "title": "title"],
-///         variantMappings: ["author": ["authorID": "id", "authorName": "name"]])
+///         namedMappings: ["author": ["authorID": "id", "authorName": "name"]])
 ///
 ///     for row in Row.fetchAll(db, sql, adapter: adapter) {
 ///         // <Row id:1 title:"Moby-Dick">
 ///         print(row)
 ///
-///         if let authorRow = row.variant(named: "author") {
+///         if let authorRow = row.adapted(as: "author") {
 ///             // <Row id:10 name:"Melville">
 ///             print(authorRow)
 ///         }
 public struct RowAdapter {
     private let impl: RowAdapterImpl
     
-    /// Creates an adapter with row variants.
+    /// Creates an adapter with named mapping.
     ///
     /// For example:
     ///
@@ -93,27 +93,27 @@ public struct RowAdapter {
     ///               "JOIN persons ON books.authorID = persons.id"
     ///
     ///     let authorMapping = ["authorID": "id", "authorName": "name"]
-    ///     let adapter = RowAdapter(variantMappings: ["author": authorMapping])
+    ///     let adapter = RowAdapter(namedMappings: ["author": authorMapping])
     ///
     ///     for row in Row.fetchAll(db, sql, adapter: adapter) {
     ///         // <Row id:1 title:"Moby-Dick" authorID:10 authorName:"Melville">
     ///         print(row)
     ///
-    ///         if let authorRow = row.variant(named: "author") {
+    ///         if let authorRow = row.adapted(as: "author") {
     ///             // <Row id:10 name:"Melville">
     ///             print(authorRow)
     ///         }
     ///     }
-    public init(variantMappings: [String: [String: String]]) {
-        let variantRowAdapters = Dictionary(keyValueSequence: variantMappings.map { (identifier, mapping) in
+    public init(namedMappings: [String: [String: String]]) {
+        let namedRowAdapters = Dictionary(keyValueSequence: namedMappings.map { (identifier, mapping) in
             (identifier, RowAdapter(impl: DictionaryRowAdapterImpl(dictionary: mapping)))
             })
         impl = NestedRowAdapterImpl(
             mainRowAdapter: RowAdapter(impl: IdentityRowAdapterImpl()),
-            variantRowAdapters: variantRowAdapters)
+            namedRowAdapters: namedRowAdapters)
     }
     
-    /// Creates an adapter with a column mapping, and eventual row variants.
+    /// Creates an adapter with a TODO, and eventual named mappings.
     ///
     /// For example:
     ///
@@ -126,19 +126,19 @@ public struct RowAdapter {
     ///     let bestFriendMapping = ["id": "friendID", "name": "friendName"]
     ///     let adapter = RowAdapter(
     ///         mapping: mainMapping,
-    ///         variantMappings: ["bestFriend": bestFriendMapping])
+    ///         namedMappings: ["bestFriend": bestFriendMapping])
     ///
     ///     for row in Row.fetchAll(db, sql, adapter: adapter) {
-    ///         print(row)                             // <Row id:1 name:"Arthur">
-    ///         print(row.variant(named: "bestFriend")) // <Row id:2 name:"Barbara">
+    ///         print(row)                           // <Row id:1 name:"Arthur">
+    ///         print(row.adapted(as: "bestFriend")) // <Row id:2 name:"Barbara">
     ///     }
-    public init(mapping: [String: String], variantMappings: [String: [String: String]] = [:]) {
-        let variantRowAdapters = Dictionary(keyValueSequence: variantMappings.map { (identifier, mapping) in
+    public init(mapping: [String: String], namedMappings: [String: [String: String]] = [:]) {
+        let namedRowAdapters = Dictionary(keyValueSequence: namedMappings.map { (identifier, mapping) in
             (identifier, RowAdapter(impl: DictionaryRowAdapterImpl(dictionary: mapping)))
             })
         impl = NestedRowAdapterImpl(
             mainRowAdapter: RowAdapter(impl: DictionaryRowAdapterImpl(dictionary: mapping)),
-            variantRowAdapters: variantRowAdapters)
+            namedRowAdapters: namedRowAdapters)
     }
     
     private init(impl: RowAdapterImpl) {
@@ -159,8 +159,8 @@ private protocol RowAdapterImpl {
     // Return an array [(baseRowIndex, mappedColumn), ...] ordered like the statement columns.
     func columnBaseIndexes(statement statement: SelectStatement) throws -> [(Int, String)]
     
-    // Bindings for variants
-    func variantBindings(statement statement: SelectStatement) throws -> [String: AdapterRowImpl.Binding]
+    // Named Bindings
+    func namedBindings(statement statement: SelectStatement) throws -> [String: AdapterRowImpl.Binding]
 }
 
 extension RowAdapterImpl {
@@ -168,11 +168,11 @@ extension RowAdapterImpl {
     func binding(with statement: SelectStatement) throws -> AdapterRowImpl.Binding {
         return try AdapterRowImpl.Binding(
             columnsAdapter: ColumnsAdapter(columnBaseIndexes: columnBaseIndexes(statement: statement)),
-            variantBindings: variantBindings(statement: statement))
+            namedBindings: namedBindings(statement: statement))
     }
 
     // default implementation
-    func variantBindings(statement statement: SelectStatement) throws -> [String: AdapterRowImpl.Binding] {
+    func namedBindings(statement statement: SelectStatement) throws -> [String: AdapterRowImpl.Binding] {
         return [:]
     }
 }
@@ -200,20 +200,20 @@ private struct DictionaryRowAdapterImpl: RowAdapterImpl {
 
 private struct NestedRowAdapterImpl: RowAdapterImpl {
     let mainRowAdapter: RowAdapter
-    let variantRowAdapters: [String: RowAdapter]
+    let namedRowAdapters: [String: RowAdapter]
     
     func columnBaseIndexes(statement statement: SelectStatement) throws -> [(Int, String)] {
         return try mainRowAdapter.columnBaseIndexes(statement: statement)
     }
     
-    func variantBindings(statement statement: SelectStatement) throws -> [String: AdapterRowImpl.Binding] {
-        let variantBindings = try variantRowAdapters.map { (identifier: String, adapter: RowAdapter) -> (String, AdapterRowImpl.Binding) in
-            let variantBinding = try AdapterRowImpl.Binding(
+    func namedBindings(statement statement: SelectStatement) throws -> [String: AdapterRowImpl.Binding] {
+        let namedBindings = try namedRowAdapters.map { (identifier: String, adapter: RowAdapter) -> (String, AdapterRowImpl.Binding) in
+            let namedBinding = try AdapterRowImpl.Binding(
                 columnsAdapter: ColumnsAdapter(columnBaseIndexes: adapter.columnBaseIndexes(statement: statement)),
-                variantBindings: [:])
-            return (identifier, variantBinding)
+                namedBindings: [:])
+            return (identifier, namedBinding)
         }
-        return Dictionary(keyValueSequence: variantBindings)
+        return Dictionary(keyValueSequence: namedBindings)
     }
 }
 
@@ -266,7 +266,7 @@ struct AdapterRowImpl : RowImpl {
     
     struct Binding {
         let columnsAdapter: ColumnsAdapter
-        let variantBindings: [String: Binding]
+        let namedBindings: [String: Binding]
     }
     
     let baseRow: Row
@@ -298,15 +298,15 @@ struct AdapterRowImpl : RowImpl {
         return columnsAdapter.adaptedIndexOfColumn(named: name)
     }
     
-    func variant(named name: String) -> Row? {
-        guard let binding = binding.variantBindings[name] else {
+    func adapted(as name: String) -> Row? {
+        guard let binding = binding.namedBindings[name] else {
             return nil
         }
         return Row(baseRow: baseRow, adapterBinding: binding)
     }
     
-    var variantNames: Set<String> {
-        return Set(binding.variantBindings.keys)
+    var adaptationNames: Set<String> {
+        return Set(binding.namedBindings.keys)
     }
     
     func copy(row: Row) -> Row {

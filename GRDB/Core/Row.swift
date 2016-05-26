@@ -393,10 +393,10 @@ extension Row {
 
 extension Row {
     
-    // MARK: - Variants
+    // MARK: - Adaptations
     
-    public func variant(named name: String) -> Row? {
-        return impl.variant(named: name)
+    public func adapted(as name: String) -> Row? {
+        return impl.adapted(as: name)
     }
 }
 
@@ -635,16 +635,16 @@ public func ==(lhs: Row, rhs: Row) -> Bool {
         }
     }
     
-    let lvariantNames = lhs.impl.variantNames
-    let rvariantNames = rhs.impl.variantNames
-    guard lvariantNames == rvariantNames else {
+    let ladaptationNames = lhs.impl.adaptationNames
+    let radaptationNames = rhs.impl.adaptationNames
+    guard ladaptationNames == radaptationNames else {
         return false
     }
     
-    for name in lvariantNames {
-        let lvariant = lhs.variant(named: name)
-        let rvariant = rhs.variant(named: name)
-        guard lvariant == rvariant else {
+    for name in ladaptationNames {
+        let ladaptation = lhs.adapted(as: name)
+        let radaptation = rhs.adapted(as: name)
+        guard ladaptation == radaptation else {
             return false
         }
     }
@@ -705,9 +705,9 @@ protocol RowImpl {
     // leftmost column that matches *name*.
     func indexOfColumn(named name: String) -> Int?
     
-    func variant(named name: String) -> Row?
+    func adapted(as name: String) -> Row?
     
-    var variantNames: Set<String> { get }
+    var adaptationNames: Set<String> { get }
     
     // row.impl is guaranteed to be self.
     func copy(row: Row) -> Row
@@ -748,11 +748,11 @@ private struct DictionaryRowImpl : RowImpl {
         return dictionary.startIndex.distanceTo(index)
     }
     
-    func variant(named name: String) -> Row? {
+    func adapted(as name: String) -> Row? {
         return nil
     }
     
-    var variantNames: Set<String> {
+    var adaptationNames: Set<String> {
         return []
     }
     
@@ -797,11 +797,11 @@ private struct StatementCopyRowImpl : RowImpl {
         return columnNames.indexOf { $0.lowercaseString == lowercaseName }
     }
     
-    func variant(named name: String) -> Row? {
+    func adapted(as name: String) -> Row? {
         return nil
     }
     
-    var variantNames: Set<String> {
+    var adaptationNames: Set<String> {
         return []
     }
     
@@ -856,11 +856,11 @@ private struct StatementRowImpl : RowImpl {
         return lowercaseColumnIndexes[name.lowercaseString]
     }
     
-    func variant(named name: String) -> Row? {
+    func adapted(as name: String) -> Row? {
         return nil
     }
     
-    var variantNames: Set<String> {
+    var adaptationNames: Set<String> {
         return []
     }
     
@@ -890,11 +890,11 @@ private struct EmptyRowImpl : RowImpl {
         return nil
     }
     
-    func variant(named name: String) -> Row? {
+    func adapted(as name: String) -> Row? {
         return nil
     }
     
-    var variantNames: Set<String> {
+    var adaptationNames: Set<String> {
         return []
     }
     

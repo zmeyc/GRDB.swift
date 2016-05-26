@@ -268,10 +268,10 @@ class AdapterRowTests: GRDBTestCase {
         }
     }
     
-    func testVariants() {
+    func testAdaptations() {
         let dbQueue = DatabaseQueue()
         dbQueue.inDatabase { db in
-            let adapter = RowAdapter(variantMappings: [
+            let adapter = RowAdapter(namedMappings: [
                     "sub1": ["id": "id1", "val": "val1"],
                     "sub2": ["id": "id2", "val": "val2"]])
             let row = Row.fetchOne(db, "SELECT 1 AS id1, 'foo1' AS val1, 2 as id2, 'foo2' AS val2", adapter: adapter)!
@@ -282,33 +282,33 @@ class AdapterRowTests: GRDBTestCase {
             XCTAssertEqual(row.value(named: "id2") as Int, 2)
             XCTAssertEqual(row.value(named: "val2") as String, "foo2")
             
-            if let variant = row.variant(named: "sub1") {
-                XCTAssertEqual(variant.count, 2)
-                XCTAssertEqual(variant.value(named: "id") as Int, 1)
-                XCTAssertEqual(variant.value(named: "val") as String, "foo1")
+            if let adaptation = row.adapted(as: "sub1") {
+                XCTAssertEqual(adaptation.count, 2)
+                XCTAssertEqual(adaptation.value(named: "id") as Int, 1)
+                XCTAssertEqual(adaptation.value(named: "val") as String, "foo1")
             } else {
                 XCTFail()
             }
             
-            if let variant = row.variant(named: "sub2") {
-                XCTAssertEqual(variant.count, 2)
-                XCTAssertEqual(variant.value(named: "id") as Int, 2)
-                XCTAssertEqual(variant.value(named: "val") as String, "foo2")
+            if let adaptation = row.adapted(as: "sub2") {
+                XCTAssertEqual(adaptation.count, 2)
+                XCTAssertEqual(adaptation.value(named: "id") as Int, 2)
+                XCTAssertEqual(adaptation.value(named: "val") as String, "foo2")
             } else {
                 XCTFail()
             }
             
-            XCTAssertTrue(row.variant(named: "SUB1") == nil)     // case-insensitivity is not really required here, and case-sensitivity helps the implementation because it allows the use of a dictionary. So let's enforce this with a public test.
-            XCTAssertTrue(row.variant(named: "missing") == nil)
+            XCTAssertTrue(row.adapted(as: "SUB1") == nil)     // case-insensitivity is not really required here, and case-sensitivity helps the implementation because it allows the use of a dictionary. So let's enforce this with a public test.
+            XCTAssertTrue(row.adapted(as: "missing") == nil)
         }
     }
     
-    func testVariantsWithMainMapping() {
+    func testAdaptationsWithMainMapping() {
         let dbQueue = DatabaseQueue()
         dbQueue.inDatabase { db in
             let adapter = RowAdapter(
                 mapping: ["id": "id0", "val": "val0"],
-                variantMappings: [
+                namedMappings: [
                     "sub1": ["id": "id1", "val": "val1"],
                     "sub2": ["id": "id2", "val": "val2"]])
             let row = Row.fetchOne(db, "SELECT 0 AS id0, 'foo0' AS val0, 1 AS id1, 'foo1' AS val1, 2 as id2, 'foo2' AS val2", adapter: adapter)!
@@ -317,24 +317,24 @@ class AdapterRowTests: GRDBTestCase {
             XCTAssertEqual(row.value(named: "id") as Int, 0)
             XCTAssertEqual(row.value(named: "val") as String, "foo0")
 
-            if let variant = row.variant(named: "sub1") {
-                XCTAssertEqual(variant.count, 2)
-                XCTAssertEqual(variant.value(named: "id") as Int, 1)
-                XCTAssertEqual(variant.value(named: "val") as String, "foo1")
+            if let adaptation = row.adapted(as: "sub1") {
+                XCTAssertEqual(adaptation.count, 2)
+                XCTAssertEqual(adaptation.value(named: "id") as Int, 1)
+                XCTAssertEqual(adaptation.value(named: "val") as String, "foo1")
             } else {
                 XCTFail()
             }
             
-            if let variant = row.variant(named: "sub2") {
-                XCTAssertEqual(variant.count, 2)
-                XCTAssertEqual(variant.value(named: "id") as Int, 2)
-                XCTAssertEqual(variant.value(named: "val") as String, "foo2")
+            if let adaptation = row.adapted(as: "sub2") {
+                XCTAssertEqual(adaptation.count, 2)
+                XCTAssertEqual(adaptation.value(named: "id") as Int, 2)
+                XCTAssertEqual(adaptation.value(named: "val") as String, "foo2")
             } else {
                 XCTFail()
             }
             
-            XCTAssertTrue(row.variant(named: "SUB1") == nil)     // case-insensitivity is not really required here, and case-sensitivity helps the implementation because it allows the use of a dictionary. So let's enforce this with a public test.
-            XCTAssertTrue(row.variant(named: "missing") == nil)
+            XCTAssertTrue(row.adapted(as: "SUB1") == nil)     // case-insensitivity is not really required here, and case-sensitivity helps the implementation because it allows the use of a dictionary. So let's enforce this with a public test.
+            XCTAssertTrue(row.adapted(as: "missing") == nil)
         }
     }
     
@@ -343,7 +343,7 @@ class AdapterRowTests: GRDBTestCase {
         dbQueue.inDatabase { db in
             let adapter = RowAdapter(
                 mapping: ["a": "basea", "b": "baseb", "c": "basec"],
-                variantMappings: ["sub": ["a": "baseb"]])
+                namedMappings: ["sub": ["a": "baseb"]])
             var copiedRow: Row? = nil
             for baseRow in Row.fetch(db, "SELECT 0 AS basea, 'XXX' AS extra, 1 AS baseb, 2 as basec", adapter: adapter) {
                 copiedRow = baseRow.copy()
@@ -354,9 +354,9 @@ class AdapterRowTests: GRDBTestCase {
                 XCTAssertEqual(copiedRow.value(named: "a") as Int, 0)
                 XCTAssertEqual(copiedRow.value(named: "b") as Int, 1)
                 XCTAssertEqual(copiedRow.value(named: "c") as Int, 2)
-                if let variant = copiedRow.variant(named: "sub") {
-                    XCTAssertEqual(variant.count, 1)
-                    XCTAssertEqual(variant.value(named: "a") as Int, 1)
+                if let adaptation = copiedRow.adapted(as: "sub") {
+                    XCTAssertEqual(adaptation.count, 1)
+                    XCTAssertEqual(adaptation.value(named: "a") as Int, 1)
                 }
             } else {
                 XCTFail()
@@ -382,22 +382,22 @@ class AdapterRowTests: GRDBTestCase {
         }
     }
     
-    func testEqualityComparesVariants() {
+    func testEqualityComparesAdaptations() {
         let dbQueue = DatabaseQueue()
         dbQueue.inDatabase { db in
             let adapter1 = RowAdapter(
                 mapping: ["a": "basea", "b": "baseb", "c": "basec"],
-                variantMappings: ["sub": ["b": "baseb"]])
+                namedMappings: ["sub": ["b": "baseb"]])
             let adapter2 = RowAdapter(mapping: ["a": "basea", "b": "baseb2", "c": "basec"])
             let adapter3 = RowAdapter(
                 mapping: ["a": "basea", "b": "baseb2", "c": "basec"],
-                variantMappings: ["sub": ["b": "baseb2"]])
+                namedMappings: ["sub": ["b": "baseb2"]])
             let adapter4 = RowAdapter(
                 mapping: ["a": "basea", "b": "baseb", "c": "basec"],
-                variantMappings: ["sub": ["b": "baseb"], "altSub": ["a": "baseb2"]])
+                namedMappings: ["sub": ["b": "baseb"], "altSub": ["a": "baseb2"]])
             let adapter5 = RowAdapter(
                 mapping: ["a": "basea", "b": "baseb", "c": "basec"],
-                variantMappings: ["sub": ["b": "baseb", "c": "basec"]])
+                namedMappings: ["sub": ["b": "baseb", "c": "basec"]])
             let row1 = Row.fetchOne(db, "SELECT 0 AS basea, 'XXX' AS extra, 1 AS baseb, 1 AS baseb2, 2 as basec", adapter: adapter1)!
             let row2 = Row.fetchOne(db, "SELECT 0 AS basea, 'XXX' AS extra, 1 AS baseb, 1 AS baseb2, 2 as basec", adapter: adapter2)!
             let row3 = Row.fetchOne(db, "SELECT 0 AS basea, 'XXX' AS extra, 1 AS baseb, 1 AS baseb2, 2 as basec", adapter: adapter3)!
@@ -409,9 +409,9 @@ class AdapterRowTests: GRDBTestCase {
                 (row1, row3, true),
                 (row1, row4, false),
                 (row1, row5, false),
-                (row1.variant(named: "sub"), row3.variant(named: "sub"), true),
-                (row1.variant(named: "sub"), row4.variant(named: "sub"), true),
-                (row1.variant(named: "sub"), row5.variant(named: "sub"), false)]
+                (row1.adapted(as: "sub"), row3.adapted(as: "sub"), true),
+                (row1.adapted(as: "sub"), row4.adapted(as: "sub"), true),
+                (row1.adapted(as: "sub"), row5.adapted(as: "sub"), false)]
             for (lrow, rrow, equal) in tests {
                 print(lrow)
                 print(rrow)
