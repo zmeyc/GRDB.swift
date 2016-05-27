@@ -1256,8 +1256,10 @@ Use the `Row.adapted(for:)` method to load a named adaptation:
 ```swift
 for row in Row.fetch(db, sql, adapter: adapter) {
     // The fetched row, without mapping:
-    row.value(named: "id")    // 1
-    row.value(named: "title")  // Moby-Dick
+    row.value(named: "id")         // 1
+    row.value(named: "title")      // Moby-Dick
+    row.value(named: "authorID")   // 10
+    row.value(named: "authorName") // Melville
     
     // The "author" adaptation, with mapped columns:
     if let authorRow = row.adapted(for: "author") {
