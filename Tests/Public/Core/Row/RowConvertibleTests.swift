@@ -110,9 +110,8 @@ class RowConvertibleTests: GRDBTestCase {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             dbQueue.inDatabase { db in
-                let adapter = RowAdapter(
-                    mapping: ["firstName": "firstName1", "lastName": "lastName1"],
-                    namedMappings: ["bestFriend": ["firstName": "firstName2", "lastName": "lastName2"]])
+                var adapter = RowAdapter(mapping: ["firstName": "firstName1", "lastName": "lastName1"])
+                adapter.add(["firstName": "firstName2", "lastName": "lastName2"], named: "bestFriend")
                 let sql = "SELECT ? AS firstName1, ? AS lastName1, ? AS firstName2, ? AS lastName2"
                 let arguments = StatementArguments(["Stan", "Laurel", "Oliver", "Hardy"])
                 let ss = Person.fetch(db, sql, arguments: arguments, adapter: adapter)
@@ -131,9 +130,8 @@ class RowConvertibleTests: GRDBTestCase {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             dbQueue.inDatabase { db in
-                let adapter = RowAdapter(
-                    mapping: ["firstName": "firstName1", "lastName": "lastName1"],
-                    namedMappings: ["bestFriend": ["firstName": "firstName2", "lastName": "lastName2"]])
+                var adapter = RowAdapter(mapping: ["firstName": "firstName1", "lastName": "lastName1"])
+                adapter.add(["firstName": "firstName2", "lastName": "lastName2"], named: "bestFriend")
                 let sql = "SELECT ? AS firstName1, ? AS lastName1, ? AS firstName2, ? AS lastName2"
                 let arguments = StatementArguments(["Stan", "Laurel", "Oliver", "Hardy"])
                 let ss = Person.fetchAll(db, sql, arguments: arguments, adapter: adapter)
@@ -152,9 +150,8 @@ class RowConvertibleTests: GRDBTestCase {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             dbQueue.inDatabase { db in
-                let adapter = RowAdapter(
-                    mapping: ["firstName": "firstName1", "lastName": "lastName1"],
-                    namedMappings: ["bestFriend": ["firstName": "firstName2", "lastName": "lastName2"]])
+                var adapter = RowAdapter(mapping: ["firstName": "firstName1", "lastName": "lastName1"])
+                adapter.add(["firstName": "firstName2", "lastName": "lastName2"], named: "bestFriend")
                 let sql = "SELECT ? AS firstName1, ? AS lastName1, ? AS firstName2, ? AS lastName2"
                 let arguments = StatementArguments(["Stan", "Laurel", "Oliver", "Hardy"])
                 let s = Person.fetchOne(db, sql, arguments: arguments, adapter: adapter)!
@@ -219,9 +216,8 @@ class RowConvertibleTests: GRDBTestCase {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
-                let adapter = RowAdapter(
-                    mapping: ["firstName": "firstName1", "lastName": "lastName1"],
-                    namedMappings: ["bestFriend": ["firstName": "firstName2", "lastName": "lastName2"]])
+                var adapter = RowAdapter(mapping: ["firstName": "firstName1", "lastName": "lastName1"])
+                adapter.add(["firstName": "firstName2", "lastName": "lastName2"], named: "bestFriend")
                 let sql = "SELECT ? AS firstName1, ? AS lastName1, ? AS firstName2, ? AS lastName2"
                 let arguments = StatementArguments(["Stan", "Laurel", "Oliver", "Hardy"])
                 let statement = try db.selectStatement(sql)
@@ -241,9 +237,8 @@ class RowConvertibleTests: GRDBTestCase {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
-                let adapter = RowAdapter(
-                    mapping: ["firstName": "firstName1", "lastName": "lastName1"],
-                    namedMappings: ["bestFriend": ["firstName": "firstName2", "lastName": "lastName2"]])
+                var adapter = RowAdapter(mapping: ["firstName": "firstName1", "lastName": "lastName1"])
+                adapter.add(["firstName": "firstName2", "lastName": "lastName2"], named: "bestFriend")
                 let sql = "SELECT ? AS firstName1, ? AS lastName1, ? AS firstName2, ? AS lastName2"
                 let arguments = StatementArguments(["Stan", "Laurel", "Oliver", "Hardy"])
                 let statement = try db.selectStatement(sql)
@@ -263,9 +258,8 @@ class RowConvertibleTests: GRDBTestCase {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
-                let adapter = RowAdapter(
-                    mapping: ["firstName": "firstName1", "lastName": "lastName1"],
-                    namedMappings: ["bestFriend": ["firstName": "firstName2", "lastName": "lastName2"]])
+                var adapter = RowAdapter(mapping: ["firstName": "firstName1", "lastName": "lastName1"])
+                adapter.add(["firstName": "firstName2", "lastName": "lastName2"], named: "bestFriend")
                 let sql = "SELECT ? AS firstName1, ? AS lastName1, ? AS firstName2, ? AS lastName2"
                 let arguments = StatementArguments(["Stan", "Laurel", "Oliver", "Hardy"])
                 let statement = try db.selectStatement(sql)

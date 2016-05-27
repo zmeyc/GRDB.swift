@@ -84,62 +84,74 @@
 public struct RowAdapter {
     private let impl: RowAdapterImpl
     
-    /// Creates an adapter with named mapping.
+    /// Creates an adapter that maps column names.
     ///
-    /// For example:
+    ///     // An adapter that maps column 'produced' to column 'consumed':
+    ///     let adapter = RowAdapter(mapping: ["consumed": "produced"])
     ///
-    ///     let sql = "SELECT books.*, persons.name AS authorName " +
-    ///               "FROM books " +
-    ///               "JOIN persons ON books.authorID = persons.id"
+    ///     // Fetch a column named 'produced', and apply adapter:
+    ///     let row = Row.fetchOne(db, "SELECT 'Hello' AS produced", adapter: adapter)!
     ///
-    ///     let authorMapping = ["authorID": "id", "authorName": "name"]
-    ///     let adapter = RowAdapter(namedMappings: ["author": authorMapping])
-    ///
-    ///     for row in Row.fetchAll(db, sql, adapter: adapter) {
-    ///         // <Row id:1 title:"Moby-Dick" authorID:10 authorName:"Melville">
-    ///         print(row)
-    ///
-    ///         if let authorRow = row.adapted(for: "author") {
-    ///             // <Row id:10 name:"Melville">
-    ///             print(authorRow)
-    ///         }
-    ///     }
-    public init(namedMappings: [String: [String: String]]) {
-        let namedRowAdapters = Dictionary(keyValueSequence: namedMappings.map { (identifier, mapping) in
-            (identifier, RowAdapter(impl: DictionaryRowAdapterImpl(dictionary: mapping)))
-            })
-        impl = NestedRowAdapterImpl(
-            mainRowAdapter: RowAdapter(impl: IdentityRowAdapterImpl()),
-            namedRowAdapters: namedRowAdapters)
+    ///     // The adapter in action:
+    ///     row.value(named: "consumed") // "Hello"
+
+    public init(mapping: [String: String]) {
+        impl = DictionaryRowAdapterImpl(dictionary: mapping)
     }
     
-    /// Creates an adapter with a TODO, and eventual named mappings.
+    // Creates an adapter than does nothing.
     ///
-    /// For example:
-    ///
-    ///     let sql = "SELECT main.id AS mainID, p.name AS mainName, " +
-    ///               "       friend.id AS friendID, friend.name AS friendName, " +
-    ///               "FROM persons main " +
-    ///               "LEFT JOIN persons friend ON p.bestFriendID = f.id"
-    ///
-    ///     let mainMapping = ["id": "mainID", "name": "mainName"]
-    ///     let bestFriendMapping = ["id": "friendID", "name": "friendName"]
-    ///     let adapter = RowAdapter(
-    ///         mapping: mainMapping,
-    ///         namedMappings: ["bestFriend": bestFriendMapping])
-    ///
-    ///     for row in Row.fetchAll(db, sql, adapter: adapter) {
-    ///         print(row)                           // <Row id:1 name:"Arthur">
-    ///         print(row.adapted(for: "bestFriend")) // <Row id:2 name:"Barbara">
-    ///     }
-    public init(mapping: [String: String], namedMappings: [String: [String: String]] = [:]) {
-        let namedRowAdapters = Dictionary(keyValueSequence: namedMappings.map { (identifier, mapping) in
-            (identifier, RowAdapter(impl: DictionaryRowAdapterImpl(dictionary: mapping)))
-            })
-        impl = NestedRowAdapterImpl(
-            mainRowAdapter: RowAdapter(impl: DictionaryRowAdapterImpl(dictionary: mapping)),
-            namedRowAdapters: namedRowAdapters)
+    ///     let row = Row.fetchOne(db, "SELECT 'Hello' AS greeting", adapter: RowAdapter())!
+    ///     row.value(named: "greeting") // "Hello"
+    public init() {
+        impl = IdentityRowAdapterImpl()
     }
+    
+    /// TODO
+    public func adding(adapter: RowAdapter, named name: String) -> RowAdapter {
+        return impl.adapterByAdding(adapter, named: name)
+    }
+    
+    // TODO
+    public mutating func add(adapter: RowAdapter, named name: String) {
+        self = adding(adapter, named: name)
+    }
+
+    
+//    /// Creates a row adapter with named adapter.
+//    ///
+//    /// For example:
+//    ///
+//    ///     let sql = "SELECT main.id AS mainID, p.name AS mainName, " +
+//    ///               "       friend.id AS friendID, friend.name AS friendName, " +
+//    ///               "FROM persons main " +
+//    ///               "LEFT JOIN persons friend ON p.bestFriendID = f.id"
+//    ///
+//    ///     let mainMapping = ["id": "mainID", "name": "mainName"]
+//    ///     let bestFriendMapping = ["id": "friendID", "name": "friendName"]
+//    ///     let adapter = RowAdapter(
+//    ///         main: RowAdapter(mapping: mainMapping),
+//    ///         namedAdapters: ["bestFriend": RowAdapter(mapping: bestFriendMapping)])
+//    ///
+//    ///     for row in Row.fetchAll(db, sql, adapter: adapter) {
+//    ///         print(row)                           // <Row id:1 name:"Arthur">
+//    ///         print(row.adapted(for: "bestFriend")) // <Row id:2 name:"Barbara">
+//    ///     }
+//    ///
+//    /// - parameters:
+//    ///     - mapping: An eventual mapping to apply to rows; if nil, rows are
+//    ///       left intact.
+//    ///     - namedMappings: A dictionary of named mappings to be loaded with
+//    ///       the row.adapted(for:) method.
+//    public init(mainAdapter: RowAdapter? = nil, namedAdapters: [String: RowAdapter]) {
+//        if let mainAdapter = mainAdapter {
+//            GRDBPrecondition(!mainAdapter.hasNamedAdapters, "Invalid shadowing of named adapters defined by the main adapter")
+//        }
+//        
+//        impl = NestedRowAdapterImpl(
+//            mainRowAdapter: mainAdapter ?? RowAdapter(),
+//            namedRowAdapters: namedAdapters)
+//    }
     
     private init(impl: RowAdapterImpl) {
         self.impl = impl
@@ -153,6 +165,17 @@ public struct RowAdapter {
     private func columnBaseIndexes(statement statement: SelectStatement) throws -> [(Int, String)] {
         return try impl.columnBaseIndexes(statement: statement)
     }
+    
+    private var hasNamedAdapters: Bool {
+        return impl.hasNamedAdapters
+    }
+}
+
+extension RowAdapter: DictionaryLiteralConvertible {
+    public init(dictionaryLiteral elements: (String, String)...) {
+        let mapping = Dictionary(keyValueSequence: elements)
+        self.init(mapping: mapping)
+    }
 }
 
 private protocol RowAdapterImpl {
@@ -161,6 +184,10 @@ private protocol RowAdapterImpl {
     
     // Named Bindings
     func namedBindings(statement statement: SelectStatement) throws -> [String: AdapterRowImpl.Binding]
+    
+    var hasNamedAdapters: Bool { get }
+    
+    func adapterByAdding(adapter: RowAdapter, named name: String) -> RowAdapter
 }
 
 extension RowAdapterImpl {
@@ -175,11 +202,22 @@ extension RowAdapterImpl {
     func namedBindings(statement statement: SelectStatement) throws -> [String: AdapterRowImpl.Binding] {
         return [:]
     }
+    
+    // default implementation
+    func adapterByAdding(adapter: RowAdapter, named name: String) -> RowAdapter {
+        return RowAdapter(impl: NestedRowAdapterImpl(
+            mainRowAdapter: RowAdapter(impl: self),
+            namedRowAdapters: [name: adapter]))
+    }
 }
 
 private struct IdentityRowAdapterImpl: RowAdapterImpl {
     func columnBaseIndexes(statement statement: SelectStatement) throws -> [(Int, String)] {
         return Array(statement.columnNames.enumerate())
+    }
+    
+    var hasNamedAdapters: Bool {
+        return false
     }
 }
 
@@ -195,6 +233,10 @@ private struct DictionaryRowAdapterImpl: RowAdapterImpl {
                 return (index, mappedColumn)
             }
             .sort { return $0.0 < $1.0 }
+    }
+    
+    var hasNamedAdapters: Bool {
+        return false
     }
 }
 
@@ -214,6 +256,16 @@ private struct NestedRowAdapterImpl: RowAdapterImpl {
             return (identifier, namedBinding)
         }
         return Dictionary(keyValueSequence: namedBindings)
+    }
+    
+    var hasNamedAdapters: Bool {
+        return !namedRowAdapters.isEmpty
+    }
+    
+    func adapterByAdding(adapter: RowAdapter, named name: String) -> RowAdapter {
+        var namedRowAdapters = self.namedRowAdapters
+        namedRowAdapters[name] = adapter
+        return RowAdapter(impl: NestedRowAdapterImpl(mainRowAdapter: mainRowAdapter, namedRowAdapters: namedRowAdapters))
     }
 }
 
