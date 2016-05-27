@@ -395,8 +395,8 @@ extension Row {
     
     // MARK: - Adaptations
     
-    public func adapted(as name: String) -> Row? {
-        return impl.adapted(as: name)
+    public func adapted(for name: String) -> Row? {
+        return impl.adapted(for: name)
     }
 }
 
@@ -642,8 +642,8 @@ public func ==(lhs: Row, rhs: Row) -> Bool {
     }
     
     for name in ladaptationNames {
-        let ladaptation = lhs.adapted(as: name)
-        let radaptation = rhs.adapted(as: name)
+        let ladaptation = lhs.adapted(for: name)
+        let radaptation = rhs.adapted(for: name)
         guard ladaptation == radaptation else {
             return false
         }
@@ -705,7 +705,7 @@ protocol RowImpl {
     // leftmost column that matches *name*.
     func indexOfColumn(named name: String) -> Int?
     
-    func adapted(as name: String) -> Row?
+    func adapted(for name: String) -> Row?
     
     var adaptationNames: Set<String> { get }
     
@@ -748,7 +748,7 @@ private struct DictionaryRowImpl : RowImpl {
         return dictionary.startIndex.distanceTo(index)
     }
     
-    func adapted(as name: String) -> Row? {
+    func adapted(for name: String) -> Row? {
         return nil
     }
     
@@ -797,7 +797,7 @@ private struct StatementCopyRowImpl : RowImpl {
         return columnNames.indexOf { $0.lowercaseString == lowercaseName }
     }
     
-    func adapted(as name: String) -> Row? {
+    func adapted(for name: String) -> Row? {
         return nil
     }
     
@@ -856,7 +856,7 @@ private struct StatementRowImpl : RowImpl {
         return lowercaseColumnIndexes[name.lowercaseString]
     }
     
-    func adapted(as name: String) -> Row? {
+    func adapted(for name: String) -> Row? {
         return nil
     }
     
@@ -890,7 +890,7 @@ private struct EmptyRowImpl : RowImpl {
         return nil
     }
     
-    func adapted(as name: String) -> Row? {
+    func adapted(for name: String) -> Row? {
         return nil
     }
     

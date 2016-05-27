@@ -32,7 +32,7 @@ private class Person : RowConvertible {
     required init(_ row: Row) {
         firstName = row.value(named: "firstName")
         lastName = row.value(named: "lastName")
-        if let adaptation = row.adapted(as: "bestFriend") {
+        if let adaptation = row.adapted(for: "bestFriend") {
             bestFriend = Person(adaptation)
         }
         fetched = false
@@ -40,7 +40,7 @@ private class Person : RowConvertible {
     
     func awakeFromFetch(row row: Row) {
         fetched = true
-        if let bestFriend = bestFriend, let adaptation = row.adapted(as: "bestFriend") {
+        if let bestFriend = bestFriend, let adaptation = row.adapted(for: "bestFriend") {
             bestFriend.awakeFromFetch(row: adaptation)
         }
     }

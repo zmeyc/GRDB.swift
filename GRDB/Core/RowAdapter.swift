@@ -77,7 +77,7 @@
 ///         // <Row id:1 title:"Moby-Dick">
 ///         print(row)
 ///
-///         if let authorRow = row.adapted(as: "author") {
+///         if let authorRow = row.adapted(for: "author") {
 ///             // <Row id:10 name:"Melville">
 ///             print(authorRow)
 ///         }
@@ -99,7 +99,7 @@ public struct RowAdapter {
     ///         // <Row id:1 title:"Moby-Dick" authorID:10 authorName:"Melville">
     ///         print(row)
     ///
-    ///         if let authorRow = row.adapted(as: "author") {
+    ///         if let authorRow = row.adapted(for: "author") {
     ///             // <Row id:10 name:"Melville">
     ///             print(authorRow)
     ///         }
@@ -130,7 +130,7 @@ public struct RowAdapter {
     ///
     ///     for row in Row.fetchAll(db, sql, adapter: adapter) {
     ///         print(row)                           // <Row id:1 name:"Arthur">
-    ///         print(row.adapted(as: "bestFriend")) // <Row id:2 name:"Barbara">
+    ///         print(row.adapted(for: "bestFriend")) // <Row id:2 name:"Barbara">
     ///     }
     public init(mapping: [String: String], namedMappings: [String: [String: String]] = [:]) {
         let namedRowAdapters = Dictionary(keyValueSequence: namedMappings.map { (identifier, mapping) in
@@ -298,7 +298,7 @@ struct AdapterRowImpl : RowImpl {
         return columnsAdapter.adaptedIndexOfColumn(named: name)
     }
     
-    func adapted(as name: String) -> Row? {
+    func adapted(for name: String) -> Row? {
         guard let binding = binding.namedBindings[name] else {
             return nil
         }

@@ -183,7 +183,7 @@ class DictionaryRowTests: GRDBTestCase {
     
     func testVariants() {
         let row = Row(["a": 0, "b": 1, "c": 2])
-        XCTAssertTrue(row.adapted(as: "missing") == nil)
+        XCTAssertTrue(row.adapted(for: "missing") == nil)
     }
     
     func testCopy() {

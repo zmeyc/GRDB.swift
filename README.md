@@ -1233,9 +1233,9 @@ let row = Row.fetchOne(db, "SELECT 'Hello' AS produced", adapter: adapter)!
 row.value(named: "consumed") // "Hello"
 ```
 
-**Row adapters can also define *named mappings*.** Named mappings let several consumers consume the same row.
+**Row adapters can also define *named mappings*.** This allows row consumers to load, by name, the mapping they're interested in.
 
-For example, let build a joined query which loads books along with their author:
+For example, let's build a joined query which loads books along with their author:
 
 ```swift
 let sql = "SELECT books.id, books.title, books.authorID, " +
@@ -1244,14 +1244,14 @@ let sql = "SELECT books.id, books.title, books.authorID, " +
           "JOIN persons ON books.authorID = persons.id"
 ```
 
-The raw author columns are "authorID" and "authorName". Let's say that we prefer to consume them as "id" and "name". For that we define a mapping named "author":
+The fetched author columns are "authorID" and "authorName". Let's say that we prefer to consume them as "id" and "name". For that we define a mapping named "author":
 
 ```swift
 let authorMapping = ["id": "authorID", "name": "authorName"]
 let adapter = RowAdapter(namedMappings: ["author": authorMapping])
 ```
 
-Use the `Row.adapted(as:)` method to load a named adaptation:
+Use the `Row.adapted(for:)` method to load a named adaptation:
 
 ```swift
 for row in Row.fetch(db, sql, adapter: adapter) {
@@ -1260,7 +1260,7 @@ for row in Row.fetch(db, sql, adapter: adapter) {
     row.value(named: "title")  // Moby-Dick
     
     // The "author" adaptation, with mapped columns:
-    if let authorRow = row.adapted(as: "author") {
+    if let authorRow = row.adapted(for: "author") {
         authorRow.value(named: "id")    // 10
         authorRow.value(named: "name")  // Melville
     }

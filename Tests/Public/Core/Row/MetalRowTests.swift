@@ -297,7 +297,7 @@ class MetalRowTests: GRDBTestCase {
             var rowFetched = false
             for row in Row.fetch(db, "SELECT 'foo' AS nAmE, 1 AS foo") {
                 rowFetched = true
-                XCTAssertTrue(row.adapted(as: "missing") == nil)
+                XCTAssertTrue(row.adapted(for: "missing") == nil)
             }
             XCTAssertTrue(rowFetched)
         }

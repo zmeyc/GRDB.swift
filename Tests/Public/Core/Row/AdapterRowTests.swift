@@ -282,7 +282,7 @@ class AdapterRowTests: GRDBTestCase {
             XCTAssertEqual(row.value(named: "id2") as Int, 2)
             XCTAssertEqual(row.value(named: "val2") as String, "foo2")
             
-            if let adaptation = row.adapted(as: "sub1") {
+            if let adaptation = row.adapted(for: "sub1") {
                 XCTAssertEqual(adaptation.count, 2)
                 XCTAssertEqual(adaptation.value(named: "id") as Int, 1)
                 XCTAssertEqual(adaptation.value(named: "val") as String, "foo1")
@@ -290,7 +290,7 @@ class AdapterRowTests: GRDBTestCase {
                 XCTFail()
             }
             
-            if let adaptation = row.adapted(as: "sub2") {
+            if let adaptation = row.adapted(for: "sub2") {
                 XCTAssertEqual(adaptation.count, 2)
                 XCTAssertEqual(adaptation.value(named: "id") as Int, 2)
                 XCTAssertEqual(adaptation.value(named: "val") as String, "foo2")
@@ -298,8 +298,8 @@ class AdapterRowTests: GRDBTestCase {
                 XCTFail()
             }
             
-            XCTAssertTrue(row.adapted(as: "SUB1") == nil)     // case-insensitivity is not really required here, and case-sensitivity helps the implementation because it allows the use of a dictionary. So let's enforce this with a public test.
-            XCTAssertTrue(row.adapted(as: "missing") == nil)
+            XCTAssertTrue(row.adapted(for: "SUB1") == nil)     // case-insensitivity is not really required here, and case-sensitivity helps the implementation because it allows the use of a dictionary. So let's enforce this with a public test.
+            XCTAssertTrue(row.adapted(for: "missing") == nil)
         }
     }
     
@@ -317,7 +317,7 @@ class AdapterRowTests: GRDBTestCase {
             XCTAssertEqual(row.value(named: "id") as Int, 0)
             XCTAssertEqual(row.value(named: "val") as String, "foo0")
 
-            if let adaptation = row.adapted(as: "sub1") {
+            if let adaptation = row.adapted(for: "sub1") {
                 XCTAssertEqual(adaptation.count, 2)
                 XCTAssertEqual(adaptation.value(named: "id") as Int, 1)
                 XCTAssertEqual(adaptation.value(named: "val") as String, "foo1")
@@ -325,7 +325,7 @@ class AdapterRowTests: GRDBTestCase {
                 XCTFail()
             }
             
-            if let adaptation = row.adapted(as: "sub2") {
+            if let adaptation = row.adapted(for: "sub2") {
                 XCTAssertEqual(adaptation.count, 2)
                 XCTAssertEqual(adaptation.value(named: "id") as Int, 2)
                 XCTAssertEqual(adaptation.value(named: "val") as String, "foo2")
@@ -333,8 +333,8 @@ class AdapterRowTests: GRDBTestCase {
                 XCTFail()
             }
             
-            XCTAssertTrue(row.adapted(as: "SUB1") == nil)     // case-insensitivity is not really required here, and case-sensitivity helps the implementation because it allows the use of a dictionary. So let's enforce this with a public test.
-            XCTAssertTrue(row.adapted(as: "missing") == nil)
+            XCTAssertTrue(row.adapted(for: "SUB1") == nil)     // case-insensitivity is not really required here, and case-sensitivity helps the implementation because it allows the use of a dictionary. So let's enforce this with a public test.
+            XCTAssertTrue(row.adapted(for: "missing") == nil)
         }
     }
     
@@ -354,7 +354,7 @@ class AdapterRowTests: GRDBTestCase {
                 XCTAssertEqual(copiedRow.value(named: "a") as Int, 0)
                 XCTAssertEqual(copiedRow.value(named: "b") as Int, 1)
                 XCTAssertEqual(copiedRow.value(named: "c") as Int, 2)
-                if let adaptation = copiedRow.adapted(as: "sub") {
+                if let adaptation = copiedRow.adapted(for: "sub") {
                     XCTAssertEqual(adaptation.count, 1)
                     XCTAssertEqual(adaptation.value(named: "a") as Int, 1)
                 }
@@ -409,9 +409,9 @@ class AdapterRowTests: GRDBTestCase {
                 (row1, row3, true),
                 (row1, row4, false),
                 (row1, row5, false),
-                (row1.adapted(as: "sub"), row3.adapted(as: "sub"), true),
-                (row1.adapted(as: "sub"), row4.adapted(as: "sub"), true),
-                (row1.adapted(as: "sub"), row5.adapted(as: "sub"), false)]
+                (row1.adapted(for: "sub"), row3.adapted(for: "sub"), true),
+                (row1.adapted(for: "sub"), row4.adapted(for: "sub"), true),
+                (row1.adapted(for: "sub"), row5.adapted(for: "sub"), false)]
             for (lrow, rrow, equal) in tests {
                 print(lrow)
                 print(rrow)
