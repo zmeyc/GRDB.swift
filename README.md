@@ -1238,8 +1238,8 @@ row.value(named: "consumed") // "Hello"
 For example, let's build a joined query which loads books along with their author:
 
 ```swift
-let sql = "SELECT books.id, books.title, books.authorID, " +
-          "       persons.name AS authorName " +
+let sql = "SELECT books.id, books.title, " +
+          "       books.authorID, persons.name AS authorName " +
           "FROM books " +
           "JOIN persons ON books.authorID = persons.id"
 ```
