@@ -271,9 +271,9 @@ class AdapterRowTests: GRDBTestCase {
     func testAdaptations() {
         let dbQueue = DatabaseQueue()
         dbQueue.inDatabase { db in
-            let adapter = RowAdapter(namedAdapters: [
-                    "sub1": ["id": "id1", "val": "val1"],
-                    "sub2": ["id": "id2", "val": "val2"]])
+            let adapter = RowAdapter()
+                .adding(["id": "id1", "val": "val1"], named: "sub1")
+                .adding(["id": "id2", "val": "val2"], named: "sub2")
             let row = Row.fetchOne(db, "SELECT 1 AS id1, 'foo1' AS val1, 2 as id2, 'foo2' AS val2", adapter: adapter)!
             
             XCTAssertEqual(row.count, 4)
@@ -306,11 +306,9 @@ class AdapterRowTests: GRDBTestCase {
     func testAdaptationsWithMainMapping() {
         let dbQueue = DatabaseQueue()
         dbQueue.inDatabase { db in
-            let adapter = RowAdapter(
-                mainAdapter: ["id": "id0", "val": "val0"],
-                namedAdapters: [
-                    "sub1": ["id": "id1", "val": "val1"],
-                    "sub2": ["id": "id2", "val": "val2"]])
+            let adapter = RowAdapter(mapping: ["id": "id0", "val": "val0"])
+                .adding(["id": "id1", "val": "val1"], named: "sub1")
+                .adding(["id": "id2", "val": "val2"], named: "sub2")
             let row = Row.fetchOne(db, "SELECT 0 AS id0, 'foo0' AS val0, 1 AS id1, 'foo1' AS val1, 2 as id2, 'foo2' AS val2", adapter: adapter)!
 
             XCTAssertEqual(row.count, 2)
@@ -341,9 +339,8 @@ class AdapterRowTests: GRDBTestCase {
     func testCopy() {
         let dbQueue = DatabaseQueue()
         dbQueue.inDatabase { db in
-            let adapter = RowAdapter(
-                mainAdapter: ["a": "basea", "b": "baseb", "c": "basec"],
-                namedAdapters: ["sub": ["a": "baseb"]])
+            let adapter = RowAdapter(mapping: ["a": "basea", "b": "baseb", "c": "basec"])
+                .adding(["a": "baseb"], named: "sub")
             var copiedRow: Row? = nil
             for baseRow in Row.fetch(db, "SELECT 0 AS basea, 'XXX' AS extra, 1 AS baseb, 2 as basec", adapter: adapter) {
                 copiedRow = baseRow.copy()
@@ -385,19 +382,16 @@ class AdapterRowTests: GRDBTestCase {
     func testEqualityComparesAdaptations() {
         let dbQueue = DatabaseQueue()
         dbQueue.inDatabase { db in
-            let adapter1 = RowAdapter(
-                mainAdapter: ["a": "basea", "b": "baseb", "c": "basec"],
-                namedAdapters: ["sub": ["b": "baseb"]])
+            let adapter1 = RowAdapter(mapping: ["a": "basea", "b": "baseb", "c": "basec"])
+                .adding(["b": "baseb"], named: "sub")
             let adapter2 = RowAdapter(mapping: ["a": "basea", "b": "baseb2", "c": "basec"])
-            let adapter3 = RowAdapter(
-                mainAdapter: ["a": "basea", "b": "baseb2", "c": "basec"],
-                namedAdapters: ["sub": ["b": "baseb2"]])
-            let adapter4 = RowAdapter(
-                mainAdapter: ["a": "basea", "b": "baseb", "c": "basec"],
-                namedAdapters: ["sub": ["b": "baseb"], "altSub": ["a": "baseb2"]])
-            let adapter5 = RowAdapter(
-                mainAdapter: ["a": "basea", "b": "baseb", "c": "basec"],
-                namedAdapters: ["sub": ["b": "baseb", "c": "basec"]])
+            let adapter3 = RowAdapter(mapping: ["a": "basea", "b": "baseb2", "c": "basec"])
+                .adding(["b": "baseb2"], named: "sub")
+            let adapter4 = RowAdapter(mapping: ["a": "basea", "b": "baseb", "c": "basec"])
+                .adding(["b": "baseb"], named: "sub")
+                .adding(["a": "baseb2"], named: "altSub")
+            let adapter5 = RowAdapter(mapping: ["a": "basea", "b": "baseb", "c": "basec"])
+                .adding(["b": "baseb", "c": "basec"], named: "sub")
             let row1 = Row.fetchOne(db, "SELECT 0 AS basea, 'XXX' AS extra, 1 AS baseb, 1 AS baseb2, 2 as basec", adapter: adapter1)!
             let row2 = Row.fetchOne(db, "SELECT 0 AS basea, 'XXX' AS extra, 1 AS baseb, 1 AS baseb2, 2 as basec", adapter: adapter2)!
             let row3 = Row.fetchOne(db, "SELECT 0 AS basea, 'XXX' AS extra, 1 AS baseb, 1 AS baseb2, 2 as basec", adapter: adapter3)!
