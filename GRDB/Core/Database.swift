@@ -71,7 +71,8 @@ public final class Database {
     }
     
     /// True if the database connection is currently in a transaction.
-    public private(set) var isInsideTransaction: Bool = false
+    public var isInsideTransaction: Bool { return isInsideExplicitTransaction || !savepointStack.isEmpty }
+    private var isInsideExplicitTransaction: Bool = false
     
     var lastErrorCode: Int32 {
         return sqlite3_errcode(sqliteConnection)
@@ -88,11 +89,10 @@ public final class Database {
     private var selectStatementCache: [String: SelectStatement] = [:]
     private var updateStatementCache: [String: UpdateStatement] = [:]
     
-    /// See setupTransactionHooks(), updateStatementDidFail(), updateStatementDidExecute()
+    /// Transaction observer support
     private var transactionState: TransactionState = .WaitForTransactionCompletion
-    
-    /// The transaction observers
     private var transactionObservers = [WeakTransactionObserver]()
+    private var savepointStack = SavePointStack()
     
     /// See setupBusyMode()
     private var busyCallback: BusyCallback?
@@ -339,7 +339,7 @@ public enum BusyMode {
 
 extension Database {
     
-    /// Returns a prepared statement that can be reused.
+    /// Returns a new prepared statement that can be reused.
     ///
     ///     let statement = try db.selectStatement("SELECT COUNT(*) FROM persons WHERE age > ?")
     ///     let moreThanTwentyCount = Int.fetchOne(statement, arguments: [20])!
@@ -353,8 +353,20 @@ extension Database {
         return try SelectStatement(database: self, sql: sql)
     }
     
+    /// Returns a prepared statement that can be reused.
+    ///
+    ///     let statement = try db.cachedSelectStatement("SELECT COUNT(*) FROM persons WHERE age > ?")
+    ///     let moreThanTwentyCount = Int.fetchOne(statement, arguments: [20])!
+    ///     let moreThanThirtyCount = Int.fetchOne(statement, arguments: [30])!
+    ///
+    /// The returned statement may have already been used: it may or may not
+    /// contain values for its eventual arguments.
+    ///
+    /// - parameter sql: An SQL query.
+    /// - returns: An UpdateStatement.
+    /// - throws: A DatabaseError whenever SQLite could not parse the sql query.
     @warn_unused_result
-    func cachedSelectStatement(sql: String) throws -> SelectStatement {
+    public func cachedSelectStatement(sql: String) throws -> SelectStatement {
         if let statement = selectStatementCache[sql] {
             return statement
         }
@@ -364,7 +376,7 @@ extension Database {
         return statement
     }
     
-    /// Returns a prepared statement that can be reused.
+    /// Returns a new prepared statement that can be reused.
     ///
     ///     let statement = try db.updateStatement("INSERT INTO persons (name) VALUES (?)")
     ///     try statement.execute(arguments: ["Arthur"])
@@ -380,8 +392,20 @@ extension Database {
         return try UpdateStatement(database: self, sql: sql)
     }
     
+    /// Returns a prepared statement that can be reused.
+    ///
+    ///     let statement = try db.cachedUpdateStatement("INSERT INTO persons (name) VALUES (?)")
+    ///     try statement.execute(arguments: ["Arthur"])
+    ///     try statement.execute(arguments: ["Barbara"])
+    ///
+    /// The returned statement may have already been used: it may or may not
+    /// contain values for its eventual arguments.
+    ///
+    /// - parameter sql: An SQL query.
+    /// - returns: An UpdateStatement.
+    /// - throws: A DatabaseError whenever SQLite could not parse the sql query.
     @warn_unused_result
-    func cachedUpdateStatement(sql: String) throws -> UpdateStatement {
+    public func cachedUpdateStatement(sql: String) throws -> UpdateStatement {
         if let statement = updateStatementCache[sql] {
             return statement
         }
@@ -487,7 +511,11 @@ extension Database {
                 }
                 
                 do {
-                    let statement = UpdateStatement(database: self, sqliteStatement: sqliteStatement, invalidatesDatabaseSchemaCache: observer.invalidatesDatabaseSchemaCache)
+                    let statement = UpdateStatement(
+                        database: self,
+                        sqliteStatement: sqliteStatement,
+                        invalidatesDatabaseSchemaCache: observer.invalidatesDatabaseSchemaCache,
+                        savepointAction: observer.savepointAction)
                     try statement.execute(arguments: consumeArguments(statement))
                 } catch let statementError {
                     error = statementError
@@ -754,8 +782,8 @@ extension Database {
 protocol DatabaseSchemaCacheType {
     mutating func clear()
     
-    func primaryKey(tableName tableName: String) -> PrimaryKey?
-    mutating func setPrimaryKey(primaryKey: PrimaryKey, forTableName tableName: String)
+    func primaryKey(tableName tableName: String) -> PrimaryKey??
+    mutating func setPrimaryKey(primaryKey: PrimaryKey?, forTableName tableName: String)
 }
 
 extension Database {
@@ -786,13 +814,13 @@ extension Database {
             arguments: [tableName.lowercaseString]) != nil
     }
     
-    /// Return the primary key for table named `tableName`.
-    /// Throws if table does not exist.
-    ///
-    /// This method is not thread-safe.
+    /// The primary key for table named `tableName`; nil if table has no
+    /// primary key.
     ///
     /// - throws: A DatabaseError if table does not exist.
-    func primaryKey(tableName: String) throws -> PrimaryKey {
+    public func primaryKey(tableName: String) throws -> PrimaryKey? {
+        DatabaseScheduler.preconditionValidQueue(self)
+        
         if let primaryKey = schemaCache.primaryKey(tableName: tableName) {
             return primaryKey
         }
@@ -833,7 +861,7 @@ extension Database {
             throw DatabaseError(message: "no such table: \(tableName)")
         }
         
-        let primaryKey: PrimaryKey
+        let primaryKey: PrimaryKey?
         let pkColumnInfos = columnInfos
             .filter { $0.primaryKeyIndex > 0 }
             .sort { $0.primaryKeyIndex < $1.primaryKeyIndex }
@@ -841,7 +869,7 @@ extension Database {
         switch pkColumnInfos.count {
         case 0:
             // No primary key column
-            primaryKey = PrimaryKey.None
+            primaryKey = nil
         case 1:
             // Single column
             let pkColumnInfo = pkColumnInfos.first!
@@ -867,13 +895,13 @@ extension Database {
             // FIXME: We ignore the exception, and consider all INTEGER primary
             // keys as aliases for the rowid:
             if pkColumnInfo.type.uppercaseString == "INTEGER" {
-                primaryKey = .RowID(pkColumnInfo.name)
+                primaryKey = .rowID(pkColumnInfo.name)
             } else {
-                primaryKey = .Regular([pkColumnInfo.name])
+                primaryKey = .regular([pkColumnInfo.name])
             }
         default:
             // Multi-columns primary key
-            primaryKey = .Regular(pkColumnInfos.map { $0.name })
+            primaryKey = .regular(pkColumnInfos.map { $0.name })
         }
         
         schemaCache.setPrimaryKey(primaryKey, forTableName: tableName)
@@ -908,25 +936,66 @@ extension Database {
     }
 }
 
-/// A primary key
-enum PrimaryKey {
+/// You get primary keys from table names, with the Database.primaryKey(_)
+/// method.
+///
+/// Primary key is nil when table has no primary key:
+///
+///     // CREATE TABLE items (name TEXT)
+///     let itemPk = try db.primaryKey("items") // nil
+///
+/// Primary keys have one or several columns. When the primary key has a single
+/// column, it may contain the row id:
+///
+///     // CREATE TABLE persons (
+///     //   id INTEGER PRIMARY KEY,
+///     //   name TEXT
+///     // )
+///     let personPk = try db.primaryKey("persons")!
+///     personPk.columns     // ["id"]
+///     personPk.rowIDColumn // "id"
+///
+///     // CREATE TABLE countries (
+///     //   isoCode TEXT NOT NULL PRIMARY KEY
+///     //   name TEXT
+///     // )
+///     let countryPk = db.primaryKey("countries")!
+///     countryPk.columns     // ["isoCode"]
+///     countryPk.rowIDColumn // nil
+///
+///     // CREATE TABLE citizenships (
+///     //   personID INTEGER NOT NULL REFERENCES persons(id)
+///     //   countryIsoCode TEXT NOT NULL REFERENCES countries(isoCode)
+///     //   PRIMARY KEY (personID, countryIsoCode)
+///     // )
+///     let citizenshipsPk = db.primaryKey("citizenships")!
+///     citizenshipsPk.columns     // ["personID", "countryIsoCode"]
+///     citizenshipsPk.rowIDColumn // nil
+public struct PrimaryKey {
+    private enum Impl {
+        /// An INTEGER PRIMARY KEY column that aliases the Row ID.
+        /// Associated string is the column name.
+        case RowID(String)
+        
+        /// Any primary key, but INTEGER PRIMARY KEY.
+        /// Associated strings are column names.
+        case Regular([String])
+    }
     
-    /// No primary key
-    case None
+    private let impl: Impl
     
-    /// An INTEGER PRIMARY KEY column that aliases the Row ID.
-    /// Associated string is the column name.
-    case RowID(String)
+    static func rowID(column: String) -> PrimaryKey {
+        return PrimaryKey(impl: .RowID(column))
+    }
     
-    /// Any primary key, but INTEGER PRIMARY KEY.
-    /// Associated strings are column names.
-    case Regular([String])
+    static func regular(columns: [String]) -> PrimaryKey {
+        assert(!columns.isEmpty)
+        return PrimaryKey(impl: .Regular(columns))
+    }
     
-    /// The columns in the primary key. May be empty.
-    var columns: [String] {
-        switch self {
-        case .None:
-            return []
+    /// The columns in the primary key; this array is never empty.
+    public var columns: [String] {
+        switch impl {
         case .RowID(let column):
             return [column]
         case .Regular(let columns):
@@ -934,11 +1003,9 @@ enum PrimaryKey {
         }
     }
     
-    /// The name of the INTEGER PRIMARY KEY
-    var rowIDColumn: String? {
-        switch self {
-        case .None:
-            return nil
+    /// When not nil, the name of the column that contains the INTEGER PRIMARY KEY.
+    public var rowIDColumn: String? {
+        switch impl {
         case .RowID(let column):
             return column
         case .Regular:
@@ -956,6 +1023,7 @@ final class StatementCompilationObserver {
     let database: Database
     var sourceTables: Set<String> = []
     var invalidatesDatabaseSchemaCache = false
+    var savepointAction: (name: String, action: SavepointActionKind)?
     
     init(_ database: Database) {
         self.database = database
@@ -971,6 +1039,11 @@ final class StatementCompilationObserver {
             case SQLITE_READ:
                 let observer = unsafeBitCast(observerPointer, StatementCompilationObserver.self)
                 observer.sourceTables.insert(String.fromCString(CString1)!)
+            case SQLITE_SAVEPOINT:
+                let observer = unsafeBitCast(observerPointer, StatementCompilationObserver.self)
+                let name = String.fromCString(CString2)!
+                let action = SavepointActionKind(rawValue: String.fromCString(CString1)!)!
+                observer.savepointAction = (name: name, action: action)
             default:
                 break
             }
@@ -985,7 +1058,14 @@ final class StatementCompilationObserver {
     func reset() {
         sourceTables = []
         invalidatesDatabaseSchemaCache = false
+        savepointAction = nil
     }
+}
+
+enum SavepointActionKind : String {
+    case Begin = "BEGIN"
+    case Release = "RELEASE"
+    case Rollback = "ROLLBACK"
 }
 
 
@@ -1019,7 +1099,7 @@ extension Database {
         // Begin transaction
         try beginTransaction(kind ?? configuration.defaultTransactionKind)
         
-        // Now that transcation is open, we'll rollback in case of error.
+        // Now that transaction has begun, we'll rollback in case of error.
         // But we'll throw the first caught error, so that user knows
         // what happened.
         var firstError: ErrorType? = nil
@@ -1039,42 +1119,77 @@ extension Database {
         }
         
         if needsRollback {
-            if let firstError = firstError {
-                // https://www.sqlite.org/lang_transaction.html#immediate
-                //
-                // > Response To Errors Within A Transaction
-                // >
-                // > If certain kinds of errors occur within a transaction, the
-                // > transaction may or may not be rolled back automatically.
-                // > The errors that can cause an automatic rollback include:
-                // >
-                // > - SQLITE_FULL: database or disk full
-                // > - SQLITE_IOERR: disk I/O error
-                // > - SQLITE_BUSY: database in use by another process
-                // > - SQLITE_NOMEM: out or memory
-                // >
-                // > [...] It is recommended that applications respond to the
-                // > errors listed above by explicitly issuing a ROLLBACK
-                // > command. If the transaction has already been rolled back
-                // > automatically by the error response, then the ROLLBACK
-                // > command will fail with an error, but no harm is caused
-                // > by this.
-                //
-                // Rollback and ignore error because we'll throw firstError.
-                do {
-                    try rollback()
-                } catch {
-                    if let error = firstError as? DatabaseError where [SQLITE_FULL, SQLITE_IOERR, SQLITE_BUSY, SQLITE_NOMEM].contains(Int32(error.code)) {
-                        isInsideTransaction = false
-                    }
+            do {
+                try rollback(underlyingError: firstError)
+            } catch {
+                if firstError == nil {
+                    firstError = error
                 }
-            } else {
-                try rollback()
             }
         }
 
         if let firstError = firstError {
             throw firstError
+        }
+    }
+    
+    public func inSavepoint(@noescape block: () throws -> TransactionCompletion) throws {
+        func impl(@noescape block: () throws -> TransactionCompletion) throws {
+            // If the savepoint is top-level, we'll use ROLLBACK TRANSACTION in
+            // order to perform the special error handling of rollbacks.
+            let topLevelSavepoint = !isInsideTransaction
+            
+            // Begin savepoint
+            try execute("SAVEPOINT grdb")
+            
+            // Now that savepoint has begun, we'll rollback in case of error.
+            // But we'll throw the first caught error, so that user knows
+            // what happened.
+            var firstError: ErrorType? = nil
+            let needsRollback: Bool
+            do {
+                let completion = try block()
+                switch completion {
+                case .Commit:
+                    try execute("RELEASE SAVEPOINT grdb")
+                    needsRollback = false
+                case .Rollback:
+                    needsRollback = true
+                }
+            } catch {
+                firstError = error
+                needsRollback = true
+            }
+            
+            if needsRollback {
+                do {
+                    if topLevelSavepoint {
+                        try rollback(underlyingError: firstError)
+                    } else {
+                        try execute("ROLLBACK TRANSACTION TO SAVEPOINT grdb")
+                        try execute("RELEASE SAVEPOINT grdb")
+                    }
+                } catch {
+                    if firstError == nil {
+                        firstError = error
+                    }
+                }
+            }
+            
+            if let firstError = firstError {
+                throw firstError
+            }
+        }
+        
+        // Top-level SQLite savepoints open a deferred transaction, but database
+        // configuration may have a different default transaction kind:
+        if isInsideTransaction || configuration.defaultTransactionKind == .Deferred {
+            try impl(block)
+        } else {
+            try inTransaction {
+                try impl(block)
+                return .Commit
+            }
         }
     }
     
@@ -1087,17 +1202,47 @@ extension Database {
         case .Exclusive:
             try execute("BEGIN EXCLUSIVE TRANSACTION")
         }
-        isInsideTransaction = true
+        isInsideExplicitTransaction = true
     }
     
-    private func rollback() throws {
-        try execute("ROLLBACK TRANSACTION")
-        isInsideTransaction = false
+    private func rollback(underlyingError underlyingError: ErrorType? = nil) throws {
+        do {
+            try execute("ROLLBACK TRANSACTION")
+        } catch {
+            // https://www.sqlite.org/lang_transaction.html#immediate
+            //
+            // > Response To Errors Within A Transaction
+            // >
+            // > If certain kinds of errors occur within a transaction, the
+            // > transaction may or may not be rolled back automatically.
+            // > The errors that can cause an automatic rollback include:
+            // >
+            // > - SQLITE_FULL: database or disk full
+            // > - SQLITE_IOERR: disk I/O error
+            // > - SQLITE_BUSY: database in use by another process
+            // > - SQLITE_NOMEM: out or memory
+            // >
+            // > [...] It is recommended that applications respond to the
+            // > errors listed above by explicitly issuing a ROLLBACK
+            // > command. If the transaction has already been rolled back
+            // > automatically by the error response, then the ROLLBACK
+            // > command will fail with an error, but no harm is caused
+            // > by this.
+            //
+            // Rollback and ignore error because we'll throw firstError.
+            guard let underlyingError = underlyingError as? DatabaseError where [SQLITE_FULL, SQLITE_IOERR, SQLITE_BUSY, SQLITE_NOMEM].contains(Int32(underlyingError.code)) else {
+                throw error
+            }
+        }
+        
+        savepointStack.clear()  // TODO: write tests that fail when we remove this line. Hint: those tests must not use any transaction observer.
+        isInsideExplicitTransaction = false
     }
     
     private func commit() throws {
         try execute("COMMIT TRANSACTION")
-        isInsideTransaction = false
+        savepointStack.clear()  // TODO: write tests that fail when we remove this line. Hint: those tests must not use any transaction observer.
+        isInsideExplicitTransaction = false
     }
     
     /// Add a transaction observer, so that it gets notified of all
@@ -1129,6 +1274,14 @@ extension Database {
         }
     }
     
+    static func preconditionValidSelectStatement(sql sql: String, observer: StatementCompilationObserver) {
+        // Select statements do not call database.updateStatementDidExecute()
+        // So make sure that the update statements we track are not hidden in a
+        // select statement:
+        GRDBPrecondition(!observer.invalidatesDatabaseSchemaCache, "Invalid statement type for query \(String(reflecting: sql)): use UpdateStatement instead.")
+        GRDBPrecondition(observer.savepointAction == nil, "Invalid statement type for query \(String(reflecting: sql)): use UpdateStatement instead.")
+    }
+    
     func updateStatementDidFail() throws {
         // Reset transactionState before didRollback eventually executes
         // other statements.
@@ -1149,6 +1302,26 @@ extension Database {
             clearSchemaCache()
         }
         
+        if let savepointAction = statement.savepointAction {
+            switch savepointAction.action {
+            case .Begin:
+                savepointStack.beginSavepoint(named: savepointAction.name)
+            case .Release:
+                savepointStack.releaseSavepoint(named: savepointAction.name)
+                if savepointStack.isEmpty {
+                    let events = savepointStack.events
+                    savepointStack.clear()
+                    for observer in transactionObservers.flatMap({ $0.observer }) {
+                        for event in events {
+                            observer.databaseDidChangeWithEvent(event)
+                        }
+                    }
+                }
+            case .Rollback:
+                savepointStack.rollbackSavepoint(named: savepointAction.name)
+            }
+        }
+        
         // Reset transactionState before didCommit or didRollback eventually
         // execute other statements.
         let transactionState = self.transactionState
@@ -1165,14 +1338,23 @@ extension Database {
     }
     
     private func willCommit() throws {
+        let events = savepointStack.events
+        savepointStack.clear()
         for observer in transactionObservers.flatMap({ $0.observer }) {
+            for event in events {
+                observer.databaseDidChangeWithEvent(event)
+            }
             try observer.databaseWillCommit()
         }
     }
     
     private func didChangeWithEvent(event: DatabaseEvent) {
-        for observer in transactionObservers.flatMap({ $0.observer }) {
-            observer.databaseDidChangeWithEvent(event)
+        if savepointStack.isEmpty {
+            for observer in transactionObservers.flatMap({ $0.observer }) {
+                observer.databaseDidChangeWithEvent(event)
+            }
+        } else {
+            savepointStack.events.append(event.copy())
         }
     }
     
@@ -1184,6 +1366,7 @@ extension Database {
     }
     
     private func didRollback() {
+        savepointStack.clear()
         for observer in transactionObservers.flatMap({ $0.observer }) {
             observer.databaseDidRollback(self)
         }
@@ -1196,10 +1379,10 @@ extension Database {
         sqlite3_update_hook(sqliteConnection, { (dbPointer, updateKind, databaseNameCString, tableNameCString, rowID) in
             let db = unsafeBitCast(dbPointer, Database.self)
             db.didChangeWithEvent(DatabaseEvent(
-                databaseNameCString: databaseNameCString,
-                tableNameCString: tableNameCString,
                 kind: DatabaseEvent.Kind(rawValue: updateKind)!,
-                rowID: rowID))
+                rowID: rowID,
+                databaseNameCString: databaseNameCString,
+                tableNameCString: tableNameCString))
             }, dbPointer)
         
         
@@ -1311,28 +1494,132 @@ class WeakTransactionObserver {
 
 
 /// A database event, notified to TransactionObserverType.
-///
-/// See https://www.sqlite.org/c3ref/update_hook.html for more information.
 public struct DatabaseEvent {
-    private let databaseNameCString: UnsafePointer<Int8>
-    private let tableNameCString: UnsafePointer<Int8>
     
     /// An event kind
     public enum Kind: Int32 {
-        case Insert = 18    // SQLITE_INSERT
-        case Delete = 9     // SQLITE_DELETE
-        case Update = 23    // SQLITE_UPDATE
+        /// SQLITE_INSERT
+        case Insert = 18
+        
+        /// SQLITE_DELETE
+        case Delete = 9
+        
+        /// SQLITE_UPDATE
+        case Update = 23
     }
     
     /// The event kind
     public let kind: Kind
     
     /// The database name
-    public var databaseName: String { return String.fromCString(databaseNameCString)! }
+    public var databaseName: String { return impl.databaseName }
 
     /// The table name
-    public var tableName: String { return String.fromCString(tableNameCString)! }
+    public var tableName: String { return impl.tableName }
     
     /// The rowID of the changed row.
     public let rowID: Int64
+    
+    /// Returns an event that can be stored:
+    ///
+    ///     class MyObserver: TransactionObserverType {
+    ///         var events: [DatabaseEvent]
+    ///         func databaseDidChangeWithEvent(event: DatabaseEvent) {
+    ///             events.append(event.copy())
+    ///         }
+    ///     }
+    public func copy() -> DatabaseEvent {
+        return impl.copy(self)
+    }
+    
+    private init(kind: Kind, rowID: Int64, impl: DatabaseEventImpl) {
+        self.kind = kind
+        self.rowID = rowID
+        self.impl = impl
+    }
+    
+    init(kind: Kind, rowID: Int64, databaseNameCString: UnsafePointer<Int8>, tableNameCString: UnsafePointer<Int8>) {
+        self.init(kind: kind, rowID: rowID, impl: MetalDatabaseEventImpl(databaseNameCString: databaseNameCString, tableNameCString: tableNameCString))
+    }
+    
+    private let impl: DatabaseEventImpl
+}
+
+private protocol DatabaseEventImpl {
+    var databaseName: String { get }
+    var tableName: String { get }
+    func copy(event: DatabaseEvent) -> DatabaseEvent
+}
+
+/// Optimization: MetalDatabaseEventImpl does not create Swift strings from raw
+/// SQLite char* until actually asked for databaseName or tableName.
+private struct MetalDatabaseEventImpl : DatabaseEventImpl {
+    let databaseNameCString: UnsafePointer<Int8>
+    let tableNameCString: UnsafePointer<Int8>
+
+    var databaseName: String { return String.fromCString(databaseNameCString)! }
+    var tableName: String { return String.fromCString(tableNameCString)! }
+    func copy(event: DatabaseEvent) -> DatabaseEvent {
+        return DatabaseEvent(kind: event.kind, rowID: event.rowID, impl: CopiedDatabaseEventImpl(databaseName: databaseName, tableName: tableName))
+    }
+}
+
+/// Impl for DatabaseEvent that contains copies of event strings.
+private struct CopiedDatabaseEventImpl : DatabaseEventImpl {
+    private let databaseName: String
+    private let tableName: String
+    func copy(event: DatabaseEvent) -> DatabaseEvent {
+        return event
+    }
+}
+
+class SavePointStack {
+    var events: [DatabaseEvent] = []
+    private var savepoints: [(name: String, index: Int)] = []
+    
+    var isEmpty: Bool { return savepoints.isEmpty }
+    
+    func clear() {
+        events.removeAll()
+        savepoints.removeAll()
+    }
+    
+    func beginSavepoint(named name: String) {
+        savepoints.append((name: name.lowercaseString, index: events.count))
+    }
+    
+    // https://www.sqlite.org/lang_savepoint.html
+    // > The ROLLBACK command with a TO clause rolls back transactions going
+    // > backwards in time back to the most recent SAVEPOINT with a matching
+    // > name. The SAVEPOINT with the matching name remains on the transaction
+    // > stack, but all database changes that occurred after that SAVEPOINT was
+    // > created are rolled back. If the savepoint-name in a ROLLBACK TO
+    // > command does not match any SAVEPOINT on the stack, then the ROLLBACK
+    // > command fails with an error and leaves the state of the
+    // > database unchanged.
+    func rollbackSavepoint(named name: String) {
+        let name = name.lowercaseString
+        while let pair = savepoints.last where pair.name != name {
+            savepoints.removeLast()
+        }
+        if let savepoint = savepoints.last {
+            events.removeLast(events.count - savepoint.index)
+        }
+        assert(!savepoints.isEmpty || events.isEmpty)
+    }
+    
+    // https://www.sqlite.org/lang_savepoint.html
+    // > The RELEASE command starts with the most recent addition to the
+    // > transaction stack and releases savepoints backwards in time until it
+    // > releases a savepoint with a matching savepoint-name. Prior savepoints,
+    // > even savepoints with matching savepoint-names, are unchanged.
+    func releaseSavepoint(named name: String) {
+        let name = name.lowercaseString
+        while let pair = savepoints.last where pair.name != name {
+            savepoints.removeLast()
+        }
+        if !savepoints.isEmpty {
+            savepoints.removeLast()
+        }
+    }
 }

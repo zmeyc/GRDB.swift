@@ -1,6 +1,40 @@
 Release Notes
 =============
 
+## 0.70.0
+
+Released May 28, 2016
+
+**New**
+
+- `Database.inSavepoint()` allows fine-grained committing and rollbacking of database statements ([documentation](https://github.com/groue/GRDB.swift#transactions-and-savepoints)). Closes [#61](https://github.com/groue/GRDB.swift/issues/61).
+
+
+## 0.69.0
+
+Released May 28, 2016
+
+**Fixed**
+
+- Database changes that are on hold because of a [savepoint](https://www.sqlite.org/lang_savepoint.html) are only notified to [transaction observers](https://github.com/groue/GRDB.swift#database-changes-observation) after the savepoint has been released. In previous versions of GRDB, savepoints had the opportunity to rollback a subset of database events, and mislead transaction observers about the actual content of a transaction. Related issue: [#61](https://github.com/groue/GRDB.swift/issues/61).
+
+**New**
+
+- `DatabaseEvent.copy()` lets you store a database event notified to a transaction observer ([documentation](https://github.com/groue/GRDB.swift#database-changes-observation)).
+
+
+## 0.68.0
+
+Released May 28, 2016
+
+**New**
+
+This release provides tools for your custom persistence mechanisms that don't use the built-in [Persistable](https://github.com/groue/GRDB.swift#persistable-protocol) protocol, and addresses issue [#60](https://github.com/groue/GRDB.swift/issues/60).
+
+- `Database.primaryKey(tableName)` lets you introspect a table's primary key ([documentation](https://github.com/groue/GRDB.swift#database-schema-introspection)).
+- `Database.cachedSelectStatement(sql)` and `Database.cachedUpdateStatement(sql)` provide robust caching of prepared statements ([documentation](https://github.com/groue/GRDB.swift#prepared-statements-cache))
+
+
 ## 0.67.0
 
 Released May 22, 2016

@@ -24,7 +24,7 @@ You should give it a try.
 
 ---
 
-**May 22, 2016: GRDB.swift 0.67.0 is out** ([changelog](CHANGELOG.md)). Follow [@groue](http://twitter.com/groue) on Twitter for release announcements and usage tips.
+**May 28, 2016: GRDB.swift 0.70.0 is out** ([changelog](CHANGELOG.md)). Follow [@groue](http://twitter.com/groue) on Twitter for release announcements and usage tips.
 
 **Requirements**: iOS 7.0+ / OSX 10.9+, Xcode 7.3+
 
@@ -142,7 +142,7 @@ Documentation
 
 **Reference**
 
-- [GRDB Reference](http://cocoadocs.org/docsets/GRDB.swift/0.67.0/index.html) (on cocoadocs.org)
+- [GRDB Reference](http://cocoadocs.org/docsets/GRDB.swift/0.70.0/index.html) (on cocoadocs.org)
 
 **Getting started**
 
@@ -193,7 +193,7 @@ To use GRDB with CocoaPods, specify in your Podfile:
 source 'https://github.com/CocoaPods/Specs.git'
 use_frameworks!
 
-pod 'GRDB.swift', '~> 0.67.0'
+pod 'GRDB.swift', '~> 0.70.0'
 ```
 
 
@@ -204,7 +204,7 @@ pod 'GRDB.swift', '~> 0.67.0'
 To use GRDB with Carthage, specify in your Cartfile:
 
 ```
-github "groue/GRDB.swift" ~> 0.67.0
+github "groue/GRDB.swift" ~> 0.70.0
 ```
 
 
@@ -306,7 +306,7 @@ let dbQueue = try DatabaseQueue(
     configuration: config)
 ```
 
-See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.67.0/Structs/Configuration.html) for more details.
+See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.70.0/Structs/Configuration.html) for more details.
 
 
 ## Database Pools
@@ -386,7 +386,7 @@ let dbPool = try DatabasePool(
     configuration: config)
 ```
 
-See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.67.0/Structs/Configuration.html) for more details.
+See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.70.0/Structs/Configuration.html) for more details.
 
 
 Database pools are more memory-hungry than database queues. See [Memory Management](#memory-management) for more information.
@@ -407,13 +407,14 @@ SQLite API
     - [NSDate and NSDateComponents](#nsdate-and-nsdatecomponents)
     - [NSNumber and NSDecimalNumber](#nsnumber-and-nsdecimalnumber)
     - [Swift enums](#swift-enums)
-- [Transactions](#transactions)
+- [Transactions and Savepoints](#transactions-and-savepoints)
 
 Advanced topics:
 
 - [Custom Value Types](#custom-value-types)
 - [Prepared Statements](#prepared-statements)
 - [Custom SQL Functions](#custom-sql-functions)
+- [Database Schema Introspection](#database-schema-introspection)
 - [Row Adapters](#row-adapters)
 - [Raw SQLite Pointers](#raw-sqlite-pointers)
 
@@ -1040,7 +1041,7 @@ Grape.fromDatabaseValue(dbv)    // nil
 ```
 
 
-## Transactions
+## Transactions and Savepoints
 
 The `DatabaseQueue.inTransaction()` and `DatabasePool.writeInTransaction()` methods open an SQLite transaction and run their closure argument in a protected dispatch queue. They block the current thread until your database statements are executed:
 
@@ -1066,6 +1067,54 @@ try dbQueue.inDatabase { db in  // or dbPool.write { db in
     ...
 }
 ```
+
+You can ask a database if a transaction is currently opened:
+
+```swift
+func myCriticalMethod(db: Database) {
+    precondition(db.isInsideTransaction, "This method requires a transaction")
+    ...
+}
+```
+
+
+### Savepoints
+
+**Statements grouped in a savepoint can be rollbacked without invalidating a whole transaction:**
+
+```swift
+try dbQueue.inTransaction { db in
+    try db.inSavepoint { 
+        try db.execute("DELETE ...")
+        try db.execute("INSERT ...") // need to rollback the delete above if this fails
+        return .Commit
+    }
+    
+    // Other savepoints, etc...
+    return .Commit
+}
+```
+
+**Unlike transactions, savepoints can be nested.** They implicitly open a transaction if no one was opened when the savepoint begins. As such, they behave just like nested transactions. Yet the database changes are only committed to disk when the outermost savepoint is committed:
+
+```swift
+try dbQueue.inDatabase { db in
+    try db.inSavepoint {
+        ...
+        try db.inSavepoint {
+            ...
+            return .Commit
+        }
+        ...
+        return .Commit  // writes changes to disk
+    }
+}
+```
+
+SQLite savepoints are more than nested transactions, though. For advanced savepoints uses, use [SQL queries](https://www.sqlite.org/lang_savepoint.html).
+
+
+### Transaction Kinds
 
 SQLite supports [three kinds of transactions](https://www.sqlite.org/lang_transaction.html): deferred, immediate, and exclusive. GRDB defaults to immediate.
 
@@ -1155,6 +1204,22 @@ let person = Person.fetchOne(selectStatement, arguments: ["Arthur"])
 See [row queries](#row-queries), [value queries](#value-queries), and [Records](#records) for more information.
 
 
+### Prepared Statements Cache
+
+When the same query will be used several times in the lifetime of your application, you may feel a natural desire to cache prepared statements.
+
+**Don't cache statements yourself.**
+
+> :point_up: **Note**: This is because you don't have the necessary tools. Statements are tied to specific SQLite connections and dispatch queues which you don't manage yourself, especially when you use [database pools](#database-pools). A change in the database schema [may, or may not](https://www.sqlite.org/compile.html#max_schema_retry) invalidate a statement. On systems earlier than iOS 8.2 and OSX 10.10 that don't have the [sqlite3_close_v2 function](https://www.sqlite.org/c3ref/close.html), SQLite connections won't close properly if statements have been kept alive.
+
+Instead, use the `cachedUpdateStatement` and `cachedSelectStatement` methods. GRDB does all the hard caching and [memory management](#memory-management) stuff for you:
+
+```swift
+let updateStatement = try db.cachedUpdateStatement(updateSQL)
+let selectStatement = try db.cachedSelectStatement(selectSQL)
+```
+
+
 ## Custom SQL Functions
 
 **SQLite lets you define SQL functions.**
@@ -1214,6 +1279,70 @@ Person.select(reverseString.apply(nameColumn))
 
 
 **GRDB ships with built-in SQL functions that perform unicode-aware string transformations.** See [Unicode](#unicode).
+
+
+## Database Schema Introspection
+
+**SQLite provides database schema introspection tools**, such as the [sqlite_master](https://www.sqlite.org/faq.html#q7) table, and the pragma [table_info](https://www.sqlite.org/pragma.html#pragma_table_info):
+
+```swift
+try db.execute("CREATE TABLE persons(id INTEGER PRIMARY KEY, name TEXT)")
+
+// <Row type:"table" name:"persons" tbl_name:"persons" rootpage:2
+//      sql:"CREATE TABLE persons(id INTEGER PRIMARY KEY, name TEXT)">
+for row in Row.fetch(db, "SELECT * FROM sqlite_master") {
+    print(row)
+}
+
+// <Row cid:0 name:"id" type:"INTEGER" notnull:0 dflt_value:NULL pk:1>
+// <Row cid:1 name:"name" type:"TEXT" notnull:0 dflt_value:NULL pk:0>
+for row in Row.fetch(db, "PRAGMA table_info('persons')") {
+    print(row)
+}
+```
+
+GRDB provides two high-level methods as well:
+
+```swift
+db.tableExists("persons")    // Bool, true if the table exists
+try db.primaryKey("persons") // PrimaryKey?, throws if the table does not exist
+```
+
+Primary key is nil when table has no primary key:
+
+```swift
+// CREATE TABLE items (name TEXT)
+let itemPk = try db.primaryKey("items") // nil
+```
+
+Primary keys have one or several columns. Single-column primary keys may contain the auto-incremented [row id](https://www.sqlite.org/autoinc.html):
+
+```swift
+// CREATE TABLE persons (
+//   id INTEGER PRIMARY KEY,
+//   name TEXT
+// )
+let personPk = try db.primaryKey("persons")!
+personPk.columns     // ["id"]
+personPk.rowIDColumn // "id"
+
+// CREATE TABLE countries (
+//   isoCode TEXT NOT NULL PRIMARY KEY
+//   name TEXT
+// )
+let countryPk = db.primaryKey("countries")!
+countryPk.columns     // ["isoCode"]
+countryPk.rowIDColumn // nil
+
+// CREATE TABLE citizenships (
+//   personID INTEGER NOT NULL REFERENCES persons(id)
+//   countryIsoCode TEXT NOT NULL REFERENCES countries(isoCode)
+//   PRIMARY KEY (personID, countryIsoCode)
+// )
+let citizenshipsPk = db.primaryKey("citizenships")!
+citizenshipsPk.columns     // ["personID", "countryIsoCode"]
+citizenshipsPk.rowIDColumn // nil
+```
 
 
 ## Row Adapters
@@ -2365,8 +2494,9 @@ public protocol TransactionObserverType : class {
     /// - event.tableName
     /// - event.rowID
     ///
-    /// The event is only valid for the duration of this method call. If you
-    /// need to keep it longer, store a copy of its properties.
+    /// For performance reasons, the event is only valid for the duration of
+    /// this method call. If you need to keep it longer, store a copy:
+    /// event.copy().
     func databaseDidChangeWithEvent(event: DatabaseEvent)
     
     /// An opportunity to rollback pending changes by throwing an error.
@@ -2415,6 +2545,26 @@ try dbQueue.inDatabase { db in
     try db.execute("UPDATE ...") // 4. didChange, 5. willCommit, 6. didCommit
 }
 ```
+
+Changes that are on hold because of a [savepoint](https://www.sqlite.org/lang_savepoint.html) are only notified after the savepoint has been released. This makes sure that notified events are only events that have an opportunity to be committed:
+
+```swift
+try dbQueue.inTransaction { db in
+    try db.execute("INSERT ...")            // 1. didChange
+    
+    try db.execute("SAVEPOINT foo")
+    try db.execute("UPDATE ...")            // not notified
+    try db.execute("ROLLBACK TO SAVEPOINT foo")
+    
+    try db.execute("SAVEPOINT foo")
+    try db.execute("UPDATE ...")            // delayed
+    try db.execute("UPDATE ...")            // delayed
+    try db.execute("RELEASE SAVEPOINT foo") // 2. didChange, 3. didChange
+    
+    return .Commit                          // 4. willCommit, 5. didCommit
+}
+```
+
 
 **Eventual errors** thrown from `databaseWillCommit` are exposed to the application code:
 
@@ -2528,7 +2678,7 @@ let controller = FetchedRecordsController<Person>(
 
 In general, FetchedRecordsController is designed to respond to changes at *the database layer*, by [notifying](#the-changes-notifications) when *database rows* change location or values.
 
-Changes are not reflected until they are applied in the database by a successful [transaction](#transactions). Transactions can be explicit, or implicit:
+Changes are not reflected until they are applied in the database by a successful [transaction](#transactions-and-savepoints). Transactions can be explicit, or implicit:
 
 ```swift
 try dbQueue.inTransaction { db in
@@ -3031,7 +3181,7 @@ let count2 = dbQueue.inDatabase { db in
 
 SQLite concurrency is a wiiide topic.
 
-First have a detailed look at the full API of [DatabaseQueue](http://cocoadocs.org/docsets/GRDB.swift/0.67.0/Classes/DatabaseQueue.html) and [DatabasePool](http://cocoadocs.org/docsets/GRDB.swift/0.67.0/Classes/DatabasePool.html). Both adopt the [DatabaseReader](http://cocoadocs.org/docsets/GRDB.swift/0.67.0/Protocols/DatabaseReader.html) and [DatabaseWriter](http://cocoadocs.org/docsets/GRDB.swift/0.67.0/Protocols/DatabaseWriter.html) protocols, so that you can write code that targets both classes.
+First have a detailed look at the full API of [DatabaseQueue](http://cocoadocs.org/docsets/GRDB.swift/0.70.0/Classes/DatabaseQueue.html) and [DatabasePool](http://cocoadocs.org/docsets/GRDB.swift/0.70.0/Classes/DatabasePool.html). Both adopt the [DatabaseReader](http://cocoadocs.org/docsets/GRDB.swift/0.70.0/Protocols/DatabaseReader.html) and [DatabaseWriter](http://cocoadocs.org/docsets/GRDB.swift/0.70.0/Protocols/DatabaseWriter.html) protocols, so that you can write code that targets both classes.
 
 If the built-in queues and pools do not fit your needs, or if you can not guarantee that a single queue or pool is accessing your database file, you may have a look at:
 
@@ -3040,7 +3190,7 @@ If the built-in queues and pools do not fit your needs, or if you can not guaran
 - WAL journal mode: https://www.sqlite.org/wal.html
 - Busy handlers: https://www.sqlite.org/c3ref/busy_handler.html
 
-See also [Transactions](#transactions) for more precise handling of transactions, and [Configuration](GRDB/Core/Configuration.swift) for more precise handling of eventual SQLITE_BUSY errors.
+See also [Transactions](#transactions-and-savepoints) for more precise handling of transactions, and [Configuration](GRDB/Core/Configuration.swift) for more precise handling of eventual SQLITE_BUSY errors.
 
 
 FAQ
