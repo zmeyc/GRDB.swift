@@ -13,7 +13,7 @@ public protocol _Association {
     func numberOfColumns(db: Database) throws -> Int
     
     /// TODO
-    var name: String { get }
+    var variantName: String { get }
     
     /// TODO
     var referencedSources: [_SQLSource] { get }
@@ -74,8 +74,8 @@ extension ChainedAssociation : Association {
     }
     
     /// TODO
-    var name: String {
-        return baseAssociation.name
+    var variantName: String {
+        return baseAssociation.variantName
     }
     
     /// TODO
@@ -112,43 +112,38 @@ extension ChainedAssociation : Association {
         let adapter = baseAssociation.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         var variants: [String: RowAdapter] = [:]
         for association in rightAssociations {
-            variants[association.name] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+            variants[association.variantName] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         }
         return adapter.adapterWithVariants(variants)
     }
 }
 
-extension ChainedAssociation : CustomStringConvertible {
-    var description: String {
-        return ([baseAssociation] + rightAssociations).map { "\($0)" }.joinWithSeparator(" ")
-    }
-}
-
 /// TODO
-public struct OneToOneAssociation {
+public struct Join {
     /// TODO
-    public let name: String
+    public let variantName: String
     /// TODO
     public let foreignKey: [String: String] // [leftColumn: rightColumn]
     /// TODO
     public let rightSource: _SQLSource
     
     /// TODO
-    public init(name: String, tableName: String, foreignKey: [String: String]) {
-        self.init(name: name, rightSource: _SQLSourceTable(tableName: tableName, alias: ((name == tableName) ? nil : name)), foreignKey: foreignKey)
+    public init(variantName: String, tableName: String, foreignKey: [String: String]) {
+        // TODO: why this forced alias?
+        self.init(variantName: variantName, rightSource: _SQLSourceTable(tableName: tableName, alias: ((variantName == tableName) ? nil : variantName)), foreignKey: foreignKey)
     }
     
-    init(name: String, rightSource: _SQLSource, foreignKey: [String: String]) {
-        self.name = name
+    init(variantName: String, rightSource: _SQLSource, foreignKey: [String: String]) {
+        self.variantName = variantName
         self.rightSource = rightSource
         self.foreignKey = foreignKey
     }
 }
 
-extension OneToOneAssociation : Association {
+extension Join : Association {
     /// TODO
-    public func fork() -> OneToOneAssociation {
-        return OneToOneAssociation(name: name, rightSource: rightSource.copy(), foreignKey: foreignKey)
+    public func fork() -> Join {
+        return Join(variantName: variantName, rightSource: rightSource.copy(), foreignKey: foreignKey)
     }
     
     /// TODO
@@ -156,7 +151,7 @@ extension OneToOneAssociation : Association {
     public func aliased(alias: String) -> Association {
         let rightSource = self.rightSource.copy()
         rightSource.name = alias
-        return OneToOneAssociation(name: name, rightSource: rightSource, foreignKey: foreignKey)
+        return Join(variantName: variantName, rightSource: rightSource, foreignKey: foreignKey)
     }
     
     /// TODO
@@ -188,12 +183,6 @@ extension OneToOneAssociation : Association {
     public func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
         defer { selectionIndex += 1 }
         return SuffixRowAdapter(fromIndex: columnIndexForSelectionIndex[selectionIndex]!)
-    }
-}
-
-extension OneToOneAssociation : CustomStringConvertible {
-    public var description: String {
-        return "-> \(name):\(rightSource)"
     }
 }
 

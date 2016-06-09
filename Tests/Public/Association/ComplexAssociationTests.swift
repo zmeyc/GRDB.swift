@@ -15,28 +15,28 @@ private final class Person : RowConvertible, TableMapping {
     let birthCountryIsoCode: String?
     
     let birthCountry: Country?
-    static let birthCountry = OneToOneAssociation(name: "birthCountry", tableName: "countries", foreignKey: ["birthCountryIsoCode": "isoCode"])
+    static let birthCountry = Join(variantName: "birthCountry", tableName: "countries", foreignKey: ["birthCountryIsoCode": "isoCode"])
     
     let ruledCountry: Country?
-    static let ruledCountry = OneToOneAssociation(name: "ruledCountry", tableName: "countries", foreignKey: ["id": "leaderID"])
+    static let ruledCountry = Join(variantName: "ruledCountry", tableName: "countries", foreignKey: ["id": "leaderID"])
     
     static func databaseTableName() -> String {
         return "persons"
     }
     
     init(_ row: Row) {
-        print("Person.init:\(row), \(Person.birthCountry.name):\(row.variant(named: Person.birthCountry.name)), \(Person.ruledCountry.name):\(row.variant(named: Person.ruledCountry.name))")
+        print("Person.init:\(row), \(Person.birthCountry.variantName):\(row.variant(named: Person.birthCountry.variantName)), \(Person.ruledCountry.variantName):\(row.variant(named: Person.ruledCountry.variantName))")
         id = row.value(named: "id")
         name = row.value(named: "name")
         birthCountryIsoCode = row.value(named: "birthCountryIsoCode")
         
-        if let birthCountryRow = row.variant(named: Person.birthCountry.name) {
+        if let birthCountryRow = row.variant(named: Person.birthCountry.variantName) {
             birthCountry = Country(birthCountryRow)
         } else {
             birthCountry = nil
         }
         
-        if let ruledCountryRow = row.variant(named: Person.ruledCountry.name) where ruledCountryRow.value(named: "isoCode") != nil {
+        if let ruledCountryRow = row.variant(named: Person.ruledCountry.variantName) where ruledCountryRow.value(named: "isoCode") != nil {
             ruledCountry = Country(ruledCountryRow)
         } else {
             ruledCountry = nil
@@ -50,15 +50,15 @@ private final class Country: RowConvertible {
     let leaderID: Int64?
     
     let leader: Person?
-    static let leader = OneToOneAssociation(name: "leader", tableName: "persons", foreignKey: ["leaderID": "id"])
+    static let leader = Join(variantName: "leader", tableName: "persons", foreignKey: ["leaderID": "id"])
     
     init(_ row: Row) {
-        print("Country.init:\(row), \(Country.leader.name):\(row.variant(named: Country.leader.name))")
+        print("Country.init:\(row), \(Country.leader.variantName):\(row.variant(named: Country.leader.variantName))")
         isoCode = row.value(named: "isoCode")
         name = row.value(named: "name")
         leaderID = row.value(named: "leaderID")
         
-        if let leaderRow = row.variant(named: Country.leader.name) {
+        if let leaderRow = row.variant(named: Country.leader.variantName) {
             leader = Person(leaderRow)
         } else {
             leader = nil
@@ -85,7 +85,7 @@ class ComplexAssociationTests: GRDBTestCase {
             dbQueue.inDatabase { db in
                 let request = Person
                     .include(Person.birthCountry)
-                    .order(sql: "\(Person.birthCountry.name).isoCode")
+                    .order(sql: "\(Person.birthCountry.variantName).isoCode")
                 let persons = request.fetchAll(db)
                 
                 XCTAssertEqual(persons.count, 1)

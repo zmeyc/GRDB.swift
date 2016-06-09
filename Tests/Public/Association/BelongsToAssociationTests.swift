@@ -18,7 +18,7 @@ class BelongsToAssociationTests: GRDBTestCase {
                 try db.execute("INSERT INTO owned (id, ownerID, name) VALUES (101, NULL, 'owned2')")
             }
             let rootTable = QueryInterfaceRequest<Void>(tableName: "owned")
-            let association = OneToOneAssociation(name: "owner", tableName: "owner", foreignKey: ["ownerID": "id"])
+            let association = Join(variantName: "owner", tableName: "owner", foreignKey: ["ownerID": "id"])
             let request = rootTable.include(association)
             XCTAssertEqual(sql(dbQueue, request), "SELECT \"owned\".*, \"owner\".* FROM \"owned\" LEFT JOIN \"owner\" ON \"owner\".\"id\" = \"owned\".\"ownerID\"")
             
@@ -33,7 +33,7 @@ class BelongsToAssociationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: association.name)!
+                let variant = row.variant(named: association.variantName)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", 1), ("name", "owner1")]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
@@ -45,7 +45,7 @@ class BelongsToAssociationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: association.name)!
+                let variant = row.variant(named: association.variantName)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", nil), ("name", nil)]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
@@ -62,7 +62,7 @@ class BelongsToAssociationTests: GRDBTestCase {
                 try db.execute("INSERT INTO persons (id, name, friendID) VALUES (2, 'Barbara', 1)")
             }
             let rootTable = QueryInterfaceRequest<Void>(tableName: "persons")
-            let association = OneToOneAssociation(name: "friend", tableName: "persons", foreignKey: ["friendID": "id"])
+            let association = Join(variantName: "friend", tableName: "persons", foreignKey: ["friendID": "id"])
             let request = rootTable.include(association)
             XCTAssertEqual(sql(dbQueue, request), "SELECT \"persons\".*, \"friend\".* FROM \"persons\" LEFT JOIN \"persons\" \"friend\" ON \"friend\".\"id\" = \"persons\".\"friendID\"")
             
@@ -77,7 +77,7 @@ class BelongsToAssociationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: association.name)!
+                let variant = row.variant(named: association.variantName)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", nil), ("name", nil), ("friendID", nil)]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
@@ -89,7 +89,7 @@ class BelongsToAssociationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: association.name)!
+                let variant = row.variant(named: association.variantName)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", 1), ("name", "Arthur"), ("friendID", nil)]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
@@ -107,7 +107,7 @@ class BelongsToAssociationTests: GRDBTestCase {
                 try db.execute("INSERT INTO persons (id, name, friendID) VALUES (3, 'Craig', 2)")
             }
             let rootTable = QueryInterfaceRequest<Void>(tableName: "persons")
-            let association = OneToOneAssociation(name: "friend", tableName: "persons", foreignKey: ["friendID": "id"])
+            let association = Join(variantName: "friend", tableName: "persons", foreignKey: ["friendID": "id"])
             let request = rootTable.include(association.include(association))
             XCTAssertEqual(sql(dbQueue, request), "SELECT \"persons\".*, \"friend0\".*, \"friend1\".* FROM \"persons\" LEFT JOIN \"persons\" \"friend0\" ON \"friend0\".\"id\" = \"persons\".\"friendID\" LEFT JOIN \"persons\" \"friend1\" ON \"friend1\".\"id\" = \"friend0\".\"friendID\"")
             
@@ -122,12 +122,12 @@ class BelongsToAssociationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: association.name)!
+                let variant = row.variant(named: association.variantName)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", 2), ("name", "Barbara"), ("friendID", 1), ("id", 1), ("name", "Arthur"), ("friendID", nil)]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant2 = variant.variant(named: association.name)!
+                let variant2 = variant.variant(named: association.variantName)!
                 let variant2Pairs: [(String, DatabaseValueConvertible?)] = [("id", 1), ("name", "Arthur"), ("friendID", nil)]
                 XCTAssertEqual(Array(variant2.columnNames), variant2Pairs.map { $0.0 })
                 XCTAssertEqual(Array(variant2.databaseValues), variant2Pairs.map { $1?.databaseValue ?? .Null })

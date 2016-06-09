@@ -306,16 +306,6 @@ extension _SQLSourceTable : _SQLSource {
     }
 }
 
-extension _SQLSourceTable : CustomStringConvertible {
-    var description: String {
-        if let alias = alias {
-            return "\(tableName) AS \(alias)"
-        } else {
-            return tableName
-        }
-    }
-}
-
 final class _SQLSourceQuery {
     private let query: _SQLSelectQuery
     var name: String?
@@ -415,16 +405,9 @@ extension _SQLJoinTree : _SQLSource {
         selectionIndex += 1
         var variants: [String: RowAdapter] = [:]
         for association in associations {
-            variants[association.name] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+            variants[association.variantName] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         }
         return adapter.adapterWithVariants(variants)
-    }
-}
-
-extension _SQLJoinTree : CustomStringConvertible {
-    var description: String {
-        let associationDescriptions = associations.map { "\($0)" }.joinWithSeparator(", ")
-        return "\(leftSource)->(\(associationDescriptions))"
     }
 }
 
