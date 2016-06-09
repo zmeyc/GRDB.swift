@@ -40,6 +40,25 @@ public struct _SQLSelectQuery {
     }
     
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?]) throws -> String {
+        // Prevent source ambiguity
+        if let source = source {
+            var sourcesByName: [String: [_SQLSource]] = [:]
+            for source in source.referencedSources {
+                guard let name = source.name else { continue }
+                var sources = sourcesByName[name] ?? []
+                guard sources.indexOf({ $0 === source }) == nil else {
+                    continue
+                }
+                sources.append(source)
+                sourcesByName[name] = sources
+            }
+            for (name, sources) in sourcesByName where sources.count > 1 {
+                for (index, source) in sources.enumerate() {
+                    source.name = "\(name)\(index)"
+                }
+            }
+        }
+        
         var sql = "SELECT"
         
         if distinct {
@@ -47,7 +66,11 @@ public struct _SQLSelectQuery {
         }
         
         assert(!selection.isEmpty)
-        sql += try " " + selection.map { try $0.resultColumnSQL(db, &bindings) }.joinWithSeparator(", ")
+        if case .Star(let starSource) = selection[0].sqlSelectableKind where starSource === source {
+            sql += " *"
+        } else {
+            sql += try " " + selection.map { try $0.resultColumnSQL(db, &bindings) }.joinWithSeparator(", ")
+        }
         
         if let source = source {
             sql += try " FROM " + source.sql(db, &bindings)
@@ -104,7 +127,7 @@ public struct _SQLSelectQuery {
             return trivialCountQuery
         }
         
-        guard let source = source, case .Table(name: let tableName, alias: let alias) = source else {
+        guard let table = source as? _SQLSourceTable else {
             // SELECT ... FROM (something which is not a table)
             return trivialCountQuery
         }
@@ -113,15 +136,13 @@ public struct _SQLSelectQuery {
         if selection.count == 1 {
             let selectable = self.selection[0]
             switch selectable.sqlSelectableKind {
-            case .Star(sourceName: let sourceName):
+            case .Star(source: let source):
                 guard !distinct else {
                     return trivialCountQuery
                 }
                 
-                if let sourceName = sourceName {
-                    guard sourceName == tableName || sourceName == alias else {
-                        return trivialCountQuery
-                    }
+                guard source === table else {
+                    return trivialCountQuery
                 }
                 
                 // SELECT * FROM tableName ...
@@ -146,7 +167,7 @@ public struct _SQLSelectQuery {
                     // ->
                     // SELECT COUNT(*) FROM tableName ...
                     var countQuery = unorderedQuery
-                    countQuery.selection = [_SQLExpression.Count(_SQLResultColumn.Star(nil))]
+                    countQuery.selection = [_SQLExpression.Count(_SQLResultColumn.Star(table))]
                     return countQuery
                 }
             }
@@ -161,16 +182,17 @@ public struct _SQLSelectQuery {
             // ->
             // SELECT COUNT(*) FROM tableName ...
             var countQuery = unorderedQuery
-            countQuery.selection = [_SQLExpression.Count(_SQLResultColumn.Star(nil))]
+            countQuery.selection = [_SQLExpression.Count(_SQLResultColumn.Star(table))]
             return countQuery
         }
     }
     
     // SELECT COUNT(*) FROM (self)
     private var trivialCountQuery: _SQLSelectQuery {
+        let source = _SQLSourceQuery(query: unorderedQuery, name: nil)
         return _SQLSelectQuery(
-            select: [_SQLExpression.Count(_SQLResultColumn.Star(nil))],
-            from: .Query(query: unorderedQuery, alias: nil))
+            select: [_SQLExpression.Count(_SQLResultColumn.Star(source))],
+            from: source)
     }
     
     /// Remove ordering
@@ -180,30 +202,222 @@ public struct _SQLSelectQuery {
         query.orderings = []
         return query
     }
+    
+    func adapter(statement: SelectStatement) throws -> RowAdapter? {
+        guard let source = source else {
+            return nil
+        }
+        // Our sources define variant based on selection index:
+        //
+        //      SELECT a.*, b.* FROM a JOIN b ...
+        //                  ^ variant at selection index 1
+        //
+        // Now that we have a statement, we can turn those indexes into
+        // column indexes:
+        //
+        //      SELECT a.id, a.name, b.id, b.title FROM a JOIN b ...
+        //                           ^ variant at column index 2
+        var columnIndex = 0
+        var columnIndexForSelectionIndex: [Int: Int] = [:]
+        for (selectionIndex, selectable) in selection.enumerate() {
+            columnIndexForSelectionIndex[selectionIndex] = columnIndex
+            switch selectable.sqlSelectableKind {
+            case .Expression:
+                columnIndex += 1
+            case .Star(let source):
+                columnIndex += try source.numberOfColumns(statement.database)
+            }
+        }
+        
+        return source.adapter(columnIndexForSelectionIndex)
+    }
+    
+    func numberOfColumns(db: Database) throws -> Int {
+        return try selection.reduce(0) { (count, let selectable) in
+            switch selectable.sqlSelectableKind {
+            case .Expression:
+                return count + 1
+            case .Star(let source):
+                return try count + source.numberOfColumns(db)
+            }
+        }
+    }
 }
 
 
 // MARK: - _SQLSource
 
-indirect enum _SQLSource {
-    case Table(name: String, alias: String?)
-    case Query(query: _SQLSelectQuery, alias: String?)
+/// TODO
+public protocol _SQLSource: class {
+    var name: String? { get set }
+    var referencedSources: [_SQLSource] { get }
+    func numberOfColumns(db: Database) throws -> Int
+    func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?]) throws -> String
+    func copy() -> Self
+    
+    func include(association: Association) -> _SQLSource
+    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
+}
+
+final class _SQLSourceTable {
+    private let tableName: String
+    var alias: String?
+    
+    init(tableName: String, alias: String?) {
+        self.tableName = tableName
+        self.alias = alias
+    }
+}
+
+extension _SQLSourceTable : _SQLSource {
+    
+    var name : String? {
+        get { return alias ?? tableName }
+        set { alias = newValue }
+    }
+    
+    var referencedSources: [_SQLSource] {
+        return [self]
+    }
+    
+    func numberOfColumns(db: Database) throws -> Int {
+        return try db.numberOfColumns(tableName)
+    }
     
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?]) throws -> String {
-        switch self {
-        case .Table(let table, let alias):
-            if let alias = alias {
-                return table.quotedDatabaseIdentifier + " AS " + alias.quotedDatabaseIdentifier
-            } else {
-                return table.quotedDatabaseIdentifier
-            }
-        case .Query(let query, let alias):
-            if let alias = alias {
-                return try "(" + query.sql(db, &bindings) + ") AS " + alias.quotedDatabaseIdentifier
-            } else {
-                return try "(" + query.sql(db, &bindings) + ")"
-            }
+        if let alias = alias {
+            return tableName.quotedDatabaseIdentifier + " " + alias.quotedDatabaseIdentifier
+        } else {
+            return tableName.quotedDatabaseIdentifier
         }
+    }
+    
+    func copy() -> _SQLSourceTable {
+        return _SQLSourceTable(tableName: tableName, alias: alias)
+    }
+    
+    func include(association: Association) -> _SQLSource {
+        return _SQLJoinTree(leftSource: self, associations: [association])
+    }
+    
+    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+        return nil
+    }
+}
+
+extension _SQLSourceTable : CustomStringConvertible {
+    var description: String {
+        if let alias = alias {
+            return "\(tableName) AS \(alias)"
+        } else {
+            return tableName
+        }
+    }
+}
+
+final class _SQLSourceQuery {
+    private let query: _SQLSelectQuery
+    var name: String?
+    
+    init(query: _SQLSelectQuery, name: String?) {
+        self.query = query
+        self.name = name
+    }
+}
+
+extension _SQLSourceQuery: _SQLSource {
+    
+    var referencedSources: [_SQLSource] {
+        if let source = query.source {
+            return [self] + source.referencedSources
+        }
+        return [self]
+    }
+    
+    func numberOfColumns(db: Database) throws -> Int {
+        return try query.numberOfColumns(db)
+    }
+
+    func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?]) throws -> String {
+        if let name = name {
+            return try "(" + query.sql(db, &bindings) + ") AS " + name.quotedDatabaseIdentifier
+        } else {
+            return try "(" + query.sql(db, &bindings) + ")"
+        }
+    }
+    
+    func copy() -> _SQLSourceQuery {
+        return _SQLSourceQuery(query: query, name: name)
+    }
+    
+    func include(association: Association) -> _SQLSource {
+        return _SQLJoinTree(leftSource: self, associations: [association])
+    }
+    
+    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+        return nil
+    }
+}
+
+final class _SQLJoinTree {
+    private let leftSource: _SQLSource
+    private let associations: [Association]
+    
+    init(leftSource: _SQLSource, associations: [Association]) {
+        self.leftSource = leftSource
+        self.associations = associations
+    }
+}
+
+extension _SQLJoinTree : _SQLSource {
+    var name : String? {
+        get { return leftSource.name }
+        set { leftSource.name = newValue }
+    }
+    
+    var referencedSources: [_SQLSource] {
+        var result = leftSource.referencedSources
+        for association in associations {
+            result += association.referencedSources
+        }
+        return result
+    }
+    
+    func numberOfColumns(db: Database) throws -> Int {
+        var result = try leftSource.numberOfColumns(db)
+        for association in associations {
+            result += try association.numberOfColumns(db)
+        }
+        return result
+    }
+    
+    func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?]) throws -> String {
+        var sql = try leftSource.sql(db, &bindings)
+        for association in associations {
+            sql += try " " + association.sql(db, &bindings, leftSourceName: leftSource.name!)
+        }
+        return sql
+    }
+    
+    func copy() -> _SQLJoinTree {
+        return _SQLJoinTree(leftSource: leftSource.copy(), associations: associations.map { $0.fork() })
+    }
+    
+    func include(association: Association) -> _SQLSource {
+        var associations = self.associations
+        associations.append(association)
+        return _SQLJoinTree(leftSource: leftSource, associations: associations)
+    }
+    
+    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+        return nil
+    }
+}
+
+extension _SQLJoinTree : CustomStringConvertible {
+    var description: String {
+        let associationDescriptions = associations.map { "\($0)" }.joinWithSeparator(", ")
+        return "\(leftSource)->(\(associationDescriptions))"
     }
 }
 
@@ -640,12 +854,12 @@ public protocol _SQLSelectable {
 ///
 /// See https://github.com/groue/GRDB.swift/#the-query-interface
 public enum _SQLSelectableKind {
+    case Star(_SQLSource)
     case Expression(_SQLExpression)
-    case Star(sourceName: String?)
 }
 
 enum _SQLResultColumn {
-    case Star(String?)
+    case Star(_SQLSource)
     case Expression(expression: _SQLExpression, alias: String)
 }
 
@@ -653,8 +867,8 @@ extension _SQLResultColumn : _SQLSelectable {
     
     func resultColumnSQL(db: Database, inout _ bindings: [DatabaseValueConvertible?]) throws -> String {
         switch self {
-        case .Star(let sourceName):
-            if let sourceName = sourceName {
+        case .Star(let source):
+            if let sourceName = source.name {
                 return sourceName.quotedDatabaseIdentifier + ".*"
             } else {
                 return "*"
@@ -675,8 +889,8 @@ extension _SQLResultColumn : _SQLSelectable {
     
     var sqlSelectableKind: _SQLSelectableKind {
         switch self {
-        case .Star(let sourceName):
-            return .Star(sourceName: sourceName)
+        case .Star(let source):
+            return .Star(source)
         case .Expression(expression: let expression, alias: _):
             return .Expression(expression)
         }

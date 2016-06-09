@@ -8,7 +8,8 @@ public struct QueryInterfaceRequest<T> {
     ///
     /// It represents the SQL query `SELECT * FROM tableName`.
     public init(tableName: String) {
-        self.init(query: _SQLSelectQuery(select: [_SQLResultColumn.Star(nil)], from: .Table(name: tableName, alias: nil)))
+        let source = _SQLSourceTable(tableName: tableName, alias: nil)
+        self.init(query: _SQLSelectQuery(select: [_SQLResultColumn.Star(source)], from: source))
     }
     
     init(query: _SQLSelectQuery) {
@@ -32,9 +33,10 @@ extension QueryInterfaceRequest : FetchRequest {
         return statement
     }
     
-    /// This method is part of the FetchRequest adoption; returns nil
+    /// This method is part of the FetchRequest adoption; returns an eventual
+    /// row adapter.
     public func adapter(statement: SelectStatement) throws -> RowAdapter? {
-        return nil
+        return try query.adapter(statement)
     }
 }
 
@@ -62,7 +64,7 @@ extension QueryInterfaceRequest where T: RowConvertible {
     /// remaining elements are undefined.
     @warn_unused_result
     public func fetch(db: Database) -> DatabaseSequence<T> {
-        return try! T.fetch(selectStatement(db))
+        return T.fetch(db, self)
     }
     
     /// Returns an array of values fetched from a fetch request.
@@ -94,6 +96,17 @@ extension QueryInterfaceRequest where T: RowConvertible {
 extension QueryInterfaceRequest {
     
     // MARK: Request Derivation
+    
+    /// TODO: documentation
+    /// TODO: test
+    @warn_unused_result
+    public func aliased(alias: String) -> QueryInterfaceRequest<T> {
+        var query = self.query
+        let source = query.source!
+        source.name = alias
+        query.source = source
+        return QueryInterfaceRequest(query: query)
+    }
     
     /// Returns a new QueryInterfaceRequest with a new net of selected columns.
     @warn_unused_result
@@ -264,6 +277,13 @@ extension TableMapping {
     @warn_unused_result
     public static func all() -> QueryInterfaceRequest<Self> {
         return QueryInterfaceRequest(tableName: databaseTableName())
+    }
+    
+    /// TODO: documentation
+    /// TODO: test
+    @warn_unused_result
+    public static func aliased(alias: String) -> QueryInterfaceRequest<Self> {
+        return all().aliased(alias)
     }
     
     /// Returns a QueryInterfaceRequest which selects *selection*.
