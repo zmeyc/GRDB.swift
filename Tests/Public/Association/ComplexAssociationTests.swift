@@ -25,7 +25,6 @@ private final class Person : RowConvertible, TableMapping {
     }
     
     init(_ row: Row) {
-        print("Person.init:\(row), \(Person.birthCountry.variantName):\(row.variant(named: Person.birthCountry.variantName)), \(Person.ruledCountry.variantName):\(row.variant(named: Person.ruledCountry.variantName))")
         id = row.value(named: "id")
         name = row.value(named: "name")
         birthCountryIsoCode = row.value(named: "birthCountryIsoCode")
@@ -53,7 +52,6 @@ private final class Country: RowConvertible {
     static let leader = Join(variantName: "leader", tableName: "persons", foreignKey: ["leaderID": "id"])
     
     init(_ row: Row) {
-        print("Country.init:\(row), \(Country.leader.variantName):\(row.variant(named: Country.leader.variantName))")
         isoCode = row.value(named: "isoCode")
         name = row.value(named: "name")
         leaderID = row.value(named: "leaderID")
@@ -69,7 +67,6 @@ private final class Country: RowConvertible {
 class ComplexAssociationTests: GRDBTestCase {
     func testDefaultAssociationAlias() {
         assertNoError {
-            dbConfiguration.trace = { print($0) }
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
                 try db.execute("CREATE TABLE countries (isoCode TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL)")
@@ -98,7 +95,6 @@ class ComplexAssociationTests: GRDBTestCase {
     
     func testExplicitAssociationAlias() {
         assertNoError {
-            dbConfiguration.trace = { print($0) }
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
                 try db.execute("CREATE TABLE countries (isoCode TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL)")
@@ -127,7 +123,6 @@ class ComplexAssociationTests: GRDBTestCase {
     
     func testPersonToRuledCountryAndToBirthCountry() {
         assertNoError {
-            dbConfiguration.trace = { print($0) }
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
                 try db.execute("CREATE TABLE persons (id INTEGER PRIMARY KEY, name TEXT NOT NULL, birthCountryIsoCode TEXT NOT NULL REFERENCES countries(isoCode))")
@@ -171,7 +166,6 @@ class ComplexAssociationTests: GRDBTestCase {
     
     func testPersonToRuledCountryAndToBirthCountryToLeaderToRuledCountry() {
         assertNoError {
-            dbConfiguration.trace = { print($0) }
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
                 try db.execute("CREATE TABLE persons (id INTEGER PRIMARY KEY, name TEXT NOT NULL, birthCountryIsoCode TEXT NOT NULL REFERENCES countries(isoCode))")

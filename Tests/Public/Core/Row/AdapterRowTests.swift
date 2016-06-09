@@ -520,9 +520,6 @@ class AdapterRowTests: GRDBTestCase {
                 (row1.variant(named: "sub"), row4.variant(named: "sub"), true),
                 (row1.variant(named: "sub"), row5.variant(named: "sub"), false)]
             for (lrow, rrow, equal) in tests {
-                print(lrow)
-                print(rrow)
-                print(lrow == rrow)
                 if equal {
                     XCTAssertEqual(lrow, rrow)
                 } else {

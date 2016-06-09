@@ -41,7 +41,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments([])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -51,7 +51,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments(["foo"])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -61,7 +61,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments(["foo", 1, "bar"])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -71,7 +71,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments([:])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -81,7 +81,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments(["firstName": "foo", "age": 1])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -165,7 +165,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments([])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -175,7 +175,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments(["foo"])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -185,7 +185,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments(["foo", 1, "baz"])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -195,7 +195,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments([:])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -205,7 +205,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments(["firstName": "foo"])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -297,7 +297,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments([])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -307,7 +307,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments(["foo"])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -317,7 +317,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments(["foo", 1, "baz"])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -327,7 +327,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments([:])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
@@ -337,7 +337,7 @@ class StatementArgumentsTests: GRDBTestCase {
                     try statement.validateArguments(["name": "foo"])
                     XCTFail("Expected error")
                 } catch let error as DatabaseError {
-                    print(error)
+                    // TODO: test error
                 } catch {
                     XCTFail("Unexpected error: \(error)")
                 }
