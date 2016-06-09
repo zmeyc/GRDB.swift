@@ -405,7 +405,7 @@ extension _SQLJoinTree : _SQLSource {
         selectionIndex += 1
         var variants: [String: RowAdapter] = [:]
         for association in associations {
-            variants[association.variantName] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+            variants[association.name] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         }
         return adapter.adapterWithVariants(variants)
     }

@@ -13,7 +13,7 @@ public protocol _Association {
     func numberOfColumns(db: Database) throws -> Int
     
     /// TODO
-    var variantName: String { get }
+    var name: String { get }
     
     /// TODO
     var referencedSources: [_SQLSource] { get }
@@ -74,8 +74,8 @@ extension ChainedAssociation : Association {
     }
     
     /// TODO
-    var variantName: String {
-        return baseAssociation.variantName
+    var name: String {
+        return baseAssociation.name
     }
     
     /// TODO
@@ -112,7 +112,7 @@ extension ChainedAssociation : Association {
         let adapter = baseAssociation.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         var variants: [String: RowAdapter] = [:]
         for association in rightAssociations {
-            variants[association.variantName] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+            variants[association.name] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         }
         return adapter.adapterWithVariants(variants)
     }
@@ -121,20 +121,20 @@ extension ChainedAssociation : Association {
 /// TODO
 public struct Join {
     /// TODO
-    public let variantName: String
+    public let name: String
     /// TODO
     public let foreignKey: [String: String] // [leftColumn: rightColumn]
     /// TODO
     public let rightSource: _SQLSource
     
     /// TODO
-    public init(variantName: String, tableName: String, foreignKey: [String: String]) {
+    public init(name: String, tableName: String, foreignKey: [String: String]) {
         // TODO: why this forced alias?
-        self.init(variantName: variantName, rightSource: _SQLSourceTable(tableName: tableName, alias: ((variantName == tableName) ? nil : variantName)), foreignKey: foreignKey)
+        self.init(name: name, rightSource: _SQLSourceTable(tableName: tableName, alias: ((name == tableName) ? nil : name)), foreignKey: foreignKey)
     }
     
-    init(variantName: String, rightSource: _SQLSource, foreignKey: [String: String]) {
-        self.variantName = variantName
+    init(name: String, rightSource: _SQLSource, foreignKey: [String: String]) {
+        self.name = name
         self.rightSource = rightSource
         self.foreignKey = foreignKey
     }
@@ -143,7 +143,7 @@ public struct Join {
 extension Join : Association {
     /// TODO
     public func fork() -> Join {
-        return Join(variantName: variantName, rightSource: rightSource.copy(), foreignKey: foreignKey)
+        return Join(name: name, rightSource: rightSource.copy(), foreignKey: foreignKey)
     }
     
     /// TODO
@@ -151,7 +151,7 @@ extension Join : Association {
     public func aliased(alias: String) -> Association {
         let rightSource = self.rightSource.copy()
         rightSource.name = alias
-        return Join(variantName: variantName, rightSource: rightSource, foreignKey: foreignKey)
+        return Join(name: name, rightSource: rightSource, foreignKey: foreignKey)
     }
     
     /// TODO
