@@ -110,7 +110,8 @@ class ComplexAssociationTests: GRDBTestCase {
             dbQueue.inDatabase { db in
                 let request = Person
                     .include(Person.birthCountry.aliased("foo"))
-                    .filter(sql: "foo.isoCode == 'FR'") // TODO: pass "FR" as an argument
+                    .filter(sql: "foo.isoCode == 'FR'") // TODO1: pass "FR" as an argument
+                                                        // TODO2: make .filter(SQLColumn("foo.isoCode") == "FR") possible. Today it fails.
                 let persons = request.fetchAll(db)
                 
                 XCTAssertEqual(persons.count, 1)
