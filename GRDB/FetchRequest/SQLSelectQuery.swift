@@ -229,7 +229,8 @@ public struct _SQLSelectQuery {
             }
         }
         
-        return source.adapter(columnIndexForSelectionIndex)
+        var selectionIndex = 0
+        return source.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
     }
     
     func numberOfColumns(db: Database) throws -> Int {
@@ -256,7 +257,7 @@ public protocol _SQLSource: class {
     func copy() -> Self
     
     func include(association: Association) -> _SQLSource
-    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
+    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
 }
 
 final class _SQLSourceTable {
@@ -300,7 +301,7 @@ extension _SQLSourceTable : _SQLSource {
         return _SQLJoinTree(leftSource: self, associations: [association])
     }
     
-    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         return nil
     }
 }
@@ -354,7 +355,7 @@ extension _SQLSourceQuery: _SQLSource {
         return _SQLJoinTree(leftSource: self, associations: [association])
     }
     
-    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         return nil
     }
 }
@@ -409,8 +410,14 @@ extension _SQLJoinTree : _SQLSource {
         return _SQLJoinTree(leftSource: leftSource, associations: associations)
     }
     
-    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
-        return nil
+    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+        let adapter = SuffixRowAdapter(fromIndex: selectionIndex)
+        selectionIndex += 1
+        var variants: [String: RowAdapter] = [:]
+        for association in associations {
+            variants[association.name] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+        }
+        return adapter.adapterWithVariants(variants)
     }
 }
 

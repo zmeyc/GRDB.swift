@@ -13,6 +13,9 @@ public protocol _Association {
     func numberOfColumns(db: Database) throws -> Int
     
     /// TODO
+    var name: String { get }
+    
+    /// TODO
     var referencedSources: [_SQLSource] { get }
     
     /// TODO
@@ -23,6 +26,9 @@ public protocol _Association {
     
     /// TODO
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String) throws -> String
+    
+    /// TODO
+    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter
 }
 
 /// TODO
@@ -68,6 +74,11 @@ extension ChainedAssociation : Association {
     }
     
     /// TODO
+    var name: String {
+        return baseAssociation.name
+    }
+    
+    /// TODO
     var referencedSources: [_SQLSource] {
         return rightAssociations.reduce(baseAssociation.referencedSources) { $0 + $1.referencedSources }
     }
@@ -94,6 +105,16 @@ extension ChainedAssociation : Association {
                 }.joinWithSeparator(" ")
         }
         return sql
+    }
+    
+    /// TODO
+    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
+        let adapter = baseAssociation.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+        var variants: [String: RowAdapter] = [:]
+        for association in rightAssociations {
+            variants[association.name] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+        }
+        return adapter.adapterWithVariants(variants)
     }
 }
 
@@ -134,7 +155,7 @@ extension OneToOneAssociation : Association {
     @warn_unused_result
     public func aliased(alias: String) -> Association {
         let rightSource = self.rightSource.copy()
-        rightSource.name = name
+        rightSource.name = alias
         return OneToOneAssociation(name: name, rightSource: rightSource, foreignKey: foreignKey)
     }
     
@@ -161,6 +182,12 @@ extension OneToOneAssociation : Association {
             "\(rightSource.name!.quotedDatabaseIdentifier).\(rightColumn.quotedDatabaseIdentifier) = \(leftSourceName.quotedDatabaseIdentifier).\(leftColumn.quotedDatabaseIdentifier)"
         }).joinWithSeparator(" AND ")
         return sql
+    }
+    
+    /// TODO
+    public func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
+        defer { selectionIndex += 1 }
+        return SuffixRowAdapter(fromIndex: columnIndexForSelectionIndex[selectionIndex]!)
     }
 }
 
