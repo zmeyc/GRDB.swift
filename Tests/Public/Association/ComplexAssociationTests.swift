@@ -125,102 +125,102 @@ class ComplexAssociationTests: GRDBTestCase {
         }
     }
     
-//    func testPersonToRuledCountryAndToBirthCountry() {
-//        assertNoError {
-//            dbConfiguration.trace = { print($0) }
-//            let dbQueue = try makeDatabaseQueue()
-//            try dbQueue.inDatabase { db in
-//                try db.execute("CREATE TABLE persons (id INTEGER PRIMARY KEY, name TEXT NOT NULL, birthCountryIsoCode TEXT NOT NULL REFERENCES countries(isoCode))")
-//                try db.execute("CREATE TABLE countries (isoCode TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL, leaderID INTEGER REFERENCES persons(id))")
-//            }
-//            
-//            try dbQueue.inTransaction { db in
-//                try db.execute("PRAGMA defer_foreign_keys = ON")
-//                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [1, "Arthur", "FR"])
-//                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [2, "Barbara", "FR"])
-//                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [3, "John", "US"])
-//                try db.execute("INSERT INTO countries (isoCode, name, leaderID) VALUES (?, ?, ?)", arguments: ["FR", "France", 2])
-//                try db.execute("INSERT INTO countries (isoCode, name, leaderID) VALUES (?, ?, ?)", arguments: ["US", "United States", 3])
-//                return .Commit
-//            }
-//            
-//            dbQueue.inDatabase { db in
-//                let request = Person
-//                    .include(Person.ruledCountry)
-//                    .include(Person.birthCountry)
-//                
-//                // TODO: sort persons using SQL
-//                let persons = request.fetchAll(db).sort { $0.id < $1.id }
-//                
-//                XCTAssertEqual(persons.count, 3)
-//                
-//                XCTAssertEqual(persons[0].name, "Arthur")
-//                XCTAssertNil(persons[0].ruledCountry)
-//                XCTAssertEqual(persons[0].birthCountry!.name, "France")
-//                
-//                XCTAssertEqual(persons[1].name, "Barbara")
-//                XCTAssertEqual(persons[1].ruledCountry!.name, "France")
-//                XCTAssertEqual(persons[1].birthCountry!.name, "France")
-//                
-//                XCTAssertEqual(persons[2].name, "John")
-//                XCTAssertEqual(persons[2].ruledCountry!.name, "United States")
-//                XCTAssertEqual(persons[2].birthCountry!.name, "United States")
-//            }
-//        }
-//    }
-//    
-//    func testPersonToRuledCountryAndToBirthCountryToLeaderToRuledCountry() {
-//        assertNoError {
-//            dbConfiguration.trace = { print($0) }
-//            let dbQueue = try makeDatabaseQueue()
-//            try dbQueue.inDatabase { db in
-//                try db.execute("CREATE TABLE persons (id INTEGER PRIMARY KEY, name TEXT NOT NULL, birthCountryIsoCode TEXT NOT NULL REFERENCES countries(isoCode))")
-//                try db.execute("CREATE TABLE countries (isoCode TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL, leaderID INTEGER REFERENCES persons(id))")
-//            }
-//            
-//            try dbQueue.inTransaction { db in
-//                try db.execute("PRAGMA defer_foreign_keys = ON")
-//                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [1, "Arthur", "FR"])
-//                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [2, "Barbara", "FR"])
-//                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [3, "John", "US"])
-//                try db.execute("INSERT INTO countries (isoCode, name, leaderID) VALUES (?, ?, ?)", arguments: ["FR", "France", 2])
-//                try db.execute("INSERT INTO countries (isoCode, name, leaderID) VALUES (?, ?, ?)", arguments: ["US", "United States", 3])
-//                return .Commit
-//            }
-//            
-//            dbQueue.inDatabase { db in
-//                let request = Person
-//                    .include(Person.ruledCountry
-//                        .include(Country.leader))
-//                    .include(Person.birthCountry
-//                        .include(Country.leader
-//                            .include(Person.ruledCountry)))
-//                
-//                // TODO: sort persons using SQL
-//                let persons = request.fetchAll(db).sort { $0.id < $1.id }
-//                
-//                XCTAssertEqual(persons.count, 3)
-//                
-//                XCTAssertEqual(persons[0].name, "Arthur")
-//                XCTAssertNil(persons[0].ruledCountry)
-//                XCTAssertEqual(persons[0].birthCountry!.name, "France")
-//                XCTAssertEqual(persons[0].birthCountry!.leader!.name, "Barbara")
-//                XCTAssertEqual(persons[0].birthCountry!.leader!.ruledCountry!.name, "France")
-//                
-//                XCTAssertEqual(persons[1].name, "Barbara")
-//                XCTAssertEqual(persons[1].ruledCountry!.name, "France")
-//                XCTAssertEqual(persons[1].ruledCountry!.leader!.name, "Barbara")
-//                XCTAssertEqual(persons[1].birthCountry!.name, "France")
-//                XCTAssertEqual(persons[1].birthCountry!.leader!.name, "Barbara")
-//                XCTAssertEqual(persons[1].birthCountry!.leader!.ruledCountry!.name, "France")
-//                
-//                XCTAssertEqual(persons[2].name, "John")
-//                XCTAssertEqual(persons[2].ruledCountry!.name, "United States")
-//                XCTAssertEqual(persons[2].ruledCountry!.leader!.name, "John")
-//                XCTAssertEqual(persons[2].birthCountry!.name, "United States")
-//                XCTAssertEqual(persons[2].birthCountry!.leader!.name, "John")
-//                XCTAssertEqual(persons[2].birthCountry!.leader!.ruledCountry!.name, "United States")
-//            }
-//        }
-//    }
+    func testPersonToRuledCountryAndToBirthCountry() {
+        assertNoError {
+            dbConfiguration.trace = { print($0) }
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE persons (id INTEGER PRIMARY KEY, name TEXT NOT NULL, birthCountryIsoCode TEXT NOT NULL REFERENCES countries(isoCode))")
+                try db.execute("CREATE TABLE countries (isoCode TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL, leaderID INTEGER REFERENCES persons(id))")
+            }
+            
+            try dbQueue.inTransaction { db in
+                try db.execute("PRAGMA defer_foreign_keys = ON")
+                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [1, "Arthur", "FR"])
+                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [2, "Barbara", "FR"])
+                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [3, "John", "US"])
+                try db.execute("INSERT INTO countries (isoCode, name, leaderID) VALUES (?, ?, ?)", arguments: ["FR", "France", 2])
+                try db.execute("INSERT INTO countries (isoCode, name, leaderID) VALUES (?, ?, ?)", arguments: ["US", "United States", 3])
+                return .Commit
+            }
+            
+            dbQueue.inDatabase { db in
+                let request = Person
+                    .include(Person.ruledCountry)
+                    .include(Person.birthCountry)
+                
+                // TODO: sort persons using SQL
+                let persons = request.fetchAll(db).sort { $0.id < $1.id }
+                
+                XCTAssertEqual(persons.count, 3)
+                
+                XCTAssertEqual(persons[0].name, "Arthur")
+                XCTAssertNil(persons[0].ruledCountry)
+                XCTAssertEqual(persons[0].birthCountry!.name, "France")
+                
+                XCTAssertEqual(persons[1].name, "Barbara")
+                XCTAssertEqual(persons[1].ruledCountry!.name, "France")
+                XCTAssertEqual(persons[1].birthCountry!.name, "France")
+                
+                XCTAssertEqual(persons[2].name, "John")
+                XCTAssertEqual(persons[2].ruledCountry!.name, "United States")
+                XCTAssertEqual(persons[2].birthCountry!.name, "United States")
+            }
+        }
+    }
+    
+    func testPersonToRuledCountryAndToBirthCountryToLeaderToRuledCountry() {
+        assertNoError {
+            dbConfiguration.trace = { print($0) }
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE persons (id INTEGER PRIMARY KEY, name TEXT NOT NULL, birthCountryIsoCode TEXT NOT NULL REFERENCES countries(isoCode))")
+                try db.execute("CREATE TABLE countries (isoCode TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL, leaderID INTEGER REFERENCES persons(id))")
+            }
+            
+            try dbQueue.inTransaction { db in
+                try db.execute("PRAGMA defer_foreign_keys = ON")
+                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [1, "Arthur", "FR"])
+                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [2, "Barbara", "FR"])
+                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (?, ?, ?)", arguments: [3, "John", "US"])
+                try db.execute("INSERT INTO countries (isoCode, name, leaderID) VALUES (?, ?, ?)", arguments: ["FR", "France", 2])
+                try db.execute("INSERT INTO countries (isoCode, name, leaderID) VALUES (?, ?, ?)", arguments: ["US", "United States", 3])
+                return .Commit
+            }
+            
+            dbQueue.inDatabase { db in
+                let request = Person
+                    .include(Person.ruledCountry
+                        .include(Country.leader))
+                    .include(Person.birthCountry
+                        .include(Country.leader
+                            .include(Person.ruledCountry)))
+                
+                // TODO: sort persons using SQL
+                let persons = request.fetchAll(db).sort { $0.id < $1.id }
+                
+                XCTAssertEqual(persons.count, 3)
+                
+                XCTAssertEqual(persons[0].name, "Arthur")
+                XCTAssertNil(persons[0].ruledCountry)
+                XCTAssertEqual(persons[0].birthCountry!.name, "France")
+                XCTAssertEqual(persons[0].birthCountry!.leader!.name, "Barbara")
+                XCTAssertEqual(persons[0].birthCountry!.leader!.ruledCountry!.name, "France")
+                
+                XCTAssertEqual(persons[1].name, "Barbara")
+                XCTAssertEqual(persons[1].ruledCountry!.name, "France")
+                XCTAssertEqual(persons[1].ruledCountry!.leader!.name, "Barbara")
+                XCTAssertEqual(persons[1].birthCountry!.name, "France")
+                XCTAssertEqual(persons[1].birthCountry!.leader!.name, "Barbara")
+                XCTAssertEqual(persons[1].birthCountry!.leader!.ruledCountry!.name, "France")
+                
+                XCTAssertEqual(persons[2].name, "John")
+                XCTAssertEqual(persons[2].ruledCountry!.name, "United States")
+                XCTAssertEqual(persons[2].ruledCountry!.leader!.name, "John")
+                XCTAssertEqual(persons[2].birthCountry!.name, "United States")
+                XCTAssertEqual(persons[2].birthCountry!.leader!.name, "John")
+                XCTAssertEqual(persons[2].birthCountry!.leader!.ruledCountry!.name, "United States")
+            }
+        }
+    }
 }
