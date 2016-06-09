@@ -110,13 +110,22 @@ class ComplexAssociationTests: GRDBTestCase {
             dbQueue.inDatabase { db in
                 let request = Person
                     .include(Person.birthCountry.aliased("foo"))
-                    .order(sql: "foo.isoCode")
+                    .filter(sql: "foo.isoCode == 'FR'") // TODO: pass "FR" as an argument
                 let persons = request.fetchAll(db)
                 
                 XCTAssertEqual(persons.count, 1)
                 
                 XCTAssertEqual(persons[0].name, "Arthur")
                 XCTAssertEqual(persons[0].birthCountry!.name, "France")
+            }
+
+            dbQueue.inDatabase { db in
+                let request = Person
+                    .include(Person.birthCountry.aliased("foo"))
+                    .filter(sql: "foo.isoCode == 'US'") // TODO: pass "US" as an argument
+                let persons = request.fetchAll(db)
+                
+                XCTAssertEqual(persons.count, 0)
             }
         }
     }

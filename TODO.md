@@ -1,4 +1,4 @@
-– [ ] Associations: include two chained associations
+– [X] Associations: include two chained associations
 – [ ] Associations: mandatory true/false (JOIN vs LEFT JOIN)
 – [ ] Associations: allow to give an alias, so that one can use an alias in an ORDER BY clause
     - [X] Person.include(Person.birthCountry.aliased("customCountryAlias"))
