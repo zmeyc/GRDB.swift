@@ -28,7 +28,7 @@ public protocol _Relation {
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String) throws -> String
     
     /// TODO
-    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter
+    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> (adapter: RowAdapter, empty: Bool)
 }
 
 /// TODO
@@ -47,14 +47,14 @@ extension Relation {
     /// extension Method
     @warn_unused_result
     public func include(relations: [Relation]) -> Relation {
-        return ChainedRelation(baseRelation: self, rightRelations: relations.map { JoinedRelation(included: true, relation: $0.fork()) })
+        return ChainedRelation(baseRelation: self, joinedRelations: relations.map { JoinedRelation(included: true, relation: $0.fork()) })
     }
     
     /// TODO
     /// extension Method
     @warn_unused_result
     public func join(relations: [Relation]) -> Relation {
-        return ChainedRelation(baseRelation: self, rightRelations: relations.map { JoinedRelation(included: false, relation: $0.fork()) })
+        return ChainedRelation(baseRelation: self, joinedRelations: relations.map { JoinedRelation(included: false, relation: $0.fork()) })
     }
 }
 
@@ -85,24 +85,24 @@ struct JoinedRelation {
 
 struct ChainedRelation {
     let baseRelation: Relation
-    let rightRelations: [JoinedRelation]
+    let joinedRelations: [JoinedRelation]
 }
 
 extension ChainedRelation : Relation {
     /// TODO
     func fork() -> ChainedRelation {
-        return ChainedRelation(baseRelation: baseRelation.fork(), rightRelations: rightRelations.map { $0.fork() })
+        return ChainedRelation(baseRelation: baseRelation.fork(), joinedRelations: joinedRelations.map { $0.fork() })
     }
     
     /// TODO
     func aliased(alias: String) -> Relation {
-        return ChainedRelation(baseRelation: baseRelation.aliased(alias), rightRelations: rightRelations)
+        return ChainedRelation(baseRelation: baseRelation.aliased(alias), joinedRelations: joinedRelations)
     }
     
     /// TODO
     @warn_unused_result
     func numberOfColumns(db: Database) throws -> Int {
-        return try rightRelations.reduce(baseRelation.numberOfColumns(db)) { try $0 + $1.numberOfColumns(db) }
+        return try joinedRelations.reduce(baseRelation.numberOfColumns(db)) { try $0 + $1.numberOfColumns(db) }
     }
     
     /// TODO
@@ -112,7 +112,7 @@ extension ChainedRelation : Relation {
     
     /// TODO
     var referencedSources: [_SQLSource] {
-        return rightRelations.reduce(baseRelation.referencedSources) { $0 + $1.relation.referencedSources }
+        return joinedRelations.reduce(baseRelation.referencedSources) { $0 + $1.relation.referencedSources }
     }
     
     /// TODO
@@ -122,7 +122,7 @@ extension ChainedRelation : Relation {
     
     /// TODO
     var selection: [_SQLSelectable] {
-        return rightRelations.reduce(baseRelation.selection) { (selection, joinedRelation) in
+        return joinedRelations.reduce(baseRelation.selection) { (selection, joinedRelation) in
             selection + joinedRelation.selection
         }
     }
@@ -130,9 +130,9 @@ extension ChainedRelation : Relation {
     /// TODO
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String) throws -> String {
         var sql = try baseRelation.sql(db, &bindings, leftSourceName: leftSourceName)
-        if !rightRelations.isEmpty {
+        if !joinedRelations.isEmpty {
             sql += " "
-            sql += try rightRelations.map {
+            sql += try joinedRelations.map {
                 try $0.relation.sql(db, &bindings, leftSourceName: baseRelation.rightSource.name!)
                 }.joinWithSeparator(" ")
         }
@@ -140,12 +140,18 @@ extension ChainedRelation : Relation {
     }
     
     /// TODO
-    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
-        let adapter = baseRelation.adapter(included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
-        let variants = Dictionary(keyValueSequence: rightRelations.map {
-            ($0.relation.name, $0.relation.adapter($0.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex))
-        })
-        return adapter.adapterWithVariants(variants)
+    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> (adapter: RowAdapter, empty: Bool) {
+        let (baseAdapter, baseEmpty) = baseRelation.adapter(included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+        
+        var empty = baseEmpty
+        var variants: [String: RowAdapter] = [:]
+        for joinedRelation in joinedRelations {
+            let (variantAdapter, variantEmpty) = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+            variants[joinedRelation.relation.name] = variantAdapter
+            empty = empty && variantEmpty
+        }
+        
+        return (adapter: baseAdapter.adapterWithVariants(variants), empty: empty)
     }
 }
 
@@ -212,12 +218,12 @@ extension ForeignRelation : Relation {
     }
     
     /// TODO
-    public func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
+    public func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> (adapter: RowAdapter, empty: Bool) {
         if included {
             defer { selectionIndex += 1 }
-            return SuffixRowAdapter(fromIndex: columnIndexForSelectionIndex[selectionIndex]!)
+            return (adapter: SuffixRowAdapter(fromIndex: columnIndexForSelectionIndex[selectionIndex]!), empty: false)
         } else {
-            return ColumnMapping([:])
+            return (adapter: ColumnMapping([:]), empty: true)
         }
     }
 }

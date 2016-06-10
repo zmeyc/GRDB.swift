@@ -229,8 +229,7 @@ public struct _SQLSelectQuery {
             }
         }
         
-        var selectionIndex = 0
-        return source.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+        return source.adapter(columnIndexForSelectionIndex)
     }
     
     func numberOfColumns(db: Database) throws -> Int {
@@ -257,7 +256,7 @@ public protocol _SQLSource: class {
     func fork() -> Self
     func include(relation: Relation) -> _SQLSource
     func join(relation: Relation) -> _SQLSource
-    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
+    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
 }
 
 final class _SQLSourceTable {
@@ -305,7 +304,7 @@ extension _SQLSourceTable : _SQLSource {
         return _SQLRelationTree(leftSource: self, joinedRelations: [JoinedRelation(included: false, relation: relation)])
     }
     
-    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         return nil
     }
 }
@@ -353,7 +352,7 @@ extension _SQLSourceQuery: _SQLSource {
         return _SQLRelationTree(leftSource: self, joinedRelations: [JoinedRelation(included: false, relation: relation)])
     }
     
-    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         return nil
     }
 }
@@ -414,14 +413,19 @@ extension _SQLRelationTree : _SQLSource {
         return _SQLRelationTree(leftSource: leftSource, joinedRelations: joinedRelations)
     }
     
-    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
-        let adapter = SuffixRowAdapter(fromIndex: selectionIndex)
-        selectionIndex += 1
+    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+        var selectionIndex = 1
+        var empty = true
         var variants: [String: RowAdapter] = [:]
         for joinedRelation in joinedRelations {
-            variants[joinedRelation.relation.name] = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+            let (variantAdapter, variantEmpty) = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+            if !variantEmpty {
+                variants[joinedRelation.relation.name] = variantAdapter
+                empty = false
+            }
         }
-        return adapter.adapterWithVariants(variants)
+        if empty { return nil }
+        return SuffixRowAdapter(fromIndex: 0).adapterWithVariants(variants)
     }
 }
 
