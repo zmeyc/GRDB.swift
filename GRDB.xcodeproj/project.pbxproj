@@ -1747,9 +1747,9 @@
 		56300B6D1C53F592005A543B /* FetchRequest */ = {
 			isa = PBXGroup;
 			children = (
-				561150961D0981C80055F80F /* Relation.swift */,
 				5687358B1CEDC334009B9116 /* FetchRequest.swift */,
 				56300B6F1C53F592005A543B /* QueryInterfaceRequest.swift */,
+				561150961D0981C80055F80F /* Relation.swift */,
 				5605F1891C6B1A8700235C62 /* SQLCollation.swift */,
 				5605F18A1C6B1A8700235C62 /* SQLFunction.swift */,
 				5605F18B1C6B1A8700235C62 /* SQLOperator.swift */,

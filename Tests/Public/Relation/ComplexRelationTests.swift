@@ -79,12 +79,19 @@ class ComplexRelationTests: GRDBTestCase {
                 return .Commit
             }
             
+            let request = Person
+                .include(Person.birthCountry)
+                .filter(sql: "\(Person.birthCountry.name).isoCode == 'FR'") // TODO1: pass "FR" as an argument
+            
+            XCTAssertEqual(
+                sql(dbQueue, request),
+                "SELECT \"persons\".*, \"birthCountry\".* " +
+                "FROM \"persons\" " +
+                "LEFT JOIN \"countries\" \"birthCountry\" ON \"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\" " +
+                "WHERE birthCountry.isoCode == \'FR\'")
+            
             dbQueue.inDatabase { db in
-                let request = Person
-                    .include(Person.birthCountry)
-                    .order(sql: "\(Person.birthCountry.name).isoCode")
                 let persons = request.fetchAll(db)
-                
                 XCTAssertEqual(persons.count, 1)
                 
                 XCTAssertEqual(persons[0].name, "Arthur")
@@ -107,13 +114,19 @@ class ComplexRelationTests: GRDBTestCase {
                 return .Commit
             }
             
+            let request = Person
+                .include(Person.birthCountry.aliased("foo"))
+                .filter(sql: "foo.isoCode == 'FR'") // TODO1: pass "FR" as an argument
+                                                    // TODO2: make .filter(SQLColumn("foo.isoCode") == "FR") possible. Today it fails.
+            XCTAssertEqual(
+                sql(dbQueue, request),
+                "SELECT \"persons\".*, \"foo\".* " +
+                "FROM \"persons\" " +
+                "LEFT JOIN \"countries\" \"foo\" ON \"foo\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\" " +
+                "WHERE foo.isoCode == \'FR\'")
+            
             dbQueue.inDatabase { db in
-                let request = Person
-                    .include(Person.birthCountry.aliased("foo"))
-                    .filter(sql: "foo.isoCode == 'FR'") // TODO1: pass "FR" as an argument
-                                                        // TODO2: make .filter(SQLColumn("foo.isoCode") == "FR") possible. Today it fails.
                 let persons = request.fetchAll(db)
-                
                 XCTAssertEqual(persons.count, 1)
                 
                 XCTAssertEqual(persons[0].name, "Arthur")
@@ -149,11 +162,18 @@ class ComplexRelationTests: GRDBTestCase {
                 return .Commit
             }
             
+            let request = Person
+                .include(Person.ruledCountry)
+                .include(Person.birthCountry)
+            
+            XCTAssertEqual(
+                sql(dbQueue, request),
+                "SELECT \"persons\".*, \"ruledCountry\".*, \"birthCountry\".* " +
+                "FROM \"persons\" " +
+                "LEFT JOIN \"countries\" \"ruledCountry\" ON \"ruledCountry\".\"leaderID\" = \"persons\".\"id\" " +
+                "LEFT JOIN \"countries\" \"birthCountry\" ON \"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\"")
+            
             dbQueue.inDatabase { db in
-                let request = Person
-                    .include(Person.ruledCountry)
-                    .include(Person.birthCountry)
-                
                 // TODO: sort persons using SQL
                 let persons = request.fetchAll(db).sort { $0.id < $1.id }
                 
@@ -192,14 +212,24 @@ class ComplexRelationTests: GRDBTestCase {
                 return .Commit
             }
             
+            let request = Person
+                .include(Person.ruledCountry
+                    .include(Country.leader))
+                .include(Person.birthCountry
+                    .include(Country.leader
+                        .include(Person.ruledCountry)))
+            
+            XCTAssertEqual(
+                sql(dbQueue, request),
+                "SELECT \"persons\".*, \"ruledCountry0\".*, \"leader0\".*, \"birthCountry\".*, \"leader1\".*, \"ruledCountry1\".* " +
+                "FROM \"persons\" " +
+                "LEFT JOIN \"countries\" \"ruledCountry0\" ON \"ruledCountry0\".\"leaderID\" = \"persons\".\"id\" " +
+                "LEFT JOIN \"persons\" \"leader0\" ON \"leader0\".\"id\" = \"ruledCountry0\".\"leaderID\" " +
+                "LEFT JOIN \"countries\" \"birthCountry\" ON \"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\" " +
+                "LEFT JOIN \"persons\" \"leader1\" ON \"leader1\".\"id\" = \"birthCountry\".\"leaderID\" " +
+                "LEFT JOIN \"countries\" \"ruledCountry1\" ON \"ruledCountry1\".\"leaderID\" = \"leader1\".\"id\"")
+            
             dbQueue.inDatabase { db in
-                let request = Person
-                    .include(Person.ruledCountry
-                        .include(Country.leader))
-                    .include(Person.birthCountry
-                        .include(Country.leader
-                            .include(Person.ruledCountry)))
-                
                 // TODO: sort persons using SQL
                 let persons = request.fetchAll(db).sort { $0.id < $1.id }
                 

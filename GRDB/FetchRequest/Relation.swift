@@ -130,6 +130,7 @@ public struct ForeignRelation {
     /// TODO
     public init(name: String, tableName: String, foreignKey: [String: String]) {
         // TODO: why this forced alias?
+        // TODO: don't alias need to be validated?
         self.init(name: name, rightSource: _SQLSourceTable(tableName: tableName, alias: ((name == tableName) ? nil : name)), foreignKey: foreignKey)
     }
     
