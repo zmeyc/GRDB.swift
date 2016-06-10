@@ -1,5 +1,5 @@
 //
-//  ComplexAssociationTests.swift
+//  ComplexRelationTests.swift
 //  GRDB
 //
 //  Created by Gwendal Roué on 25/05/2016.
@@ -15,10 +15,10 @@ private final class Person : RowConvertible, TableMapping {
     let birthCountryIsoCode: String?
     
     let birthCountry: Country?
-    static let birthCountry = Join(name: "birthCountry", tableName: "countries", foreignKey: ["birthCountryIsoCode": "isoCode"])
+    static let birthCountry = ForeignRelation(name: "birthCountry", tableName: "countries", foreignKey: ["birthCountryIsoCode": "isoCode"])
     
     let ruledCountry: Country?
-    static let ruledCountry = Join(name: "ruledCountry", tableName: "countries", foreignKey: ["id": "leaderID"])
+    static let ruledCountry = ForeignRelation(name: "ruledCountry", tableName: "countries", foreignKey: ["id": "leaderID"])
     
     static func databaseTableName() -> String {
         return "persons"
@@ -49,7 +49,7 @@ private final class Country: RowConvertible {
     let leaderID: Int64?
     
     let leader: Person?
-    static let leader = Join(name: "leader", tableName: "persons", foreignKey: ["leaderID": "id"])
+    static let leader = ForeignRelation(name: "leader", tableName: "persons", foreignKey: ["leaderID": "id"])
     
     init(_ row: Row) {
         isoCode = row.value(named: "isoCode")
@@ -64,8 +64,8 @@ private final class Country: RowConvertible {
     }
 }
 
-class ComplexAssociationTests: GRDBTestCase {
-    func testDefaultAssociationAlias() {
+class ComplexRelationTests: GRDBTestCase {
+    func testDefaultRelationAlias() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
@@ -93,7 +93,7 @@ class ComplexAssociationTests: GRDBTestCase {
         }
     }
     
-    func testExplicitAssociationAlias() {
+    func testExplicitRelationAlias() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in

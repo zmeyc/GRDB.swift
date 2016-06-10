@@ -1,12 +1,12 @@
 /// TODO
-public protocol _Association {
+public protocol _Relation {
     /// TODO
     @warn_unused_result
     func fork() -> Self
     
     /// TODO
     @warn_unused_result
-    func aliased(alias: String) -> Association
+    func aliased(alias: String) -> Relation
     
     /// TODO
     @warn_unused_result
@@ -32,76 +32,76 @@ public protocol _Association {
 }
 
 /// TODO
-public protocol Association : _Association {
+public protocol Relation : _Relation {
 }
 
-extension Association {
+extension Relation {
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func include(associations: Association...) -> Association {
-        return include(associations)
+    public func include(relations: Relation...) -> Relation {
+        return include(relations)
     }
     
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func include(associations: [Association]) -> Association {
-        return ChainedAssociation(baseAssociation: self, rightAssociations: associations.map { $0.fork() })
+    public func include(relations: [Relation]) -> Relation {
+        return ChainedRelation(baseRelation: self, rightRelations: relations.map { $0.fork() })
     }
 }
 
-struct ChainedAssociation {
-    let baseAssociation: Association
-    let rightAssociations: [Association]
+struct ChainedRelation {
+    let baseRelation: Relation
+    let rightRelations: [Relation]
 }
 
-extension ChainedAssociation : Association {
+extension ChainedRelation : Relation {
     /// TODO
-    func fork() -> ChainedAssociation {
-        return ChainedAssociation(baseAssociation: baseAssociation.fork(), rightAssociations: rightAssociations.map { $0.fork() })
+    func fork() -> ChainedRelation {
+        return ChainedRelation(baseRelation: baseRelation.fork(), rightRelations: rightRelations.map { $0.fork() })
     }
     
     /// TODO
-    func aliased(alias: String) -> Association {
-        return ChainedAssociation(baseAssociation: baseAssociation.aliased(alias), rightAssociations: rightAssociations)
+    func aliased(alias: String) -> Relation {
+        return ChainedRelation(baseRelation: baseRelation.aliased(alias), rightRelations: rightRelations)
     }
     
     /// TODO
     @warn_unused_result
     func numberOfColumns(db: Database) throws -> Int {
-        return try rightAssociations.reduce(baseAssociation.numberOfColumns(db)) { try $0 + $1.numberOfColumns(db) }
+        return try rightRelations.reduce(baseRelation.numberOfColumns(db)) { try $0 + $1.numberOfColumns(db) }
     }
     
     /// TODO
     var name: String {
-        return baseAssociation.name
+        return baseRelation.name
     }
     
     /// TODO
     var referencedSources: [_SQLSource] {
-        return rightAssociations.reduce(baseAssociation.referencedSources) { $0 + $1.referencedSources }
+        return rightRelations.reduce(baseRelation.referencedSources) { $0 + $1.referencedSources }
     }
     
     /// TODO
     var rightSource: _SQLSource {
-        return baseAssociation.rightSource
+        return baseRelation.rightSource
     }
     
     /// TODO
     var selection: [_SQLSelectable] {
-        return rightAssociations.reduce(baseAssociation.selection) { (selection, association) in
-            selection + association.selection
+        return rightRelations.reduce(baseRelation.selection) { (selection, relation) in
+            selection + relation.selection
         }
     }
     
     /// TODO
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String) throws -> String {
-        var sql = try baseAssociation.sql(db, &bindings, leftSourceName: leftSourceName)
-        if !rightAssociations.isEmpty {
+        var sql = try baseRelation.sql(db, &bindings, leftSourceName: leftSourceName)
+        if !rightRelations.isEmpty {
             sql += " "
-            sql += try rightAssociations.map {
-                try $0.sql(db, &bindings, leftSourceName: baseAssociation.rightSource.name!)
+            sql += try rightRelations.map {
+                try $0.sql(db, &bindings, leftSourceName: baseRelation.rightSource.name!)
                 }.joinWithSeparator(" ")
         }
         return sql
@@ -109,17 +109,17 @@ extension ChainedAssociation : Association {
     
     /// TODO
     func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
-        let adapter = baseAssociation.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+        let adapter = baseRelation.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         var variants: [String: RowAdapter] = [:]
-        for association in rightAssociations {
-            variants[association.name] = association.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+        for relation in rightRelations {
+            variants[relation.name] = relation.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         }
         return adapter.adapterWithVariants(variants)
     }
 }
 
 /// TODO
-public struct Join {
+public struct ForeignRelation {
     /// TODO
     public let name: String
     /// TODO
@@ -140,18 +140,18 @@ public struct Join {
     }
 }
 
-extension Join : Association {
+extension ForeignRelation : Relation {
     /// TODO
-    public func fork() -> Join {
-        return Join(name: name, rightSource: rightSource.copy(), foreignKey: foreignKey)
+    public func fork() -> ForeignRelation {
+        return ForeignRelation(name: name, rightSource: rightSource.fork(), foreignKey: foreignKey)
     }
     
     /// TODO
     @warn_unused_result
-    public func aliased(alias: String) -> Association {
-        let rightSource = self.rightSource.copy()
+    public func aliased(alias: String) -> Relation {
+        let rightSource = self.rightSource.fork()
         rightSource.name = alias
-        return Join(name: name, rightSource: rightSource, foreignKey: foreignKey)
+        return ForeignRelation(name: name, rightSource: rightSource, foreignKey: foreignKey)
     }
     
     /// TODO
@@ -189,19 +189,19 @@ extension Join : Association {
 extension QueryInterfaceRequest {
     /// TODO: doc
     @warn_unused_result
-    public func include(associations: Association...) -> QueryInterfaceRequest<T> {
-        return include(associations)
+    public func include(relations: Relation...) -> QueryInterfaceRequest<T> {
+        return include(relations)
     }
     
     /// TODO: doc
     /// TODO: test that request.include([assoc1, assoc2]) <=> request.include([assoc1]).include([assoc2])
     @warn_unused_result
-    public func include(associations: [Association]) -> QueryInterfaceRequest<T> {
+    public func include(relations: [Relation]) -> QueryInterfaceRequest<T> {
         var query = self.query
         var source = query.source!
-        for association in associations {
-            source = source.include(association)
-            query.selection.appendContentsOf(association.selection)
+        for relation in relations {
+            source = source.include(relation)
+            query.selection.appendContentsOf(relation.selection)
         }
         query.source = source
         return QueryInterfaceRequest(query: query)
@@ -211,13 +211,13 @@ extension QueryInterfaceRequest {
 extension TableMapping {
     /// TODO: doc
     @warn_unused_result
-    public static func include(associations: Association...) -> QueryInterfaceRequest<Self> {
-        return all().include(associations)
+    public static func include(relations: Relation...) -> QueryInterfaceRequest<Self> {
+        return all().include(relations)
     }
     
     /// TODO: doc
     @warn_unused_result
-    public static func include(associations: [Association]) -> QueryInterfaceRequest<Self> {
-        return all().include(associations)
+    public static func include(relations: [Relation]) -> QueryInterfaceRequest<Self> {
+        return all().include(relations)
     }
 }
