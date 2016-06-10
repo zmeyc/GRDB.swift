@@ -65,7 +65,7 @@ private final class Country: RowConvertible {
 }
 
 class ComplexRelationTests: GRDBTestCase {
-    func testDefaultRelationAlias() {
+    func testDefaultRelationAliasWithInclude() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
@@ -96,6 +96,41 @@ class ComplexRelationTests: GRDBTestCase {
                 
                 XCTAssertEqual(persons[0].name, "Arthur")
                 XCTAssertEqual(persons[0].birthCountry!.name, "France")
+            }
+        }
+    }
+    
+    func testDefaultRelationAliasWithJoin() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE countries (isoCode TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL)")
+                try db.execute("CREATE TABLE persons (id INTEGER PRIMARY KEY, name TEXT NOT NULL, birthCountryIsoCode TEXT NOT NULL REFERENCES countries(isoCode))")
+            }
+            
+            try dbQueue.inTransaction { db in
+                try db.execute("INSERT INTO countries (isoCode, name) VALUES (?, ?)", arguments: ["FR", "France"])
+                try db.execute("INSERT INTO persons (id, name, birthCountryIsoCode) VALUES (NULL, ?, ?)", arguments: ["Arthur", "FR"])
+                return .Commit
+            }
+            
+            let request = Person
+                .join(Person.birthCountry)
+                .filter(sql: "\(Person.birthCountry.name).isoCode == 'FR'") // TODO1: pass "FR" as an argument
+            
+            XCTAssertEqual(
+                sql(dbQueue, request),
+                "SELECT \"persons\".* " +
+                "FROM \"persons\" " +
+                "LEFT JOIN \"countries\" \"birthCountry\" ON \"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\" " +
+                "WHERE birthCountry.isoCode == \'FR\'")
+            
+            dbQueue.inDatabase { db in
+                let persons = request.fetchAll(db)
+                XCTAssertEqual(persons.count, 1)
+                
+                XCTAssertEqual(persons[0].name, "Arthur")
+                XCTAssertTrue(persons[0].birthCountry == nil)
             }
         }
     }

@@ -28,7 +28,7 @@ public protocol _Relation {
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String) throws -> String
     
     /// TODO
-    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter
+    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter
 }
 
 /// TODO
@@ -47,13 +47,45 @@ extension Relation {
     /// extension Method
     @warn_unused_result
     public func include(relations: [Relation]) -> Relation {
-        return ChainedRelation(baseRelation: self, rightRelations: relations.map { $0.fork() })
+        return ChainedRelation(baseRelation: self, rightRelations: relations.map { JoinedRelation(included: true, relation: $0.fork()) })
+    }
+    
+    /// TODO
+    /// extension Method
+    @warn_unused_result
+    public func join(relations: [Relation]) -> Relation {
+        return ChainedRelation(baseRelation: self, rightRelations: relations.map { JoinedRelation(included: false, relation: $0.fork()) })
+    }
+}
+
+struct JoinedRelation {
+    let included: Bool
+    let relation: Relation
+    
+    func fork() -> JoinedRelation {
+        return JoinedRelation(included: included, relation: relation.fork())
+    }
+    
+    func numberOfColumns(db: Database) throws -> Int {
+        if included {
+            return try relation.numberOfColumns(db)
+        } else {
+            return 0
+        }
+    }
+    
+    var selection: [_SQLSelectable] {
+        if included {
+            return relation.selection
+        } else {
+            return []
+        }
     }
 }
 
 struct ChainedRelation {
     let baseRelation: Relation
-    let rightRelations: [Relation]
+    let rightRelations: [JoinedRelation]
 }
 
 extension ChainedRelation : Relation {
@@ -80,7 +112,7 @@ extension ChainedRelation : Relation {
     
     /// TODO
     var referencedSources: [_SQLSource] {
-        return rightRelations.reduce(baseRelation.referencedSources) { $0 + $1.referencedSources }
+        return rightRelations.reduce(baseRelation.referencedSources) { $0 + $1.relation.referencedSources }
     }
     
     /// TODO
@@ -90,8 +122,8 @@ extension ChainedRelation : Relation {
     
     /// TODO
     var selection: [_SQLSelectable] {
-        return rightRelations.reduce(baseRelation.selection) { (selection, relation) in
-            selection + relation.selection
+        return rightRelations.reduce(baseRelation.selection) { (selection, joinedRelation) in
+            selection + joinedRelation.selection
         }
     }
     
@@ -101,19 +133,18 @@ extension ChainedRelation : Relation {
         if !rightRelations.isEmpty {
             sql += " "
             sql += try rightRelations.map {
-                try $0.sql(db, &bindings, leftSourceName: baseRelation.rightSource.name!)
+                try $0.relation.sql(db, &bindings, leftSourceName: baseRelation.rightSource.name!)
                 }.joinWithSeparator(" ")
         }
         return sql
     }
     
     /// TODO
-    func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
-        let adapter = baseRelation.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
-        var variants: [String: RowAdapter] = [:]
-        for relation in rightRelations {
-            variants[relation.name] = relation.adapter(&selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
-        }
+    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
+        let adapter = baseRelation.adapter(included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+        let variants = Dictionary(keyValueSequence: rightRelations.map {
+            ($0.relation.name, $0.relation.adapter($0.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex))
+        })
         return adapter.adapterWithVariants(variants)
     }
 }
@@ -181,9 +212,13 @@ extension ForeignRelation : Relation {
     }
     
     /// TODO
-    public func adapter(inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
-        defer { selectionIndex += 1 }
-        return SuffixRowAdapter(fromIndex: columnIndexForSelectionIndex[selectionIndex]!)
+    public func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter {
+        if included {
+            defer { selectionIndex += 1 }
+            return SuffixRowAdapter(fromIndex: columnIndexForSelectionIndex[selectionIndex]!)
+        } else {
+            return ColumnMapping([:])
+        }
     }
 }
 
@@ -207,6 +242,25 @@ extension QueryInterfaceRequest {
         query.source = source
         return QueryInterfaceRequest(query: query)
     }
+    
+    /// TODO: doc
+    @warn_unused_result
+    public func join(relations: Relation...) -> QueryInterfaceRequest<T> {
+        return join(relations)
+    }
+    
+    /// TODO: doc
+    /// TODO: test that request.join([assoc1, assoc2]) <=> request.join([assoc1]).join([assoc2])
+    @warn_unused_result
+    public func join(relations: [Relation]) -> QueryInterfaceRequest<T> {
+        var query = self.query
+        var source = query.source!
+        for relation in relations {
+            source = source.join(relation)
+        }
+        query.source = source
+        return QueryInterfaceRequest(query: query)
+    }
 }
 
 extension TableMapping {
@@ -220,5 +274,17 @@ extension TableMapping {
     @warn_unused_result
     public static func include(relations: [Relation]) -> QueryInterfaceRequest<Self> {
         return all().include(relations)
+    }
+    
+    /// TODO: doc
+    @warn_unused_result
+    public static func join(relations: Relation...) -> QueryInterfaceRequest<Self> {
+        return all().join(relations)
+    }
+    
+    /// TODO: doc
+    @warn_unused_result
+    public static func join(relations: [Relation]) -> QueryInterfaceRequest<Self> {
+        return all().join(relations)
     }
 }

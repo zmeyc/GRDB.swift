@@ -4,7 +4,7 @@
     - [X] Person.include(Person.birthCountry.aliased("customCountryAlias"))
     - [ ] Person.aliased("customPersonAlias").include(Person.birthCountry) 
 - [X] Association: Type.include() instead of Type.all().include()
-- [ ] Association: Type.join() instead of Type.all().join()
+- [X] Association: Type.join() instead of Type.all().join()
 - [ ] Association: .include() adds columns in the fetches row and a variant, .join() does not columns, nor variant
 – [?] Association: distinguishing BelongsTo and HasOne could help verifying that the right table of belongsTo has a unique index on the joined columns. For HasOne, we have to trust the user. 
 - [ ] FetchedRecordsController: see if we can replace identity comparison function with a function that returns an Equatable value (beware the generics trouble). See if this can help optimize memory use, and use a sortedMerge() algorithm.
