@@ -418,9 +418,9 @@ extension _SQLRelationTree : _SQLSource {
         var empty = true
         var variants: [String: RowAdapter] = [:]
         for joinedRelation in joinedRelations {
-            let (variantAdapter, variantEmpty) = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
-            if !variantEmpty {
-                variants[joinedRelation.relation.name] = variantAdapter
+            let (adapter, adapterContainsData) = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+            if adapterContainsData {
+                variants[joinedRelation.relation.name] = adapter
                 empty = false
             }
         }
