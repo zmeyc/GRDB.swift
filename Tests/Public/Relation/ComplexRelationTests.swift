@@ -65,6 +65,277 @@ private final class Country: RowConvertible {
 }
 
 class ComplexRelationTests: GRDBTestCase {
+    func testAvailableVariants() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id))")
+                try db.execute("CREATE TABLE c (id INTEGER PRIMARY KEY, bID REFERENCES b(id))")
+                try db.execute("CREATE TABLE d (id INTEGER PRIMARY KEY, cID REFERENCES c(id))")
+                try db.execute("INSERT INTO a (id) VALUES (NULL)")
+                try db.execute("INSERT INTO b (id, aID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
+                try db.execute("INSERT INTO c (id, bID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
+                try db.execute("INSERT INTO d (id, cID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
+                
+                let aTable = QueryInterfaceRequest<Void>(tableName : "a")
+                let b = ForeignRelation(name: "b", tableName: "b", foreignKey: ["id": "aID"])
+                let c = ForeignRelation(name: "c", tableName: "c", foreignKey: ["id": "bID"])
+                let d = ForeignRelation(name: "d", tableName: "d", foreignKey: ["id": "cID"])
+                
+                do {
+                    let request = aTable.join(b)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") == nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") == nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                }
+                
+                do {
+                    let request = aTable.include(b)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") == nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                    
+                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.join(b.join(c))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") == nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") == nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                }
+                
+                do {
+                    let request = aTable.include(b.join(c))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") == nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                    
+                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.join(b.include(c))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                    
+                    XCTAssertFalse(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.include(b.include(c))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                    
+                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.join(b.join(c.join(d)))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") == nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") == nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                }
+                
+                do {
+                    let request = aTable.include(b.join(c.join(d)))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") == nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                    
+                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.join(b.include(c.join(d)))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                    
+                    XCTAssertFalse(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.include(b.include(c.join(d)))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
+                    
+                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.join(b.join(c.include(d)))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"d\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") != nil)
+                    
+                    XCTAssertFalse(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.include(b.join(c.include(d)))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"d\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") != nil)
+                    
+                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.join(b.include(c.include(d)))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"c\".*, \"d\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") != nil)
+                    
+                    XCTAssertFalse(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.hasColumn("id"))
+                }
+                
+                do {
+                    let request = aTable.include(b.include(c.include(d)))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".*, \"d\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
+                    XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") != nil)
+                    
+                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.hasColumn("id"))
+                }
+            }
+        }
+    }
+    
     func testDefaultRelationAliasWithInclude() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()

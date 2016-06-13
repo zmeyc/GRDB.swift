@@ -22,13 +22,13 @@ public protocol _Relation {
     var rightSource: _SQLSource { get }
     
     /// TODO
-    var selection: [_SQLSelectable] { get }
-    
-    /// TODO
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String) throws -> String
     
     /// TODO
-    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
+    func selection(included included: Bool) -> [_SQLSelectable]
+    
+    /// TODO
+    func adapter(included included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
 }
 
 /// TODO
@@ -53,6 +53,13 @@ extension Relation {
     /// TODO
     /// extension Method
     @warn_unused_result
+    public func join(relations: Relation...) -> Relation {
+        return join(relations)
+    }
+    
+    /// TODO
+    /// extension Method
+    @warn_unused_result
     public func join(relations: [Relation]) -> Relation {
         return ChainedRelation(baseRelation: self, joinedRelations: relations.map { JoinedRelation(included: false, relation: $0.fork()) })
     }
@@ -71,14 +78,6 @@ struct JoinedRelation {
             return try relation.numberOfColumns(db)
         } else {
             return 0
-        }
-    }
-    
-    var selection: [_SQLSelectable] {
-        if included {
-            return relation.selection
-        } else {
-            return []
         }
     }
 }
@@ -121,13 +120,6 @@ extension ChainedRelation : Relation {
     }
     
     /// TODO
-    var selection: [_SQLSelectable] {
-        return joinedRelations.reduce(baseRelation.selection) { (selection, joinedRelation) in
-            selection + joinedRelation.selection
-        }
-    }
-    
-    /// TODO
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String) throws -> String {
         var sql = try baseRelation.sql(db, &bindings, leftSourceName: leftSourceName)
         if !joinedRelations.isEmpty {
@@ -140,12 +132,19 @@ extension ChainedRelation : Relation {
     }
     
     /// TODO
-    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
-        let baseAdapter = baseRelation.adapter(included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+    func selection(included included: Bool) -> [_SQLSelectable] {
+        return joinedRelations.reduce(baseRelation.selection(included: included)) { (selection, joinedRelation) in
+            selection + joinedRelation.relation.selection(included: joinedRelation.included)
+        }
+    }
+    
+    /// TODO
+    func adapter(included included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+        let baseAdapter = baseRelation.adapter(included: included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         
         var variants: [String: RowAdapter] = [:]
         for joinedRelation in joinedRelations {
-            if let adapter = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
+            if let adapter = joinedRelation.relation.adapter(included: joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
                 variants[joinedRelation.relation.name] = adapter
             }
         }
@@ -207,11 +206,6 @@ extension ForeignRelation : Relation {
     }
     
     /// TODO
-    public var selection: [_SQLSelectable] {
-        return [_SQLResultColumn.Star(rightSource)]
-    }
-    
-    /// TODO
     public func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String) throws -> String {
         var sql = try "LEFT JOIN " + rightSource.sql(db, &bindings) + " ON "
         sql += foreignKey.map({ (leftColumn, rightColumn) -> String in
@@ -221,7 +215,15 @@ extension ForeignRelation : Relation {
     }
     
     /// TODO
-    public func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+    public func selection(included included: Bool) -> [_SQLSelectable] {
+        guard included else {
+            return []
+        }
+        return [_SQLResultColumn.Star(rightSource)]
+    }
+    
+    /// TODO
+    public func adapter(included included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         guard included else {
             return nil
         }
@@ -245,7 +247,7 @@ extension QueryInterfaceRequest {
         var source = query.source!
         for relation in relations {
             source = source.include(relation)
-            query.selection.appendContentsOf(relation.selection)
+            query.selection.appendContentsOf(relation.selection(included: true))
         }
         query.source = source
         return QueryInterfaceRequest(query: query)
@@ -265,6 +267,7 @@ extension QueryInterfaceRequest {
         var source = query.source!
         for relation in relations {
             source = source.join(relation)
+            query.selection.appendContentsOf(relation.selection(included: false))
         }
         query.source = source
         return QueryInterfaceRequest(query: query)

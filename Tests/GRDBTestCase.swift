@@ -124,4 +124,9 @@ class GRDBTestCase: XCTestCase {
             return self.lastSQLQuery
         }
     }
+    
+    func sql(db: Database, _ request: FetchRequest) -> String {
+        _ = Row.fetchOne(db, request)
+        return self.lastSQLQuery
+    }
 }
