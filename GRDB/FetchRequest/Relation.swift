@@ -28,7 +28,7 @@ public protocol _Relation {
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String) throws -> String
     
     /// TODO
-    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> (adapter: RowAdapter, adapterContainsData: Bool)
+    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
 }
 
 /// TODO
@@ -140,20 +140,21 @@ extension ChainedRelation : Relation {
     }
     
     /// TODO
-    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> (adapter: RowAdapter, adapterContainsData: Bool) {
-        let (baseAdapter, baseAdapterContainsData) = baseRelation.adapter(included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
+    func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+        let baseAdapter = baseRelation.adapter(included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         
-        var resultContainsData = baseAdapterContainsData
         var variants: [String: RowAdapter] = [:]
         for joinedRelation in joinedRelations {
-            let (adapter, adapterContainsData) = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
-            if adapterContainsData {
+            if let adapter = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
                 variants[joinedRelation.relation.name] = adapter
-                resultContainsData = true
             }
         }
         
-        return (adapter: baseAdapter.adapterWithVariants(variants), adapterContainsData: resultContainsData)
+        if baseAdapter == nil && variants.isEmpty {
+            return nil
+        }
+        
+        return (baseAdapter ?? ColumnMapping([:])).adapterWithVariants(variants)
     }
 }
 
@@ -220,13 +221,12 @@ extension ForeignRelation : Relation {
     }
     
     /// TODO
-    public func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> (adapter: RowAdapter, adapterContainsData: Bool) {
-        if included {
-            defer { selectionIndex += 1 }
-            return (adapter: SuffixRowAdapter(fromIndex: columnIndexForSelectionIndex[selectionIndex]!), adapterContainsData: true)
-        } else {
-            return (adapter: ColumnMapping([:]), adapterContainsData: false)
+    public func adapter(included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+        guard included else {
+            return nil
         }
+        defer { selectionIndex += 1 }
+        return SuffixRowAdapter(fromIndex: columnIndexForSelectionIndex[selectionIndex]!)
     }
 }
 

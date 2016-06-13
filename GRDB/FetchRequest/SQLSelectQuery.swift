@@ -415,16 +415,13 @@ extension _SQLRelationTree : _SQLSource {
     
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         var selectionIndex = 1
-        var empty = true
         var variants: [String: RowAdapter] = [:]
         for joinedRelation in joinedRelations {
-            let (adapter, adapterContainsData) = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
-            if adapterContainsData {
+            if let adapter = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
                 variants[joinedRelation.relation.name] = adapter
-                empty = false
             }
         }
-        if empty { return nil }
+        if variants.isEmpty { return nil }
         return SuffixRowAdapter(fromIndex: 0).adapterWithVariants(variants)
     }
 }
