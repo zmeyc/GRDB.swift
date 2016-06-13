@@ -110,7 +110,7 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") == nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
                     
-                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
                 }
                 
                 do {
@@ -142,7 +142,7 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") == nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
                     
-                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
                 }
                 
                 do {
@@ -159,8 +159,8 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
                     
-                    XCTAssertFalse(row.variant(named: "b")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.isEmpty)
                 }
                 
                 do {
@@ -177,8 +177,8 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
                     
-                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.isEmpty)
                 }
                 
                 do {
@@ -212,7 +212,7 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") == nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
                     
-                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
                 }
                 
                 do {
@@ -230,8 +230,8 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
                     
-                    XCTAssertFalse(row.variant(named: "b")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.isEmpty)
                 }
                 
                 do {
@@ -249,8 +249,8 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") == nil)
                     
-                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.isEmpty)
                 }
                 
                 do {
@@ -268,9 +268,9 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") != nil)
                     
-                    XCTAssertFalse(row.variant(named: "b")!.hasColumn("id"))
-                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.isEmpty)
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.isEmpty)
                 }
                 
                 do {
@@ -288,9 +288,9 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") != nil)
                     
-                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
-                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.hasColumn("id"))
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.isEmpty)
                 }
                 
                 do {
@@ -308,9 +308,9 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") != nil)
                     
-                    XCTAssertFalse(row.variant(named: "b")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.hasColumn("id"))
+                    XCTAssertTrue(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.isEmpty)
                 }
                 
                 do {
@@ -328,9 +328,9 @@ class ComplexRelationTests: GRDBTestCase {
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c") != nil)
                     XCTAssertTrue(row.variant(named: "b")?.variant(named: "c")?.variant(named: "d") != nil)
                     
-                    XCTAssertTrue(row.variant(named: "b")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.hasColumn("id"))
-                    XCTAssertTrue(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.hasColumn("id"))
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "b")!.variant(named: "c")!.variant(named: "d")!.isEmpty)
                 }
             }
         }
