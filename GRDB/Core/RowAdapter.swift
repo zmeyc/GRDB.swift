@@ -148,6 +148,9 @@ extension RowAdapter {
     /// - parameter variants: A dictionary that maps variant names to
     ///   row adapters.
     public func adapterWithVariants(variants: [String: RowAdapter]) -> RowAdapter {
+        if variants.isEmpty {
+            return self
+        }
         return VariantRowAdapter(mainAdapter: self, variants: variants)
     }
 }
