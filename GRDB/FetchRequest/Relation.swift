@@ -13,7 +13,7 @@ public protocol _Relation {
     func numberOfColumns(db: Database) throws -> Int
     
     /// TODO
-    var name: String { get }
+    var variantName: String { get }
     
     /// TODO
     var referencedSources: [_SQLSource] { get }
@@ -105,8 +105,8 @@ extension ChainedRelation : Relation {
     }
     
     /// TODO
-    var name: String {
-        return baseRelation.name
+    var variantName: String {
+        return baseRelation.variantName
     }
     
     /// TODO
@@ -145,7 +145,7 @@ extension ChainedRelation : Relation {
         var variants: [String: RowAdapter] = [:]
         for joinedRelation in joinedRelations {
             if let adapter = joinedRelation.relation.adapter(included: joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
-                variants[joinedRelation.relation.name] = adapter
+                variants[joinedRelation.relation.variantName] = adapter
             }
         }
         
@@ -160,21 +160,23 @@ extension ChainedRelation : Relation {
 /// TODO
 public struct ForeignRelation {
     /// TODO
-    public let name: String
+    public let variantName: String
     /// TODO
     public let foreignKey: [String: String] // [leftColumn: rightColumn]
     /// TODO
     public let rightSource: _SQLSource
     
     /// TODO
-    public init(name: String, tableName: String, foreignKey: [String: String]) {
-        // TODO: why this forced alias?
-        // TODO: don't alias need to be validated?
-        self.init(name: name, rightSource: _SQLSourceTable(tableName: tableName, alias: ((name == tableName) ? nil : name)), foreignKey: foreignKey)
+    public init(variantName: String? = nil, tableName: String, foreignKey: [String: String]) {
+        // TODO: doesn't alias need to be validated as valid SQLite identifiers?
+        let variantName = variantName ?? tableName
+        let alias: String? = (variantName == tableName) ? nil : variantName
+        let rightSource = _SQLSourceTable(tableName: tableName, alias: alias)
+        self.init(variantName: variantName, rightSource: rightSource, foreignKey: foreignKey)
     }
     
-    init(name: String, rightSource: _SQLSource, foreignKey: [String: String]) {
-        self.name = name
+    init(variantName: String, rightSource: _SQLSource, foreignKey: [String: String]) {
+        self.variantName = variantName
         self.rightSource = rightSource
         self.foreignKey = foreignKey
     }
@@ -183,7 +185,7 @@ public struct ForeignRelation {
 extension ForeignRelation : Relation {
     /// TODO
     public func fork() -> ForeignRelation {
-        return ForeignRelation(name: name, rightSource: rightSource.fork(), foreignKey: foreignKey)
+        return ForeignRelation(variantName: variantName, rightSource: rightSource.fork(), foreignKey: foreignKey)
     }
     
     /// TODO
@@ -191,7 +193,7 @@ extension ForeignRelation : Relation {
     public func aliased(alias: String) -> Relation {
         let rightSource = self.rightSource.fork()
         rightSource.name = alias
-        return ForeignRelation(name: name, rightSource: rightSource, foreignKey: foreignKey)
+        return ForeignRelation(variantName: variantName, rightSource: rightSource, foreignKey: foreignKey)
     }
     
     /// TODO

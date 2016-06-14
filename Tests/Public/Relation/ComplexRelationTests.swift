@@ -15,10 +15,10 @@ private final class Person : RowConvertible, TableMapping {
     let birthCountryIsoCode: String?
     
     let birthCountry: Country?
-    static let birthCountry = ForeignRelation(name: "birthCountry", tableName: "countries", foreignKey: ["birthCountryIsoCode": "isoCode"])
+    static let birthCountry = ForeignRelation(variantName: "birthCountry", tableName: "countries", foreignKey: ["birthCountryIsoCode": "isoCode"])
     
     let ruledCountry: Country?
-    static let ruledCountry = ForeignRelation(name: "ruledCountry", tableName: "countries", foreignKey: ["id": "leaderID"])
+    static let ruledCountry = ForeignRelation(variantName: "ruledCountry", tableName: "countries", foreignKey: ["id": "leaderID"])
     
     static func databaseTableName() -> String {
         return "persons"
@@ -29,13 +29,13 @@ private final class Person : RowConvertible, TableMapping {
         name = row.value(named: "name")
         birthCountryIsoCode = row.value(named: "birthCountryIsoCode")
         
-        if let birthCountryRow = row.variant(named: Person.birthCountry.name) {
+        if let birthCountryRow = row.variant(named: Person.birthCountry.variantName) {
             birthCountry = Country(birthCountryRow)
         } else {
             birthCountry = nil
         }
         
-        if let ruledCountryRow = row.variant(named: Person.ruledCountry.name) where ruledCountryRow.value(named: "isoCode") != nil {
+        if let ruledCountryRow = row.variant(named: Person.ruledCountry.variantName) where ruledCountryRow.value(named: "isoCode") != nil {
             ruledCountry = Country(ruledCountryRow)
         } else {
             ruledCountry = nil
@@ -49,14 +49,14 @@ private final class Country: RowConvertible {
     let leaderID: Int64?
     
     let leader: Person?
-    static let leader = ForeignRelation(name: "leader", tableName: "persons", foreignKey: ["leaderID": "id"])
+    static let leader = ForeignRelation(variantName: "leader", tableName: "persons", foreignKey: ["leaderID": "id"])
     
     init(_ row: Row) {
         isoCode = row.value(named: "isoCode")
         name = row.value(named: "name")
         leaderID = row.value(named: "leaderID")
         
-        if let leaderRow = row.variant(named: Country.leader.name) {
+        if let leaderRow = row.variant(named: Country.leader.variantName) {
             leader = Person(leaderRow)
         } else {
             leader = nil
@@ -79,9 +79,9 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO d (id, cID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 
                 let aTable = QueryInterfaceRequest<Void>(tableName : "a")
-                let b = ForeignRelation(name: "b", tableName: "b", foreignKey: ["id": "aID"])
-                let c = ForeignRelation(name: "c", tableName: "c", foreignKey: ["id": "bID"])
-                let d = ForeignRelation(name: "d", tableName: "d", foreignKey: ["id": "cID"])
+                let b = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
+                let c = ForeignRelation(tableName: "c", foreignKey: ["id": "bID"])
+                let d = ForeignRelation(tableName: "d", foreignKey: ["id": "cID"])
                 
                 do {
                     let request = aTable.join(b)
@@ -336,6 +336,154 @@ class ComplexRelationTests: GRDBTestCase {
         }
     }
     
+    func testRelationVariantNameAndAlias() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id))")
+                try db.execute("INSERT INTO a (id) VALUES (NULL)")
+                try db.execute("INSERT INTO b (id, aID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
+                
+                let aTable = QueryInterfaceRequest<Void>(tableName : "a")
+                let bRelationUnnamed = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
+                let bRelationNamedAsTable = ForeignRelation(variantName: "b", tableName: "b", foreignKey: ["id": "aID"])
+                let bRelationNamed = ForeignRelation(variantName: "bVariant", tableName: "b", foreignKey: ["id": "aID"])
+                
+                do {
+                    let request = aTable.include(bRelationUnnamed)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = aTable.include(bRelationUnnamed.aliased("bAlias"))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bAlias\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bAlias\" ON \"bAlias\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = aTable.include(bRelationNamedAsTable)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = aTable.include(bRelationNamedAsTable.aliased("bAlias"))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bAlias\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bAlias\" ON \"bAlias\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = aTable.include(bRelationNamed)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bVariant\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bVariant\" ON \"bVariant\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "bVariant") != nil)
+                    XCTAssertFalse(row.variant(named: "bVariant")!.isEmpty)
+                }
+                
+                do {
+                    let request = aTable.include(bRelationNamed.aliased("bAlias"))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bAlias\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bAlias\" ON \"bAlias\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "bVariant") != nil)
+                    XCTAssertFalse(row.variant(named: "bVariant")!.isEmpty)
+                }
+            }
+        }
+    }
+    
+    func testRelationAliasingOnSourceConflict() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inTransaction { db in
+                try db.execute("PRAGMA defer_foreign_keys = ON")
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, bID REFERENCES b(id))")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id))")
+                try db.execute("INSERT INTO a (id, bID) VALUES (?, ?)", arguments: [1, 1])
+                try db.execute("INSERT INTO b (id, aID) VALUES (?, ?)", arguments: [1, 1])
+                return .Commit
+            }
+            
+            let aTable = QueryInterfaceRequest<Void>(tableName : "a")
+            let bRelation = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
+            let aRelation = ForeignRelation(tableName: "a", foreignKey: ["id": "bID"])
+            
+            dbQueue.inDatabase { db in
+                let request = aTable.include(bRelation.include(aRelation))
+                XCTAssertEqual(
+                    self.sql(db, request),
+                    "SELECT \"a0\".*, \"b\".*, \"a1\".* " +
+                    "FROM \"a\" \"a0\" " +
+                    "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a0\".\"id\" " +
+                    "LEFT JOIN \"a\" \"a1\" ON \"a1\".\"bID\" = \"b\".\"id\"")
+                
+                let row = Row.fetchOne(db, request)!
+                XCTAssertTrue(row.variant(named: "b") != nil)
+                XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                XCTAssertTrue(row.variant(named: "b")!.variant(named: "a") != nil)
+                XCTAssertFalse(row.variant(named: "b")!.variant(named: "a")!.isEmpty)
+            }
+            
+            dbQueue.inDatabase { db in
+                let request = aTable.include(bRelation.include(aRelation.include(bRelation)))
+                XCTAssertEqual(
+                    self.sql(db, request),
+                    "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
+                    "FROM \"a\" \"a0\" " +
+                    "LEFT JOIN \"b\" \"b0\" ON \"b0\".\"aID\" = \"a0\".\"id\" " +
+                    "LEFT JOIN \"a\" \"a1\" ON \"a1\".\"bID\" = \"b\".\"id\" " +
+                    "LEFT JOIN \"b\" \"b1\" ON \"b1\".\"aID\" = \"a1\".\"id\"")
+                
+                let row = Row.fetchOne(db, request)!
+                XCTAssertTrue(row.variant(named: "b") != nil)
+                XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                XCTAssertTrue(row.variant(named: "b")!.variant(named: "a") != nil)
+                XCTAssertFalse(row.variant(named: "b")!.variant(named: "a")!.isEmpty)
+                XCTAssertTrue(row.variant(named: "b")!.variant(named: "a")!.variant(named: "b") != nil)
+                XCTAssertFalse(row.variant(named: "b")!.variant(named: "a")!.variant(named: "b")!.isEmpty)
+            }
+        }
+    }
+    
     func testDefaultRelationAliasWithInclude() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
@@ -352,7 +500,7 @@ class ComplexRelationTests: GRDBTestCase {
             
             let request = Person
                 .include(Person.birthCountry)
-                .filter(sql: "\(Person.birthCountry.name).isoCode == 'FR'") // TODO1: pass "FR" as an argument
+                .filter(sql: "\(Person.birthCountry.variantName).isoCode == 'FR'") // TODO1: pass "FR" as an argument
             
             XCTAssertEqual(
                 sql(dbQueue, request),
@@ -387,7 +535,7 @@ class ComplexRelationTests: GRDBTestCase {
             
             let request = Person
                 .join(Person.birthCountry)
-                .filter(sql: "\(Person.birthCountry.name).isoCode == 'FR'") // TODO1: pass "FR" as an argument
+                .filter(sql: "\(Person.birthCountry.variantName).isoCode == 'FR'") // TODO1: pass "FR" as an argument
             
             XCTAssertEqual(
                 sql(dbQueue, request),

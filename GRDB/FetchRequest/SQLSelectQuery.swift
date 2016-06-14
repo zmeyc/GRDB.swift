@@ -417,8 +417,8 @@ extension _SQLRelationTree : _SQLSource {
         var selectionIndex = 1
         var variants: [String: RowAdapter] = [:]
         for joinedRelation in joinedRelations {
-            if let adapter = joinedRelation.relation.adapter(joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
-                variants[joinedRelation.relation.name] = adapter
+            if let adapter = joinedRelation.relation.adapter(included: joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
+                variants[joinedRelation.relation.variantName] = adapter
             }
         }
         if variants.isEmpty { return nil }
