@@ -1,12 +1,14 @@
-– [X] Associations: include two chained associations
-– [ ] Associations: mandatory true/false (JOIN vs LEFT JOIN)
-– [ ] Associations: allow to give an alias, so that one can use an alias in an ORDER BY clause
+– [X] Relations: include two chained relations
+- [ ] Relations: filter on joined relation (JOIN ... ON ...)
+- [ ] Relations: filter on joined relation (JOIN ... WHERE ...)
+– [ ] Relations: mandatory true/false (JOIN vs LEFT JOIN)
+– [ ] Relations: allow to give an alias, so that one can use an alias in an ORDER BY clause
     - [X] Person.include(Person.birthCountry.aliased("customCountryAlias"))
     - [ ] Person.aliased("customPersonAlias").include(Person.birthCountry) 
-- [X] Association: Type.include() instead of Type.all().include()
-- [X] Association: Type.join() instead of Type.all().join()
-- [X] Association: .include() adds columns in the fetches row and a variant, .join() does not columns, nor variant
-– [?] Association: distinguishing BelongsTo and HasOne could help verifying that the right table of belongsTo has a unique index on the joined columns. For HasOne, we have to trust the user. 
+- [X] Relations: Type.include() instead of Type.all().include()
+- [X] Relations: Type.join() instead of Type.all().join()
+- [X] Relations: .include() adds columns in the fetches row and a variant, .join() does not columns, nor variant
+– [?] Relations: distinguishing BelongsTo and HasOne could help verifying that the right table of belongsTo has a unique index on the joined columns. For HasOne, we have to trust the user. 
 - [ ] FetchedRecordsController: see if we can replace identity comparison function with a function that returns an Equatable value (beware the generics trouble). See if this can help optimize memory use, and use a sortedMerge() algorithm.
 - [ ] GRDBCipher: remove limitations on iOS or OS X versions
 - [ ] FetchedRecordsController: take inspiration from https://github.com/jflinter/Dwifft
