@@ -1,7 +1,7 @@
 GRDB.swift [![Swift](https://img.shields.io/badge/swift-2.2-orange.svg?style=flat)](https://developer.apple.com/swift/) [![Platforms](https://img.shields.io/cocoapods/p/GRDB.swift.svg)](https://developer.apple.com/swift/) [![License](https://img.shields.io/github/license/groue/GRDB.swift.svg?maxAge=2592000)](/LICENSE)
 ==========
 
-GRDB.swift is an SQLite toolkit for Swift 2.2.
+GRDB.swift is an SQLite toolkit for Swift 2.2. For Swift 3, see the [Swift3](https://github.com/groue/GRDB.swift/tree/Swift3) branch.
 
 It ships with a **low-level SQLite API**, and high-level tools that help dealing with databases:
 
@@ -27,7 +27,7 @@ You should give it a try.
 
 **June 9, 2016: GRDB.swift 0.72.0 is out** ([changelog](CHANGELOG.md)). Follow [@groue](http://twitter.com/groue) on Twitter for release announcements and usage tips.
 
-**Requirements**: iOS 7.0+ / OSX 10.9+, Xcode 7.3+
+**Requirements**: iOS 8.0+ / OSX 10.9+, Xcode 7.3+
 
 
 ### Usage
@@ -1170,7 +1170,7 @@ public protocol DatabaseValueConvertible {
 
 All types that adopt this protocol can be used like all other [value types](#values) (Bool, Int, String, NSDate, Swift enums, etc.)
 
-The `databaseValue` property returns [DatabaseValue](GRDB/Core/DatabaseValue.swift), a type that wraps the five values supported by SQLite: NULL, Int64, Double, String and NSData. DatabaseValue has no public initializer: to create one, use `DatabaseValue.Null`, or another type that already adopts the protocol: `1.databaseValue`, `"foo".databaseValue`, etc.
+The `databaseValue` property returns [DatabaseValue](#databasevalue), a type that wraps the five values supported by SQLite: NULL, Int64, Double, String and NSData. DatabaseValue has no public initializer: to create one, use `DatabaseValue.Null`, or another type that already adopts the protocol: `1.databaseValue`, `"foo".databaseValue`, etc.
 
 The `fromDatabaseValue()` factory method returns an instance of your custom type if the databaseValue contains a suitable value. If the databaseValue does not contain a suitable value, such as "foo" for NSDate, the method returns nil.
 
@@ -2856,7 +2856,7 @@ On iOS, FetchedRecordsController can notify that the controller’s fetched reco
 
 #### Record Identity
 
-Updates and moves are nicer to the eye when your perform table view animations. They require the controller to identify individual records in the fetched database rows. You must tell the controller how to do so:
+Updates and moves are nicer to the eye when you perform table view animations. They require the controller to identify individual records in the fetched database rows. You must tell the controller how to do so:
 
 ```swift
 let controller = FetchedRecordsController<Person>(
@@ -3318,7 +3318,7 @@ FAQ
     }
     ```
     
-    This is a Swift compiler bug (see [SR-1570](https://bugs.swift.org/browse/SR-1570)).
+    This is a Swift compiler issue (see [SR-1570](https://bugs.swift.org/browse/SR-1570)).
     
     The general workaround is to explicitly declare the type of the closure result:
     
