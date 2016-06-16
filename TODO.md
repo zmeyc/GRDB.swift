@@ -1,3 +1,29 @@
+– [ ] Relations: Document Table(tableName) in the Query Interface documentation
+- [?] Relations: include(required: relation) instead of include(required: true, relation)?
+– [ ] Relations: row.isPopulated, row.containsData, row.hasValues, row.hasNonNullValues, something which helps ignoring a joined row variant without values:
+    init(_ row: Row)
+        if let authorRow = row.variant(named: "author") {
+            // Dangerous, because authorRow may be full of NULLs, in case of LEFT JOIIN
+            self.author = Person(authorRow)
+        }
+    }
+    init(_ row: Row)
+        if let authorRow = row.variant(named: "author") where authorRow.isPopulated {
+            // Safe
+            self.author = Person(authorRow)
+        }
+    }
+    // Alternative
+    init(_ row: Row)
+        if let authorRow = row.requiredVariant(named: "author"){
+            // Safe
+            self.author = Person(authorRow)
+        }
+    }
+    // Alternative
+    init(_ row: Row)
+        self.author = Person.from(variant: "author", in: row)
+    }
 – [X] Relations: include two chained relations
 - [ ] Relations: filter on joined relation (JOIN ... ON ...)
 - [ ] Relations: filter on joined relation (JOIN ... WHERE ...)
