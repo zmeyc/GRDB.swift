@@ -17,7 +17,7 @@ class BelongsToRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO owned (id, ownerID, name) VALUES (100, 1, 'owned1')")
                 try db.execute("INSERT INTO owned (id, ownerID, name) VALUES (101, NULL, 'owned2')")
             }
-            let rootTable = QueryInterfaceRequest<Void>(tableName: "owned")
+            let rootTable = Table("owned")
             let relation = ForeignRelation(tableName: "owner", foreignKey: ["ownerID": "id"])
             let request = rootTable.include(relation)
             XCTAssertEqual(sql(dbQueue, request), "SELECT \"owned\".*, \"owner\".* FROM \"owned\" LEFT JOIN \"owner\" ON \"owner\".\"id\" = \"owned\".\"ownerID\"")
@@ -61,7 +61,7 @@ class BelongsToRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO persons (id, name, friendID) VALUES (1, 'Arthur', NULL)")
                 try db.execute("INSERT INTO persons (id, name, friendID) VALUES (2, 'Barbara', 1)")
             }
-            let rootTable = QueryInterfaceRequest<Void>(tableName: "persons")
+            let rootTable = Table("persons")
             let relation = ForeignRelation(variantName: "friend", tableName: "persons", foreignKey: ["friendID": "id"])
             let request = rootTable.include(relation)
             XCTAssertEqual(sql(dbQueue, request), "SELECT \"persons\".*, \"friend\".* FROM \"persons\" LEFT JOIN \"persons\" \"friend\" ON \"friend\".\"id\" = \"persons\".\"friendID\"")
@@ -106,7 +106,7 @@ class BelongsToRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO persons (id, name, friendID) VALUES (2, 'Barbara', 1)")
                 try db.execute("INSERT INTO persons (id, name, friendID) VALUES (3, 'Craig', 2)")
             }
-            let rootTable = QueryInterfaceRequest<Void>(tableName: "persons")
+            let rootTable = Table("persons")
             let relation = ForeignRelation(variantName: "friend", tableName: "persons", foreignKey: ["friendID": "id"])
             let request = rootTable.include(relation.include(relation))
             XCTAssertEqual(sql(dbQueue, request), "SELECT \"persons\".*, \"friend0\".*, \"friend1\".* FROM \"persons\" LEFT JOIN \"persons\" \"friend0\" ON \"friend0\".\"id\" = \"persons\".\"friendID\" LEFT JOIN \"persons\" \"friend1\" ON \"friend1\".\"id\" = \"friend0\".\"friendID\"")

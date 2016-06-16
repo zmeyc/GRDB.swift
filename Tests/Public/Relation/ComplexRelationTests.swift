@@ -78,13 +78,12 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO c (id, bID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 try db.execute("INSERT INTO d (id, cID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 
-                let aTable = QueryInterfaceRequest<Void>(tableName : "a")
                 let b = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
                 let c = ForeignRelation(tableName: "c", foreignKey: ["id": "bID"])
                 let d = ForeignRelation(tableName: "d", foreignKey: ["id": "cID"])
                 
                 do {
-                    let request = aTable.join(b)
+                    let request = Table("a").join(b)
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".* " +
@@ -98,7 +97,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(b)
+                    let request = Table("a").include(b)
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
@@ -114,7 +113,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.join(b.join(c))
+                    let request = Table("a").join(b.join(c))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".* " +
@@ -129,7 +128,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(b.join(c))
+                    let request = Table("a").include(b.join(c))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
@@ -146,7 +145,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.join(b.include(c))
+                    let request = Table("a").join(b.include(c))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c\".* " +
@@ -164,7 +163,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(b.include(c))
+                    let request = Table("a").include(b.include(c))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
@@ -182,7 +181,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.join(b.join(c.join(d)))
+                    let request = Table("a").join(b.join(c.join(d)))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".* " +
@@ -198,7 +197,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(b.join(c.join(d)))
+                    let request = Table("a").include(b.join(c.join(d)))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
@@ -216,7 +215,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.join(b.include(c.join(d)))
+                    let request = Table("a").join(b.include(c.join(d)))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c\".* " +
@@ -235,7 +234,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(b.include(c.join(d)))
+                    let request = Table("a").include(b.include(c.join(d)))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
@@ -254,7 +253,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.join(b.join(c.include(d)))
+                    let request = Table("a").join(b.join(c.include(d)))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"d\".* " +
@@ -274,7 +273,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(b.join(c.include(d)))
+                    let request = Table("a").include(b.join(c.include(d)))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"d\".* " +
@@ -294,7 +293,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.join(b.include(c.include(d)))
+                    let request = Table("a").join(b.include(c.include(d)))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c\".*, \"d\".* " +
@@ -314,7 +313,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(b.include(c.include(d)))
+                    let request = Table("a").include(b.include(c.include(d)))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".*, \"d\".* " +
@@ -345,13 +344,12 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO a (id) VALUES (NULL)")
                 try db.execute("INSERT INTO b (id, aID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 
-                let aTable = QueryInterfaceRequest<Void>(tableName : "a")
                 let bRelationUnnamed = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
                 let bRelationNamedAsTable = ForeignRelation(variantName: "b", tableName: "b", foreignKey: ["id": "aID"])
                 let bRelationNamed = ForeignRelation(variantName: "bVariant", tableName: "b", foreignKey: ["id": "aID"])
                 
                 do {
-                    let request = aTable.include(bRelationUnnamed)
+                    let request = Table("a").include(bRelationUnnamed)
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
@@ -364,7 +362,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(bRelationUnnamed.aliased("bAlias"))
+                    let request = Table("a").include(bRelationUnnamed.aliased("bAlias"))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
@@ -377,7 +375,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(bRelationNamedAsTable)
+                    let request = Table("a").include(bRelationNamedAsTable)
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
@@ -390,7 +388,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(bRelationNamedAsTable.aliased("bAlias"))
+                    let request = Table("a").include(bRelationNamedAsTable.aliased("bAlias"))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
@@ -403,7 +401,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(bRelationNamed)
+                    let request = Table("a").include(bRelationNamed)
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bVariant\".* " +
@@ -416,7 +414,7 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = aTable.include(bRelationNamed.aliased("bAlias"))
+                    let request = Table("a").include(bRelationNamed.aliased("bAlias"))
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
@@ -443,12 +441,11 @@ class ComplexRelationTests: GRDBTestCase {
                 return .Commit
             }
             
-            let aTable = QueryInterfaceRequest<Void>(tableName : "a")
             let bRelation = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
             let aRelation = ForeignRelation(tableName: "a", foreignKey: ["id": "bID"])
             
             dbQueue.inDatabase { db in
-                let request = aTable.include(bRelation.include(aRelation))
+                let request = Table("a").include(bRelation.include(aRelation))
                 XCTAssertEqual(
                     self.sql(db, request),
                     "SELECT \"a0\".*, \"b\".*, \"a1\".* " +
@@ -464,13 +461,13 @@ class ComplexRelationTests: GRDBTestCase {
             }
             
             dbQueue.inDatabase { db in
-                let request = aTable.include(bRelation.include(aRelation.include(bRelation)))
+                let request = Table("a").include(bRelation.include(aRelation.include(bRelation)))
                 XCTAssertEqual(
                     self.sql(db, request),
                     "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
                     "FROM \"a\" \"a0\" " +
                     "LEFT JOIN \"b\" \"b0\" ON \"b0\".\"aID\" = \"a0\".\"id\" " +
-                    "LEFT JOIN \"a\" \"a1\" ON \"a1\".\"bID\" = \"b\".\"id\" " +
+                    "LEFT JOIN \"a\" \"a1\" ON \"a1\".\"bID\" = \"b0\".\"id\" " +
                     "LEFT JOIN \"b\" \"b1\" ON \"b1\".\"aID\" = \"a1\".\"id\"")
                 
                 let row = Row.fetchOne(db, request)!

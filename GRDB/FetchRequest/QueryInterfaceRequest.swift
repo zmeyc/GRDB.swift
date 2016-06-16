@@ -7,7 +7,7 @@ public struct QueryInterfaceRequest<T> {
     /// Initializes a QueryInterfaceRequest based on table *tableName*.
     ///
     /// It represents the SQL query `SELECT * FROM tableName`.
-    public init(tableName: String) {
+    init(tableName: String) {
         let source = _SQLSourceTable(tableName: tableName, alias: nil)
         self.init(query: _SQLSelectQuery(select: [_SQLResultColumn.Star(source)], from: source))
     }
@@ -15,6 +15,13 @@ public struct QueryInterfaceRequest<T> {
     init(query: _SQLSelectQuery) {
         self.query = query
     }
+}
+
+/// Creates a QueryInterfaceRequest based on table *tableName*.
+///
+/// It represents the SQL query `SELECT * FROM tableName`.
+public func Table(tableName: String) -> QueryInterfaceRequest<Void> {
+    return QueryInterfaceRequest<Void>(tableName: tableName)
 }
 
 

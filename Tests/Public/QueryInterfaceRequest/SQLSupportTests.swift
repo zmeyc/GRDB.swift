@@ -14,7 +14,7 @@ private struct Col {
     static let readerId = SQLColumn("readerId")
 }
 
-private let tableRequest = QueryInterfaceRequest<Void>(tableName: "readers")
+private let tableRequest = Table("readers")
 
 class SQLSupportTests: GRDBTestCase {
     
