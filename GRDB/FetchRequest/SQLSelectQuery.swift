@@ -254,8 +254,8 @@ public protocol _SQLSource: class {
     func numberOfColumns(db: Database) throws -> Int
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?]) throws -> String
     func fork() -> Self
-    func include(relation: Relation) -> _SQLSource
-    func join(relation: Relation) -> _SQLSource
+    func include(required required: Bool, relation: Relation) -> _SQLSource
+    func join(required required: Bool, relation: Relation) -> _SQLSource
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
 }
 
@@ -296,12 +296,12 @@ extension _SQLSourceTable : _SQLSource {
         return _SQLSourceTable(tableName: tableName, alias: alias)
     }
     
-    func include(relation: Relation) -> _SQLSource {
-        return _SQLRelationTree(leftSource: self, joinedRelations: [JoinedRelation(included: true, relation: relation)])
+    func include(required required: Bool, relation: Relation) -> _SQLSource {
+        return _SQLRelationTree(leftSource: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
     }
     
-    func join(relation: Relation) -> _SQLSource {
-        return _SQLRelationTree(leftSource: self, joinedRelations: [JoinedRelation(included: false, relation: relation)])
+    func join(required required: Bool, relation: Relation) -> _SQLSource {
+        return _SQLRelationTree(leftSource: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
     }
     
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
@@ -344,12 +344,12 @@ extension _SQLSourceQuery: _SQLSource {
         return _SQLSourceQuery(query: query, name: name)
     }
     
-    func include(relation: Relation) -> _SQLSource {
-        return _SQLRelationTree(leftSource: self, joinedRelations: [JoinedRelation(included: true, relation: relation)])
+    func include(required required: Bool, relation: Relation) -> _SQLSource {
+        return _SQLRelationTree(leftSource: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
     }
     
-    func join(relation: Relation) -> _SQLSource {
-        return _SQLRelationTree(leftSource: self, joinedRelations: [JoinedRelation(included: false, relation: relation)])
+    func join(required required: Bool, relation: Relation) -> _SQLSource {
+        return _SQLRelationTree(leftSource: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
     }
     
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
@@ -359,11 +359,11 @@ extension _SQLSourceQuery: _SQLSource {
 
 final class _SQLRelationTree {
     private let leftSource: _SQLSource
-    private let joinedRelations: [JoinedRelation]
+    private let joins: [Join]
     
-    init(leftSource: _SQLSource, joinedRelations: [JoinedRelation]) {
+    init(leftSource: _SQLSource, joins: [Join]) {
         self.leftSource = leftSource
-        self.joinedRelations = joinedRelations
+        self.joins = joins
     }
 }
 
@@ -375,50 +375,50 @@ extension _SQLRelationTree : _SQLSource {
     
     var referencedSources: [_SQLSource] {
         var result = leftSource.referencedSources
-        for joinedRelation in joinedRelations {
-            result += joinedRelation.relation.referencedSources
+        for join in joins {
+            result += join.relation.referencedSources
         }
         return result
     }
     
     func numberOfColumns(db: Database) throws -> Int {
         var result = try leftSource.numberOfColumns(db)
-        for joinedRelation in joinedRelations {
-            result += try joinedRelation.numberOfColumns(db)
+        for join in joins {
+            result += try join.numberOfColumns(db)
         }
         return result
     }
     
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?]) throws -> String {
         var sql = try leftSource.sql(db, &bindings)
-        for joinedRelation in joinedRelations {
-            sql += try " " + joinedRelation.relation.sql(db, &bindings, leftSourceName: leftSource.name!)
+        for join in joins {
+            sql += try " " + join.relation.sql(db, &bindings, joinKind: join.kind, leftSourceName: leftSource.name!)
         }
         return sql
     }
     
     func fork() -> _SQLRelationTree {
-        return _SQLRelationTree(leftSource: leftSource.fork(), joinedRelations: joinedRelations.map { $0.fork() })
+        return _SQLRelationTree(leftSource: leftSource.fork(), joins: joins.map { $0.fork() })
     }
     
-    func include(relation: Relation) -> _SQLSource {
-        var joinedRelations = self.joinedRelations
-        joinedRelations.append(JoinedRelation(included: true, relation: relation))
-        return _SQLRelationTree(leftSource: leftSource, joinedRelations: joinedRelations)
+    func include(required required: Bool, relation: Relation) -> _SQLSource {
+        var joins = self.joins
+        joins.append(Join(included: true, kind: required ? .Inner : .Left, relation: relation))
+        return _SQLRelationTree(leftSource: leftSource, joins: joins)
     }
     
-    func join(relation: Relation) -> _SQLSource {
-        var joinedRelations = self.joinedRelations
-        joinedRelations.append(JoinedRelation(included: false, relation: relation))
-        return _SQLRelationTree(leftSource: leftSource, joinedRelations: joinedRelations)
+    func join(required required: Bool, relation: Relation) -> _SQLSource {
+        var joins = self.joins
+        joins.append(Join(included: false, kind: required ? .Inner : .Left, relation: relation))
+        return _SQLRelationTree(leftSource: leftSource, joins: joins)
     }
     
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         var selectionIndex = 1
         var variants: [String: RowAdapter] = [:]
-        for joinedRelation in joinedRelations {
-            if let adapter = joinedRelation.relation.adapter(included: joinedRelation.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
-                variants[joinedRelation.relation.variantName] = adapter
+        for join in joins {
+            if let adapter = join.relation.adapter(included: join.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
+                variants[join.relation.variantName] = adapter
             }
         }
         if variants.isEmpty { return nil }

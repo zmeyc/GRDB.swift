@@ -481,6 +481,59 @@ class ComplexRelationTests: GRDBTestCase {
         }
     }
     
+    func testFirstLevelRequiredRelation() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id))")
+                try db.execute("INSERT INTO a (id) VALUES (NULL)")
+                
+                let bRelation = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
+                
+                do {
+                    let request = Table("a").include(bRelation)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertTrue(row.variant(named: "b")!.value(named: "id") == nil)
+                }
+                
+                do {
+                    let request = Table("a").include(required: false, bRelation)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertTrue(row.variant(named: "b")!.value(named: "id") == nil)
+                }
+                
+                do {
+                    let request = Table("a").include(required: true, bRelation)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                    
+                    let row = Row.fetchOne(db, request)
+                    XCTAssertTrue(row == nil)
+                }
+            }
+        }
+    }
+    
     func testDefaultRelationAliasWithInclude() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
