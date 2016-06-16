@@ -392,7 +392,7 @@ extension _SQLRelationTree : _SQLSource {
     func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?]) throws -> String {
         var sql = try leftSource.sql(db, &bindings)
         for join in joins {
-            sql += try " " + join.relation.sql(db, &bindings, joinKind: join.kind, leftSourceName: leftSource.name!)
+            sql += try " " + join.relation.sql(db, &bindings, leftSourceName: leftSource.name!, joinKind: join.kind, innerJoinForbidden: false)
         }
         return sql
     }

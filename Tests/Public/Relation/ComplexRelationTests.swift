@@ -534,6 +534,140 @@ class ComplexRelationTests: GRDBTestCase {
         }
     }
     
+    func testTwoLevelsRequiredRelation() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id))")
+                try db.execute("CREATE TABLE c (id INTEGER PRIMARY KEY, bID REFERENCES b(id))")
+                try db.execute("INSERT INTO a (id) VALUES (NULL)")
+                try db.execute("INSERT INTO a (id) VALUES (NULL)")
+                try db.execute("INSERT INTO b (id, aID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
+                try db.execute("INSERT INTO a (id) VALUES (NULL)")
+                try db.execute("INSERT INTO b (id, aID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
+                try db.execute("INSERT INTO c (id, bID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
+                
+                let bRelation = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
+                let cRelation = ForeignRelation(tableName: "c", foreignKey: ["id": "bID"])
+                
+                do {
+                    let request = Table("a").include(bRelation.include(cRelation)).order(sql: "a.id, b.id, c.id")
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "ORDER BY a.id, b.id, c.id")
+                    
+                    let rows = Row.fetchAll(db, request)
+                    XCTAssertEqual(rows.count, 3)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelation.include(required: false, cRelation)).order(sql: "a.id, b.id, c.id")
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "ORDER BY a.id, b.id, c.id")
+                    
+                    let rows = Row.fetchAll(db, request)
+                    XCTAssertEqual(rows.count, 3)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelation.include(required: true, cRelation)).order(sql: "a.id, b.id, c.id")
+                    _ = try request.selectStatement(db)
+                    XCTFail("Expected DatabaseError")
+                } catch let error as DatabaseError {
+                    XCTAssertEqual(error.code, 21) // SQLITE_MISUSE
+                }
+                
+                do {
+                    let request = Table("a").include(required: true, bRelation.include(cRelation)).order(sql: "a.id, b.id, c.id")
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "ORDER BY a.id, b.id, c.id")
+                    
+                    let rows = Row.fetchAll(db, request)
+                    XCTAssertEqual(rows.count, 2)
+                }
+                
+                do {
+                    let request = Table("a").include(required: true, bRelation.include(required: false, cRelation)).order(sql: "a.id, b.id, c.id")
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "ORDER BY a.id, b.id, c.id")
+                    
+                    let rows = Row.fetchAll(db, request)
+                    XCTAssertEqual(rows.count, 2)
+                }
+                
+                do {
+                    let request = Table("a").include(required: true, bRelation.include(required: true, cRelation)).order(sql: "a.id, b.id, c.id")
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "ORDER BY a.id, b.id, c.id")
+                    
+                    let rows = Row.fetchAll(db, request)
+                    XCTAssertEqual(rows.count, 1)
+                }
+                
+                do {
+                    let request = Table("a").include(required: false, bRelation.include(cRelation)).order(sql: "a.id, b.id, c.id")
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "ORDER BY a.id, b.id, c.id")
+                    
+                    let rows = Row.fetchAll(db, request)
+                    XCTAssertEqual(rows.count, 3)
+                }
+                
+                do {
+                    let request = Table("a").include(required: false, bRelation.include(required: false, cRelation)).order(sql: "a.id, b.id, c.id")
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
+                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "ORDER BY a.id, b.id, c.id")
+                    
+                    let rows = Row.fetchAll(db, request)
+                    XCTAssertEqual(rows.count, 3)
+                }
+                
+                do {
+                    let request = Table("a").include(required: false, bRelation.include(required: true, cRelation)).order(sql: "a.id, b.id, c.id")
+                    _ = try request.selectStatement(db)
+                    XCTFail("Expected DatabaseError")
+                } catch let error as DatabaseError {
+                    XCTAssertEqual(error.code, 21) // SQLITE_MISUSE
+                }
+            }
+        }
+    }
+    
     func testDefaultRelationAliasWithInclude() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()

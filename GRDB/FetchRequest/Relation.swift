@@ -1,3 +1,15 @@
+#if !USING_BUILTIN_SQLITE
+    #if os(OSX)
+        import SQLiteMacOSX
+    #elseif os(iOS)
+        #if (arch(i386) || arch(x86_64))
+            import SQLiteiPhoneSimulator
+        #else
+            import SQLiteiPhoneOS
+        #endif
+    #endif
+#endif
+
 /// TODO
 public protocol _Relation {
     /// TODO
@@ -22,7 +34,7 @@ public protocol _Relation {
     var rightSource: _SQLSource { get }
     
     /// TODO
-    func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], joinKind: _JoinKind, leftSourceName: String) throws -> String
+    func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String
     
     /// TODO
     func selection(included included: Bool) -> [_SQLSelectable]
@@ -39,29 +51,29 @@ extension Relation {
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func include(relations: Relation...) -> Relation {
-        return include(relations)
+    public func include(required required: Bool = false, _ relations: Relation...) -> Relation {
+        return include(required: required, relations)
     }
     
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func include(relations: [Relation]) -> Relation {
-        return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: true, kind: .Left, relation: $0.fork()) })
+    public func include(required required: Bool = false, _ relations: [Relation]) -> Relation {
+        return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: true, kind: required ? .Inner : .Left, relation: $0.fork()) })
     }
     
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func join(relations: Relation...) -> Relation {
-        return join(relations)
+    public func join(required required: Bool = false, _ relations: Relation...) -> Relation {
+        return join(required: required, relations)
     }
     
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func join(relations: [Relation]) -> Relation {
-        return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: false, kind: .Left, relation: $0.fork()) })
+    public func join(required required: Bool = false, _ relations: [Relation]) -> Relation {
+        return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: false, kind: required ? .Inner : .Left, relation: $0.fork()) })
     }
 }
 
@@ -128,12 +140,13 @@ extension ChainedRelation : Relation {
     }
     
     /// TODO
-    func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], joinKind: _JoinKind, leftSourceName: String) throws -> String {
-        var sql = try baseRelation.sql(db, &bindings, joinKind: joinKind, leftSourceName: leftSourceName)
+    func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
+        var sql = try baseRelation.sql(db, &bindings, leftSourceName: leftSourceName, joinKind: joinKind, innerJoinForbidden: innerJoinForbidden)
         if !joins.isEmpty {
+            let innerJoinForbidden = (joinKind == .Left)
             sql += " "
             sql += try joins.map {
-                try $0.relation.sql(db, &bindings, joinKind: $0.kind, leftSourceName: baseRelation.rightSource.name!)
+                try $0.relation.sql(db, &bindings, leftSourceName: baseRelation.rightSource.name!, joinKind: $0.kind, innerJoinForbidden: innerJoinForbidden)
                 }.joinWithSeparator(" ")
         }
         return sql
@@ -216,7 +229,10 @@ extension ForeignRelation : Relation {
     }
     
     /// TODO
-    public func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], joinKind: _JoinKind, leftSourceName: String) throws -> String {
+    public func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
+        if innerJoinForbidden && joinKind != .Left {
+            throw DatabaseError(code: SQLITE_MISUSE, message: "Invalid required relation after a non-required relation.")
+        }
         var sql = try joinKind.rawValue + " " + rightSource.sql(db, &bindings) + " ON "
         sql += foreignKey.map({ (leftColumn, rightColumn) -> String in
             "\(rightSource.name!.quotedDatabaseIdentifier).\(rightColumn.quotedDatabaseIdentifier) = \(leftSourceName.quotedDatabaseIdentifier).\(leftColumn.quotedDatabaseIdentifier)"

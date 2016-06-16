@@ -27,9 +27,9 @@
 – [X] Relations: include two chained relations
 - [ ] Relations: filter on joined relation (JOIN ... ON ...)
 - [ ] Relations: filter on joined relation (JOIN ... WHERE ...)
-– [ ] Relations: mandatory true/false (JOIN vs LEFT JOIN)
+– [X] Relations: mandatory true/false (JOIN vs LEFT JOIN)
     - [X] first level: table.include(required: true, relation) 
-    - [ ] first level: table.include(required: true, relation.include(required: true, relation))
+    - [X] deep level: table.include(required: true, relation.include(required: true, relation))
 – [ ] Relations: allow to give an alias, so that one can use an alias in an ORDER BY clause
     - [X] Person.include(Person.birthCountry.aliased("customCountryAlias"))
     - [ ] Person.aliased("customPersonAlias").include(Person.birthCountry) 
