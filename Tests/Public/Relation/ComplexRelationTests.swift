@@ -15,10 +15,10 @@ private final class Person : RowConvertible, TableMapping {
     let birthCountryIsoCode: String?
     
     let birthCountry: Country?
-    static let birthCountry = ForeignRelation(variantName: "birthCountry", tableName: "countries", foreignKey: ["birthCountryIsoCode": "isoCode"])
+    static let birthCountry = ForeignRelation(to: "countries", through: ["birthCountryIsoCode": "isoCode"], variantName: "birthCountry")
     
     let ruledCountry: Country?
-    static let ruledCountry = ForeignRelation(variantName: "ruledCountry", tableName: "countries", foreignKey: ["id": "leaderID"])
+    static let ruledCountry = ForeignRelation(to: "countries", through: ["id": "leaderID"], variantName: "ruledCountry")
     
     static func databaseTableName() -> String {
         return "persons"
@@ -49,7 +49,7 @@ private final class Country: RowConvertible {
     let leaderID: Int64?
     
     let leader: Person?
-    static let leader = ForeignRelation(variantName: "leader", tableName: "persons", foreignKey: ["leaderID": "id"])
+    static let leader = ForeignRelation(to: "persons", through: ["leaderID": "id"], variantName: "leader")
     
     init(_ row: Row) {
         isoCode = row.value(named: "isoCode")
@@ -79,9 +79,9 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO c (id, bID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 try db.execute("INSERT INTO d (id, cID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 
-                let b = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
-                let c = ForeignRelation(tableName: "c", foreignKey: ["id": "bID"])
-                let d = ForeignRelation(tableName: "d", foreignKey: ["id": "cID"])
+                let b = ForeignRelation(to: "b", through: ["id": "aID"])
+                let c = ForeignRelation(to: "c", through: ["id": "bID"])
+                let d = ForeignRelation(to: "d", through: ["id": "cID"])
                 
                 do {
                     let request = Table("a").join(b)
@@ -350,9 +350,9 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO b (id, aID) VALUES (NULL, ?)", arguments: [a1ID])
                 try db.execute("INSERT INTO c (id, a1ID, a2ID) VALUES (NULL, ?, ?)", arguments: [a1ID, a2ID])
                 
-                let b = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
-                let c1 = ForeignRelation(variantName: "c1", tableName: "c", foreignKey: ["id": "a1ID"])
-                let c2 = ForeignRelation(variantName: "c2", tableName: "c", foreignKey: ["id": "a2ID"])
+                let b = ForeignRelation(to: "b", through: ["id": "aID"])
+                let c1 = ForeignRelation(to: "c", through: ["id": "a1ID"], variantName: "c1")
+                let c2 = ForeignRelation(to: "c", through: ["id": "a2ID"], variantName: "c2")
                 
                 do {
                     let request = Table("a").join(b, c1, c2)
@@ -503,10 +503,10 @@ class ComplexRelationTests: GRDBTestCase {
                 let cID = db.lastInsertedRowID
                 try db.execute("INSERT INTO d (id, bID, cID) VALUES (NULL, ?, ?)", arguments: [bID, cID])
                 
-                let b = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
-                let c = ForeignRelation(tableName: "c", foreignKey: ["id": "aID"])
-                let bd = ForeignRelation(tableName: "d", foreignKey: ["id": "bID"])
-                let cd = ForeignRelation(tableName: "d", foreignKey: ["id": "cID"])
+                let b = ForeignRelation(to: "b", through: ["id": "aID"])
+                let c = ForeignRelation(to: "c", through: ["id": "aID"])
+                let bd = ForeignRelation(to: "d", through: ["id": "bID"])
+                let cd = ForeignRelation(to: "d", through: ["id": "cID"])
                 
                 do {
                     let request = Table("a").join(b.join(bd), c.join(cd))
@@ -660,9 +660,9 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO a (id) VALUES (NULL)")
                 try db.execute("INSERT INTO b (id, aID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 
-                let bRelationUnnamed = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
-                let bRelationNamedAsTable = ForeignRelation(variantName: "b", tableName: "b", foreignKey: ["id": "aID"])
-                let bRelationNamed = ForeignRelation(variantName: "bVariant", tableName: "b", foreignKey: ["id": "aID"])
+                let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
+                let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
+                let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
                 
                 do {
                     let request = Table("a").include(bRelationUnnamed)
@@ -755,9 +755,12 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO b (id, aID, bar) VALUES (NULL, ?, ?)", arguments: [db.lastInsertedRowID, "bar"])
                 
                 let fooColumn = SQLColumn("foo")
-                let bRelationUnnamed = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"]).filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
-                let bRelationNamedAsTable = ForeignRelation(variantName: "b", tableName: "b", foreignKey: ["id": "aID"]).filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
-                let bRelationNamed = ForeignRelation(variantName: "bVariant", tableName: "b", foreignKey: ["id": "aID"]).filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
+                let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
+                    .filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
+                let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
+                    .filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
+                let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
+                    .filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
                 
                 do {
                     let request = Table("a").include(bRelationUnnamed)
@@ -853,8 +856,8 @@ class ComplexRelationTests: GRDBTestCase {
                 return .Commit
             }
             
-            let bRelation = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
-            let aRelation = ForeignRelation(tableName: "a", foreignKey: ["id": "bID"])
+            let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
+            let aRelation = ForeignRelation(to: "a", through: ["id": "bID"])
             
             dbQueue.inDatabase { db in
                 let request = Table("a").include(bRelation.include(aRelation))
@@ -901,7 +904,7 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id))")
                 try db.execute("INSERT INTO a (id) VALUES (NULL)")
                 
-                let bRelation = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
+                let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
                 
                 do {
                     let request = Table("a").include(bRelation)
@@ -960,8 +963,8 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO b (id, aID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 try db.execute("INSERT INTO c (id, bID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 
-                let bRelation = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"])
-                let cRelation = ForeignRelation(tableName: "c", foreignKey: ["id": "bID"])
+                let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
+                let cRelation = ForeignRelation(to: "c", through: ["id": "bID"])
                 
                 do {
                     let request = Table("a").include(bRelation.include(cRelation)).order(sql: "a.id, b.id, c.id")

@@ -190,7 +190,7 @@ public struct ForeignRelation {
     var predicate: ((left: SQLSource, right: SQLSource) -> _SQLExpressible)
     
     /// TODO
-    public init(variantName: String? = nil, tableName: String, foreignKey: [String: String]) {
+    public init(to tableName: String, through foreignKey: [String: String], variantName: String? = nil) {
         // TODO: doesn't alias need to be validated as valid SQLite identifiers?
         let variantName = variantName ?? tableName
         let alias: String? = (variantName == tableName) ? nil : variantName
