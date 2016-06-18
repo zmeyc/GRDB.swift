@@ -49,28 +49,28 @@ public protocol SQLRelation : _SQLRelation {
 
 extension SQLRelation {
     /// TODO
-    /// extension Method
+    /// Extension method
     @warn_unused_result
     public func include(required required: Bool = false, _ relations: SQLRelation...) -> SQLRelation {
         return include(required: required, relations)
     }
     
     /// TODO
-    /// extension Method
+    /// Extension method
     @warn_unused_result
     public func include(required required: Bool = false, _ relations: [SQLRelation]) -> SQLRelation {
         return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: true, kind: required ? .Inner : .Left, relation: $0.fork()) })
     }
     
     /// TODO
-    /// extension Method
+    /// Extension method
     @warn_unused_result
     public func join(required required: Bool = false, _ relations: SQLRelation...) -> SQLRelation {
         return join(required: required, relations)
     }
     
     /// TODO
-    /// extension Method
+    /// Extension method
     @warn_unused_result
     public func join(required required: Bool = false, _ relations: [SQLRelation]) -> SQLRelation {
         return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: false, kind: required ? .Inner : .Left, relation: $0.fork()) })
@@ -286,7 +286,8 @@ extension QueryInterfaceRequest {
         var query = self.query
         var source = query.source!
         for relation in relations {
-            source = source.include(required: required, relation: relation)
+            var relation = relation
+            source = source.include(required: required, relation: &relation)
             query.selection.appendContentsOf(relation.selection(included: true))
         }
         query.source = source
@@ -306,7 +307,8 @@ extension QueryInterfaceRequest {
         var query = self.query
         var source = query.source!
         for relation in relations {
-            source = source.join(required: required, relation: relation)
+            var relation = relation
+            source = source.join(required: required, relation: &relation)
             query.selection.appendContentsOf(relation.selection(included: false))
         }
         query.source = source

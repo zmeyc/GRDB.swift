@@ -266,14 +266,12 @@ public protocol _SQLSource: class {
     func sql(db: Database, inout _ arguments: StatementArguments) throws -> String
     func fork() -> Self
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
+    func include(required required: Bool, inout relation: SQLRelation) -> SQLSource
+    func join(required required: Bool, inout relation: SQLRelation) -> SQLSource
 }
 
 /// TODO
 public protocol SQLSource : _SQLSource {
-    /// TODO
-    func include(required required: Bool, relation: SQLRelation) -> SQLSource
-    /// TODO
-    func join(required required: Bool, relation: SQLRelation) -> SQLSource
 }
 
 extension SQLSource {
@@ -328,16 +326,19 @@ extension _SQLSourceTable : _SQLSource {
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         return nil
     }
-}
-
-extension _SQLSourceTable : SQLSource {
-    func include(required required: Bool, relation: SQLRelation) -> SQLSource {
+    
+    func include(required required: Bool, inout relation: SQLRelation) -> SQLSource {
+        relation = relation.fork()
         return _SQLRelationTree(leftSource: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
     }
     
-    func join(required required: Bool, relation: SQLRelation) -> SQLSource {
+    func join(required required: Bool, inout relation: SQLRelation) -> SQLSource {
+        relation = relation.fork()
         return _SQLRelationTree(leftSource: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
     }
+}
+
+extension _SQLSourceTable : SQLSource {
 }
 
 final class _SQLSourceQuery {
@@ -378,18 +379,21 @@ extension _SQLSourceQuery: _SQLSource {
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         return nil
     }
-}
-
-extension _SQLSourceQuery : SQLSource {
+    
     // TODO
-    func include(required required: Bool, relation: SQLRelation) -> SQLSource {
+    func include(required required: Bool, inout relation: SQLRelation) -> SQLSource {
+        relation = relation.fork()
         return _SQLRelationTree(leftSource: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
     }
     
     // TODO
-    func join(required required: Bool, relation: SQLRelation) -> SQLSource {
+    func join(required required: Bool, inout relation: SQLRelation) -> SQLSource {
+        relation = relation.fork()
         return _SQLRelationTree(leftSource: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
     }
+}
+
+extension _SQLSourceQuery : SQLSource {
 }
 
 final class _SQLRelationTree {
@@ -447,21 +451,21 @@ extension _SQLRelationTree : _SQLSource {
         if variants.isEmpty { return nil }
         return SuffixRowAdapter(fromIndex: 0).adapterWithVariants(variants)
     }
+    
+    func include(required required: Bool, inout relation: SQLRelation) -> SQLSource {
+        relation = relation.fork()
+        let join = Join(included: true, kind: required ? .Inner : .Left, relation: relation)
+        return _SQLRelationTree(leftSource: leftSource, joins: joins + [join])
+    }
+    
+    func join(required required: Bool, inout relation: SQLRelation) -> SQLSource {
+        relation = relation.fork()
+        let join = Join(included: false, kind: required ? .Inner : .Left, relation: relation)
+        return _SQLRelationTree(leftSource: leftSource, joins: joins + [join])
+    }
 }
 
 extension _SQLRelationTree : SQLSource {
-    
-    func include(required required: Bool, relation: SQLRelation) -> SQLSource {
-        var joins = self.joins
-        joins.append(Join(included: true, kind: required ? .Inner : .Left, relation: relation))
-        return _SQLRelationTree(leftSource: leftSource, joins: joins)
-    }
-    
-    func join(required required: Bool, relation: SQLRelation) -> SQLSource {
-        var joins = self.joins
-        joins.append(Join(included: false, kind: required ? .Inner : .Left, relation: relation))
-        return _SQLRelationTree(leftSource: leftSource, joins: joins)
-    }
 }
 
 
