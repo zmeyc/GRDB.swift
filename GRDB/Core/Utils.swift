@@ -119,6 +119,15 @@ extension SequenceType {
     }
 }
 
+extension Array {
+    func reduce(@noescape combine: (Generator.Element, Generator.Element) throws -> Generator.Element) rethrows -> Generator.Element {
+        guard count > 1 else {
+            return self[0]
+        }
+        return try suffixFrom(1).reduce(self[0], combine: combine)
+    }
+}
+
 /// A ReadWriteBox grants multiple readers and single-writer guarantees on a value.
 final class ReadWriteBox<T> {
     var value: T {

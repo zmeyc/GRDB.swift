@@ -20,7 +20,7 @@
 public struct _SQLSelectQuery {
     var selection: [_SQLSelectable]
     var distinct: Bool
-    var source: _SQLSource?
+    var source: SQLSource?
     var whereExpression: _SQLExpression?
     var groupByExpressions: [_SQLExpression]
     var orderings: [_SQLOrdering]
@@ -31,7 +31,7 @@ public struct _SQLSelectQuery {
     init(
         select selection: [_SQLSelectable],
         distinct: Bool = false,
-        from source: _SQLSource? = nil,
+        from source: SQLSource? = nil,
         filter whereExpression: _SQLExpression? = nil,
         groupBy groupByExpressions: [_SQLExpression] = [],
         orderBy orderings: [_SQLOrdering] = [],
@@ -265,9 +265,27 @@ public protocol _SQLSource: class {
     func numberOfColumns(db: Database) throws -> Int
     func sql(db: Database, inout _ arguments: StatementArguments) throws -> String
     func fork() -> Self
-    func include(required required: Bool, relation: Relation) -> _SQLSource
-    func join(required required: Bool, relation: Relation) -> _SQLSource
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
+}
+
+/// TODO
+public protocol SQLSource : _SQLSource {
+    /// TODO
+    func include(required required: Bool, relation: Relation) -> SQLSource
+    /// TODO
+    func join(required required: Bool, relation: Relation) -> SQLSource
+}
+
+extension SQLSource {
+    /// TODO
+    public subscript(columnName: String) -> SQLColumn {
+        return SQLColumn(name: columnName, source: self)
+    }
+    
+    /// TODO
+    public subscript(column: SQLColumn) -> SQLColumn {
+        return self[column.name]
+    }
 }
 
 final class _SQLSourceTable {
@@ -307,16 +325,18 @@ extension _SQLSourceTable : _SQLSource {
         return _SQLSourceTable(tableName: tableName, alias: alias)
     }
     
-    func include(required required: Bool, relation: Relation) -> _SQLSource {
+    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
+        return nil
+    }
+}
+
+extension _SQLSourceTable : SQLSource {
+    func include(required required: Bool, relation: Relation) -> SQLSource {
         return _SQLRelationTree(leftSource: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
     }
     
-    func join(required required: Bool, relation: Relation) -> _SQLSource {
+    func join(required required: Bool, relation: Relation) -> SQLSource {
         return _SQLRelationTree(leftSource: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
-    }
-    
-    func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
-        return nil
     }
 }
 
@@ -355,24 +375,28 @@ extension _SQLSourceQuery: _SQLSource {
         return _SQLSourceQuery(query: query, name: name)
     }
     
-    func include(required required: Bool, relation: Relation) -> _SQLSource {
-        return _SQLRelationTree(leftSource: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
-    }
-    
-    func join(required required: Bool, relation: Relation) -> _SQLSource {
-        return _SQLRelationTree(leftSource: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
-    }
-    
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         return nil
     }
 }
 
+extension _SQLSourceQuery : SQLSource {
+    // TODO
+    func include(required required: Bool, relation: Relation) -> SQLSource {
+        return _SQLRelationTree(leftSource: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
+    }
+    
+    // TODO
+    func join(required required: Bool, relation: Relation) -> SQLSource {
+        return _SQLRelationTree(leftSource: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
+    }
+}
+
 final class _SQLRelationTree {
-    private let leftSource: _SQLSource
+    private let leftSource: SQLSource
     private let joins: [Join]
     
-    init(leftSource: _SQLSource, joins: [Join]) {
+    init(leftSource: SQLSource, joins: [Join]) {
         self.leftSource = leftSource
         self.joins = joins
     }
@@ -403,25 +427,13 @@ extension _SQLRelationTree : _SQLSource {
     func sql(db: Database, inout _ arguments: StatementArguments) throws -> String {
         var sql = try leftSource.sql(db, &arguments)
         for join in joins {
-            sql += try " " + join.relation.sql(db, &arguments, leftSourceName: leftSource.name!, joinKind: join.kind, innerJoinForbidden: false)
+            sql += try " " + join.relation.sql(db, &arguments, leftSource: leftSource, joinKind: join.kind, innerJoinForbidden: false)
         }
         return sql
     }
     
     func fork() -> _SQLRelationTree {
         return _SQLRelationTree(leftSource: leftSource.fork(), joins: joins.map { $0.fork() })
-    }
-    
-    func include(required required: Bool, relation: Relation) -> _SQLSource {
-        var joins = self.joins
-        joins.append(Join(included: true, kind: required ? .Inner : .Left, relation: relation))
-        return _SQLRelationTree(leftSource: leftSource, joins: joins)
-    }
-    
-    func join(required required: Bool, relation: Relation) -> _SQLSource {
-        var joins = self.joins
-        joins.append(Join(included: false, kind: required ? .Inner : .Left, relation: relation))
-        return _SQLRelationTree(leftSource: leftSource, joins: joins)
     }
     
     func adapter(columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
@@ -434,6 +446,21 @@ extension _SQLRelationTree : _SQLSource {
         }
         if variants.isEmpty { return nil }
         return SuffixRowAdapter(fromIndex: 0).adapterWithVariants(variants)
+    }
+}
+
+extension _SQLRelationTree : SQLSource {
+    
+    func include(required required: Bool, relation: Relation) -> SQLSource {
+        var joins = self.joins
+        joins.append(Join(included: true, kind: required ? .Inner : .Left, relation: relation))
+        return _SQLRelationTree(leftSource: leftSource, joins: joins)
+    }
+    
+    func join(required required: Bool, relation: Relation) -> SQLSource {
+        var joins = self.joins
+        joins.append(Join(included: false, kind: required ? .Inner : .Left, relation: relation))
+        return _SQLRelationTree(leftSource: leftSource, joins: joins)
     }
 }
 
@@ -931,10 +958,17 @@ extension _SQLResultColumn : _SQLSelectable {
 public struct SQLColumn {
     /// The name of the column
     public let name: String
+    let source: _SQLSource?
     
     /// Initializes a column given its name.
     public init(_ name: String) {
         self.name = name
+        self.source = nil
+    }
+    
+    init(name: String, source: _SQLSource) {
+        self.name = name
+        self.source = source
     }
 }
 
@@ -945,7 +979,7 @@ extension SQLColumn : _SpecificSQLExpressible {
     ///
     /// See https://github.com/groue/GRDB.swift/#the-query-interface
     public var sqlExpression: _SQLExpression {
-        return .Identifier(identifier: name, sourceName: nil)
+        return .Identifier(identifier: name, sourceName: source?.name)
     }
 }
 

@@ -27,7 +27,7 @@
         self.author = Person(bewareRow: row)                  // Person? - what parameter name?
     }
 – [X] Relations: include two chained relations
-- [ ] Relations: filter on joined relation (JOIN ... ON ...)
+- [X] Relations: filter on joined relation (JOIN ... ON ...)
 - [ ] Relations: filter on joined relation (JOIN ... WHERE ...)
 – [X] Relations: mandatory true/false (JOIN vs LEFT JOIN)
     - [X] first level: table.include(required: true, relation) 

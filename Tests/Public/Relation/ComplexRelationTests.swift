@@ -89,7 +89,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") == nil)
@@ -103,7 +103,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -119,8 +119,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") == nil)
@@ -134,8 +134,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -151,8 +151,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -169,8 +169,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -187,9 +187,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"d\" ON (\"d\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") == nil)
@@ -203,9 +203,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"d\" ON (\"d\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -221,9 +221,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"d\" ON (\"d\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -240,9 +240,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"d\" ON (\"d\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -259,9 +259,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"d\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"d\" ON (\"d\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -279,9 +279,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"d\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"d\" ON (\"d\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -299,9 +299,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c\".*, \"d\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"d\" ON (\"d\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -319,9 +319,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".*, \"d\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"d\" ON \"d\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"d\" ON (\"d\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -360,9 +360,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c1\" ON \"c1\".\"a1ID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c2\" ON \"c2\".\"a2ID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") == nil)
@@ -376,9 +376,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c2\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c1\" ON \"c1\".\"a1ID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c2\" ON \"c2\".\"a2ID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") == nil)
@@ -392,9 +392,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c1\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c1\" ON \"c1\".\"a1ID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c2\" ON \"c2\".\"a2ID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") == nil)
@@ -408,9 +408,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c1\".*, \"c2\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c1\" ON \"c1\".\"a1ID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c2\" ON \"c2\".\"a2ID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") == nil)
@@ -424,9 +424,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c1\" ON \"c1\".\"a1ID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c2\" ON \"c2\".\"a2ID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertFalse(row.variant(named: "b")!.isEmpty)
@@ -440,9 +440,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c2\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c1\" ON \"c1\".\"a1ID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c2\" ON \"c2\".\"a2ID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertFalse(row.variant(named: "b")!.isEmpty)
@@ -456,9 +456,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c1\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c1\" ON \"c1\".\"a1ID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c2\" ON \"c2\".\"a2ID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertFalse(row.variant(named: "b")!.isEmpty)
@@ -472,9 +472,9 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c1\".*, \"c2\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c1\" ON \"c1\".\"a1ID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" \"c2\" ON \"c2\".\"a2ID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertFalse(row.variant(named: "b")!.isEmpty)
@@ -514,10 +514,10 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d0\" ON \"d0\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d1\" ON \"d1\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d0\" ON (\"d0\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d1\" ON (\"d1\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") == nil)
@@ -530,10 +530,10 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d0\" ON \"d0\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d1\" ON \"d1\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d0\" ON (\"d0\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d1\" ON (\"d1\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertFalse(row.variant(named: "b")!.isEmpty)
@@ -548,10 +548,10 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"d0\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d0\" ON \"d0\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d1\" ON \"d1\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d0\" ON (\"d0\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d1\" ON (\"d1\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b")!.isEmpty)
@@ -565,10 +565,10 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"d0\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d0\" ON \"d0\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d1\" ON \"d1\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d0\" ON (\"d0\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d1\" ON (\"d1\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertFalse(row.variant(named: "b")!.isEmpty)
@@ -583,10 +583,10 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"d1\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d0\" ON \"d0\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d1\" ON \"d1\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d0\" ON (\"d0\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d1\" ON (\"d1\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") == nil)
@@ -600,10 +600,10 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".*, \"d1\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d0\" ON \"d0\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d1\" ON \"d1\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d0\" ON (\"d0\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d1\" ON (\"d1\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertFalse(row.variant(named: "b")!.isEmpty)
@@ -618,10 +618,10 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"d0\".*, \"d1\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d0\" ON \"d0\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d1\" ON \"d1\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d0\" ON (\"d0\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d1\" ON (\"d1\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b")!.isEmpty)
@@ -636,10 +636,10 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"d0\".*, \"c\".*, \"d1\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d0\" ON \"d0\".\"bID\" = \"b\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"d\" \"d1\" ON \"d1\".\"cID\" = \"c\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d0\" ON (\"d0\".\"bID\" = \"b\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"d\" \"d1\" ON (\"d1\".\"cID\" = \"c\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertFalse(row.variant(named: "b")!.isEmpty)
@@ -670,7 +670,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -683,7 +683,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON \"bAlias\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" \"bAlias\" ON (\"bAlias\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -696,7 +696,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -709,7 +709,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON \"bAlias\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" \"bAlias\" ON (\"bAlias\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -722,7 +722,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bVariant\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bVariant\" ON \"bVariant\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" \"bVariant\" ON (\"bVariant\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "bVariant") != nil)
@@ -735,7 +735,102 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON \"bAlias\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" \"bAlias\" ON (\"bAlias\".\"aID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "bVariant") != nil)
+                    XCTAssertFalse(row.variant(named: "bVariant")!.isEmpty)
+                }
+            }
+        }
+    }
+    
+    func testRelationFilter() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, foo TEXT)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
+                try db.execute("INSERT INTO a (id, foo) VALUES (NULL, ?)", arguments: ["foo"])
+                try db.execute("INSERT INTO b (id, aID, bar) VALUES (NULL, ?, ?)", arguments: [db.lastInsertedRowID, "bar"])
+                
+                let fooColumn = SQLColumn("foo")
+                let bRelationUnnamed = ForeignRelation(tableName: "b", foreignKey: ["id": "aID"]).filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
+                let bRelationNamedAsTable = ForeignRelation(variantName: "b", tableName: "b", foreignKey: ["id": "aID"]).filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
+                let bRelationNamed = ForeignRelation(variantName: "bVariant", tableName: "b", foreignKey: ["id": "aID"]).filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
+                
+                do {
+                    let request = Table("a").include(bRelationUnnamed)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"b\".\"bar\" = 'bar')))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationUnnamed.aliased("bAlias"))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bAlias\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"bAlias\".\"bar\" = 'bar')))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationNamedAsTable)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"b\".\"bar\" = 'bar')))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationNamedAsTable.aliased("bAlias"))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bAlias\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"bAlias\".\"bar\" = 'bar')))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationNamed)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bVariant\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bVariant\" ON ((\"bVariant\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"bVariant\".\"bar\" = 'bar')))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "bVariant") != nil)
+                    XCTAssertFalse(row.variant(named: "bVariant")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationNamed.aliased("bAlias"))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bAlias\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"bAlias\".\"bar\" = 'bar')))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "bVariant") != nil)
@@ -767,8 +862,8 @@ class ComplexRelationTests: GRDBTestCase {
                     self.sql(db, request),
                     "SELECT \"a0\".*, \"b\".*, \"a1\".* " +
                     "FROM \"a\" \"a0\" " +
-                    "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a0\".\"id\" " +
-                    "LEFT JOIN \"a\" \"a1\" ON \"a1\".\"bID\" = \"b\".\"id\"")
+                    "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a0\".\"id\") " +
+                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b\".\"id\")")
                 
                 let row = Row.fetchOne(db, request)!
                 XCTAssertTrue(row.variant(named: "b") != nil)
@@ -783,9 +878,9 @@ class ComplexRelationTests: GRDBTestCase {
                     self.sql(db, request),
                     "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
                     "FROM \"a\" \"a0\" " +
-                    "LEFT JOIN \"b\" \"b0\" ON \"b0\".\"aID\" = \"a0\".\"id\" " +
-                    "LEFT JOIN \"a\" \"a1\" ON \"a1\".\"bID\" = \"b0\".\"id\" " +
-                    "LEFT JOIN \"b\" \"b1\" ON \"b1\".\"aID\" = \"a1\".\"id\"")
+                    "LEFT JOIN \"b\" \"b0\" ON (\"b0\".\"aID\" = \"a0\".\"id\") " +
+                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b0\".\"id\") " +
+                    "LEFT JOIN \"b\" \"b1\" ON (\"b1\".\"aID\" = \"a1\".\"id\")")
                 
                 let row = Row.fetchOne(db, request)!
                 XCTAssertTrue(row.variant(named: "b") != nil)
@@ -814,7 +909,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -828,7 +923,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -842,7 +937,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\"")
+                        "JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\")")
                     
                     let row = Row.fetchOne(db, request)
                     XCTAssertTrue(row == nil)
@@ -874,8 +969,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
                         "ORDER BY a.id, b.id, c.id")
                     
                     let rows = Row.fetchAll(db, request)
@@ -888,8 +983,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
                         "ORDER BY a.id, b.id, c.id")
                     
                     let rows = Row.fetchAll(db, request)
@@ -910,8 +1005,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
                         "ORDER BY a.id, b.id, c.id")
                     
                     let rows = Row.fetchAll(db, request)
@@ -924,8 +1019,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
                         "ORDER BY a.id, b.id, c.id")
                     
                     let rows = Row.fetchAll(db, request)
@@ -938,8 +1033,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
                         "ORDER BY a.id, b.id, c.id")
                     
                     let rows = Row.fetchAll(db, request)
@@ -952,8 +1047,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
                         "ORDER BY a.id, b.id, c.id")
                     
                     let rows = Row.fetchAll(db, request)
@@ -966,8 +1061,8 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON \"b\".\"aID\" = \"a\".\"id\" " +
-                        "LEFT JOIN \"c\" ON \"c\".\"bID\" = \"b\".\"id\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" ON (\"c\".\"bID\" = \"b\".\"id\") " +
                         "ORDER BY a.id, b.id, c.id")
                     
                     let rows = Row.fetchAll(db, request)
@@ -1007,7 +1102,7 @@ class ComplexRelationTests: GRDBTestCase {
                 sql(dbQueue, request),
                 "SELECT \"persons\".*, \"birthCountry\".* " +
                 "FROM \"persons\" " +
-                "LEFT JOIN \"countries\" \"birthCountry\" ON \"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\" " +
+                "LEFT JOIN \"countries\" \"birthCountry\" ON (\"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
                 "WHERE birthCountry.isoCode == \'FR\'")
             
             dbQueue.inDatabase { db in
@@ -1042,7 +1137,7 @@ class ComplexRelationTests: GRDBTestCase {
                 sql(dbQueue, request),
                 "SELECT \"persons\".* " +
                 "FROM \"persons\" " +
-                "LEFT JOIN \"countries\" \"birthCountry\" ON \"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\" " +
+                "LEFT JOIN \"countries\" \"birthCountry\" ON (\"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
                 "WHERE birthCountry.isoCode == \'FR\'")
             
             dbQueue.inDatabase { db in
@@ -1077,7 +1172,7 @@ class ComplexRelationTests: GRDBTestCase {
                 sql(dbQueue, request),
                 "SELECT \"persons\".*, \"foo\".* " +
                 "FROM \"persons\" " +
-                "LEFT JOIN \"countries\" \"foo\" ON \"foo\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\" " +
+                "LEFT JOIN \"countries\" \"foo\" ON (\"foo\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
                 "WHERE foo.isoCode == \'FR\'")
             
             dbQueue.inDatabase { db in
@@ -1125,8 +1220,8 @@ class ComplexRelationTests: GRDBTestCase {
                 sql(dbQueue, request),
                 "SELECT \"persons\".*, \"ruledCountry\".*, \"birthCountry\".* " +
                 "FROM \"persons\" " +
-                "LEFT JOIN \"countries\" \"ruledCountry\" ON \"ruledCountry\".\"leaderID\" = \"persons\".\"id\" " +
-                "LEFT JOIN \"countries\" \"birthCountry\" ON \"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\"")
+                "LEFT JOIN \"countries\" \"ruledCountry\" ON (\"ruledCountry\".\"leaderID\" = \"persons\".\"id\") " +
+                "LEFT JOIN \"countries\" \"birthCountry\" ON (\"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\")")
             
             dbQueue.inDatabase { db in
                 // TODO: sort persons using SQL
@@ -1178,11 +1273,11 @@ class ComplexRelationTests: GRDBTestCase {
                 sql(dbQueue, request),
                 "SELECT \"persons\".*, \"ruledCountry0\".*, \"leader0\".*, \"birthCountry\".*, \"leader1\".*, \"ruledCountry1\".* " +
                 "FROM \"persons\" " +
-                "LEFT JOIN \"countries\" \"ruledCountry0\" ON \"ruledCountry0\".\"leaderID\" = \"persons\".\"id\" " +
-                "LEFT JOIN \"persons\" \"leader0\" ON \"leader0\".\"id\" = \"ruledCountry0\".\"leaderID\" " +
-                "LEFT JOIN \"countries\" \"birthCountry\" ON \"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\" " +
-                "LEFT JOIN \"persons\" \"leader1\" ON \"leader1\".\"id\" = \"birthCountry\".\"leaderID\" " +
-                "LEFT JOIN \"countries\" \"ruledCountry1\" ON \"ruledCountry1\".\"leaderID\" = \"leader1\".\"id\"")
+                "LEFT JOIN \"countries\" \"ruledCountry0\" ON (\"ruledCountry0\".\"leaderID\" = \"persons\".\"id\") " +
+                "LEFT JOIN \"persons\" \"leader0\" ON (\"leader0\".\"id\" = \"ruledCountry0\".\"leaderID\") " +
+                "LEFT JOIN \"countries\" \"birthCountry\" ON (\"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
+                "LEFT JOIN \"persons\" \"leader1\" ON (\"leader1\".\"id\" = \"birthCountry\".\"leaderID\") " +
+                "LEFT JOIN \"countries\" \"ruledCountry1\" ON (\"ruledCountry1\".\"leaderID\" = \"leader1\".\"id\")")
             
             dbQueue.inDatabase { db in
                 // TODO: sort persons using SQL

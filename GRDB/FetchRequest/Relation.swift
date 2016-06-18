@@ -31,10 +31,10 @@ public protocol _Relation {
     var referencedSources: [_SQLSource] { get }
     
     /// TODO
-    var rightSource: _SQLSource { get }
+    var rightSource: SQLSource { get }
     
     /// TODO
-    func sql(db: Database, inout _ arguments: StatementArguments, leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String
+    func sql(db: Database, inout _ arguments: StatementArguments, leftSource: SQLSource, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String
     
     /// TODO
     func selection(included included: Bool) -> [_SQLSelectable]
@@ -135,18 +135,18 @@ extension ChainedRelation : Relation {
     }
     
     /// TODO
-    var rightSource: _SQLSource {
+    var rightSource: SQLSource {
         return baseRelation.rightSource
     }
     
     /// TODO
-    func sql(db: Database, inout _ arguments: StatementArguments, leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
-        var sql = try baseRelation.sql(db, &arguments, leftSourceName: leftSourceName, joinKind: joinKind, innerJoinForbidden: innerJoinForbidden)
+    func sql(db: Database, inout _ arguments: StatementArguments, leftSource: SQLSource, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
+        var sql = try baseRelation.sql(db, &arguments, leftSource: leftSource, joinKind: joinKind, innerJoinForbidden: innerJoinForbidden)
         if !joins.isEmpty {
             let innerJoinForbidden = (joinKind == .Left)
             sql += " "
             sql += try joins.map {
-                try $0.relation.sql(db, &arguments, leftSourceName: baseRelation.rightSource.name!, joinKind: $0.kind, innerJoinForbidden: innerJoinForbidden)
+                try $0.relation.sql(db, &arguments, leftSource: baseRelation.rightSource, joinKind: $0.kind, innerJoinForbidden: innerJoinForbidden)
                 }.joinWithSeparator(" ")
         }
         return sql
@@ -185,7 +185,9 @@ public struct ForeignRelation {
     /// TODO
     public let foreignKey: [String: String] // [leftColumn: rightColumn]
     /// TODO
-    public let rightSource: _SQLSource
+    public private(set) var rightSource: SQLSource
+    
+    var predicate: ((left: SQLSource, right: SQLSource) -> _SQLExpressible)
     
     /// TODO
     public init(variantName: String? = nil, tableName: String, foreignKey: [String: String]) {
@@ -196,25 +198,39 @@ public struct ForeignRelation {
         self.init(variantName: variantName, rightSource: rightSource, foreignKey: foreignKey)
     }
     
-    init(variantName: String, rightSource: _SQLSource, foreignKey: [String: String]) {
+    /// TODO
+    public func filter(predicate: (left: SQLSource, right: SQLSource) -> _SQLExpressible) -> ForeignRelation {
+        var relation = self
+        let existingPredicate = self.predicate
+        relation.predicate = { (left, right) in
+            existingPredicate(left: left, right: right).sqlExpression && predicate(left: left, right: right).sqlExpression
+        }
+        return relation
+    }
+    
+    init(variantName: String, rightSource: SQLSource, foreignKey: [String: String]) {
         self.variantName = variantName
         self.rightSource = rightSource
         self.foreignKey = foreignKey
+        self.predicate = { (left, right) in foreignKey.map { (leftColumn, rightColumn) in right[rightColumn] == left[leftColumn] }.reduce(&&) }
     }
 }
 
 extension ForeignRelation : Relation {
     /// TODO
     public func fork() -> ForeignRelation {
-        return ForeignRelation(variantName: variantName, rightSource: rightSource.fork(), foreignKey: foreignKey)
+        var relation = self
+        relation.rightSource = rightSource.fork()
+        return relation
     }
     
     /// TODO
     @warn_unused_result
     public func aliased(alias: String) -> Relation {
-        let rightSource = self.rightSource.fork()
-        rightSource.name = alias
-        return ForeignRelation(variantName: variantName, rightSource: rightSource, foreignKey: foreignKey)
+        var relation = self
+        relation.rightSource = rightSource.fork()
+        relation.rightSource.name = alias
+        return relation
     }
     
     /// TODO
@@ -229,14 +245,12 @@ extension ForeignRelation : Relation {
     }
     
     /// TODO
-    public func sql(db: Database, inout _ arguments: StatementArguments, leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
+    public func sql(db: Database, inout _ arguments: StatementArguments, leftSource: SQLSource, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
         if innerJoinForbidden && joinKind != .Left {
             throw DatabaseError(code: SQLITE_MISUSE, message: "Invalid required relation after a non-required relation.")
         }
         var sql = try joinKind.rawValue + " " + rightSource.sql(db, &arguments) + " ON "
-        sql += foreignKey.map({ (leftColumn, rightColumn) -> String in
-            "\(rightSource.name!.quotedDatabaseIdentifier).\(rightColumn.quotedDatabaseIdentifier) = \(leftSourceName.quotedDatabaseIdentifier).\(leftColumn.quotedDatabaseIdentifier)"
-        }).joinWithSeparator(" AND ")
+        sql += try predicate(left: leftSource, right: rightSource).sqlExpression.sql(db, &arguments)
         return sql
     }
     
