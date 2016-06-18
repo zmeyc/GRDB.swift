@@ -1003,68 +1003,68 @@ class ComplexRelationTests: GRDBTestCase {
         }
     }
     
-    func testRelationSource() {
-        assertNoError {
-            let dbQueue = try makeDatabaseQueue()
-            try dbQueue.inDatabase { db in
-                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, foo TEXT)")
-                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
-                try db.execute("INSERT INTO a (id, foo) VALUES (NULL, ?)", arguments: ["foo"])
-                try db.execute("INSERT INTO b (id, aID, bar) VALUES (NULL, ?, ?)", arguments: [db.lastInsertedRowID, "bar"])
-                
-                let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
-                let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
-                let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
-                
-                do {
-                    var b: SQLSource! = nil
-                    let request = Table("a").include(bRelationUnnamed, source: &b).filter(b["bar"] == "bar")
-                    XCTAssertEqual(
-                        self.sql(db, request),
-                        "SELECT \"a\".*, \"b\".* " +
-                        "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
-                        "WHERE (\"b\".\"bar\" = 'bar')")
-                    
-                    let row = Row.fetchOne(db, request)!
-                    XCTAssertTrue(row.variant(named: "b") != nil)
-                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
-                }
-                
-                do {
-                    var b: SQLSource! = nil
-                    let request = Table("a").include(bRelationNamedAsTable, source: &b).filter(b["bar"] == "bar")
-                    XCTAssertEqual(
-                        self.sql(db, request),
-                        "SELECT \"a\".*, \"b\".* " +
-                        "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
-                        "WHERE (\"b\".\"bar\" = 'bar')")
-                    
-                    let row = Row.fetchOne(db, request)!
-                    XCTAssertTrue(row.variant(named: "b") != nil)
-                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
-                }
-                
-                do {
-                    var b: SQLSource! = nil
-                    let request = Table("a").include(bRelationNamed, source: &b).filter(b["bar"] == "bar")
-                    XCTAssertEqual(
-                        self.sql(db, request),
-                        "SELECT \"a\".*, \"bVariant\".* " +
-                        "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bVariant\" ON (\"bVariant\".\"aID\" = \"a\".\"id\") " +
-                        "WHERE (\"bVariant\".\"bar\" = 'bar')")
-                    
-                    let row = Row.fetchOne(db, request)!
-                    XCTAssertTrue(row.variant(named: "bVariant") != nil)
-                    XCTAssertFalse(row.variant(named: "bVariant")!.isEmpty)
-                }
-            }
-        }
-    }
+//    func testRelationSource() {
+//        assertNoError {
+//            let dbQueue = try makeDatabaseQueue()
+//            try dbQueue.inDatabase { db in
+//                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, foo TEXT)")
+//                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
+//                try db.execute("INSERT INTO a (id, foo) VALUES (NULL, ?)", arguments: ["foo"])
+//                try db.execute("INSERT INTO b (id, aID, bar) VALUES (NULL, ?, ?)", arguments: [db.lastInsertedRowID, "bar"])
+//                
+//                let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
+//                let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
+//                let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
+//                
+//                do {
+//                    var b: SQLSource! = nil
+//                    let request = Table("a").include(bRelationUnnamed, source: &b).filter(b["bar"] == "bar")
+//                    XCTAssertEqual(
+//                        self.sql(db, request),
+//                        "SELECT \"a\".*, \"b\".* " +
+//                        "FROM \"a\" " +
+//                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+//                        "WHERE (\"b\".\"bar\" = 'bar')")
+//                    
+//                    let row = Row.fetchOne(db, request)!
+//                    XCTAssertTrue(row.variant(named: "b") != nil)
+//                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+//                }
+//                
+//                do {
+//                    var b: SQLSource! = nil
+//                    let request = Table("a").include(bRelationNamedAsTable, source: &b).filter(b["bar"] == "bar")
+//                    XCTAssertEqual(
+//                        self.sql(db, request),
+//                        "SELECT \"a\".*, \"b\".* " +
+//                        "FROM \"a\" " +
+//                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+//                        "WHERE (\"b\".\"bar\" = 'bar')")
+//                    
+//                    let row = Row.fetchOne(db, request)!
+//                    XCTAssertTrue(row.variant(named: "b") != nil)
+//                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+//                }
+//                
+//                do {
+//                    var b: SQLSource! = nil
+//                    let request = Table("a").include(bRelationNamed, source: &b).filter(b["bar"] == "bar")
+//                    XCTAssertEqual(
+//                        self.sql(db, request),
+//                        "SELECT \"a\".*, \"bVariant\".* " +
+//                        "FROM \"a\" " +
+//                        "LEFT JOIN \"b\" \"bVariant\" ON (\"bVariant\".\"aID\" = \"a\".\"id\") " +
+//                        "WHERE (\"bVariant\".\"bar\" = 'bar')")
+//                    
+//                    let row = Row.fetchOne(db, request)!
+//                    XCTAssertTrue(row.variant(named: "bVariant") != nil)
+//                    XCTAssertFalse(row.variant(named: "bVariant")!.isEmpty)
+//                }
+//            }
+//        }
+//    }
     
-    func testRelationAliasingOnSourceConflict() {
+    func testRelationWithConflict() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inTransaction { db in
@@ -1116,6 +1116,105 @@ class ComplexRelationTests: GRDBTestCase {
             }
         }
     }
+    
+//    func testRelationFilterWithConflict() {
+//        assertNoError {
+//            let dbQueue = try makeDatabaseQueue()
+//            try dbQueue.inTransaction { db in
+//                // a <- b <- c
+//                try db.execute("PRAGMA defer_foreign_keys = ON")
+//                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, bID REFERENCES b(id), foo TEXT)")
+//                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
+//                try db.execute("INSERT INTO a (id, bID, foo) VALUES (?, ?, ?)", arguments: [1, 1, "foo"])
+//                try db.execute("INSERT INTO b (id, aID, bar) VALUES (?, ?)", arguments: [1, 1, "bar"])
+//                return .Commit
+//            }
+//            
+//            let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
+//            let aRelation = ForeignRelation(to: "a", through: ["id": "bID"])
+//            
+//            dbQueue.inDatabase { db in
+//                let request = Table("a").include(bRelation.include(aRelation))
+//                XCTAssertEqual(
+//                    self.sql(db, request),
+//                    "SELECT \"a0\".*, \"b\".*, \"a1\".* " +
+//                    "FROM \"a\" \"a0\" " +
+//                    "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a0\".\"id\") " +
+//                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b\".\"id\")")
+//                
+//                let row = Row.fetchOne(db, request)!
+//                XCTAssertTrue(row.variant(named: "b") != nil)
+//                XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+//                XCTAssertTrue(row.variant(named: "b")!.variant(named: "a") != nil)
+//                XCTAssertFalse(row.variant(named: "b")!.variant(named: "a")!.isEmpty)
+//            }
+//            
+//            dbQueue.inDatabase { db in
+//                let request = Table("a").include(bRelation.include(aRelation.include(bRelation)))
+//                XCTAssertEqual(
+//                    self.sql(db, request),
+//                    "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
+//                    "FROM \"a\" \"a0\" " +
+//                    "LEFT JOIN \"b\" \"b0\" ON (\"b0\".\"aID\" = \"a0\".\"id\") " +
+//                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b0\".\"id\") " +
+//                    "LEFT JOIN \"b\" \"b1\" ON (\"b1\".\"aID\" = \"a1\".\"id\")")
+//                
+//                let row = Row.fetchOne(db, request)!
+//                XCTAssertTrue(row.variant(named: "b") != nil)
+//                XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+//                XCTAssertTrue(row.variant(named: "b")!.variant(named: "a") != nil)
+//                XCTAssertFalse(row.variant(named: "b")!.variant(named: "a")!.isEmpty)
+//                XCTAssertTrue(row.variant(named: "b")!.variant(named: "a")!.variant(named: "b") != nil)
+//                XCTAssertFalse(row.variant(named: "b")!.variant(named: "a")!.variant(named: "b")!.isEmpty)
+//            }
+//        }
+//    }
+    
+//    func testRelationSourceWithConflict() {
+//        assertNoError {
+//            let dbQueue = try makeDatabaseQueue()
+//            try dbQueue.inTransaction { db in
+//                // a <- b <- c
+//                try db.execute("PRAGMA defer_foreign_keys = ON")
+//                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, bID REFERENCES b(id), foo TEXT)")
+//                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
+//                try db.execute("INSERT INTO a (id, bID, foo) VALUES (?, ?, ?)", arguments: [1, 1, "foo"])
+//                try db.execute("INSERT INTO b (id, aID, bar) VALUES (?, ?, ?)", arguments: [1, 1, "bar"])
+//                return .Commit
+//            }
+//            
+//            let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
+//            let aRelation = ForeignRelation(to: "a", through: ["id": "bID"])
+//            
+//            dbQueue.inDatabase { db in
+//                var a: SQLSource! = nil
+//                var b: SQLSource! = nil
+//                let request = Table("a").include(bRelation.include(aRelation, source: &a), source: &b)
+//                    .filter(a["foo"] == "foo" && b["bar"] == "bar")
+//                XCTAssertEqual(
+//                    self.sql(db, request),
+//                    "SELECT \"a0\".*, \"b\".*, \"a1\".* " +
+//                    "FROM \"a\" \"a0\" " +
+//                    "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a0\".\"id\") " +
+//                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b\".\"id\")")
+//            }
+//            
+//            dbQueue.inDatabase { db in
+//                var a: SQLSource! = nil
+//                var b1: SQLSource! = nil
+//                var b2: SQLSource! = nil
+//                let request = Table("a").include(bRelation.include(aRelation.include(bRelation, source: &b2), source: &a), source: &b1)
+//                    .filter(a["foo"] == "foo" && b1["bar"] == "bar" && b2["bar"] == "baz")
+//                XCTAssertEqual(
+//                    self.sql(db, request),
+//                    "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
+//                    "FROM \"a\" \"a0\" " +
+//                    "LEFT JOIN \"b\" \"b0\" ON (\"b0\".\"aID\" = \"a0\".\"id\") " +
+//                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b0\".\"id\") " +
+//                    "LEFT JOIN \"b\" \"b1\" ON (\"b1\".\"aID\" = \"a1\".\"id\")")
+//            }
+//        }
+//    }
     
     func testFirstLevelRequiredRelation() {
         assertNoError {
