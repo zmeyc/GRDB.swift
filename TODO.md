@@ -20,9 +20,11 @@
             self.author = Person(authorRow)
         }
     }
-    // Alternative
+    // Alternatives
     init(_ row: Row)
-        self.author = Person.from(variant: "author", in: row)
+        self.author = Person.from(variant: "author", in: row) // Person?
+        self.author = Person(row: row, variant: "author")     // Person?
+        self.author = Person(bewareRow: row)                  // Person? - what parameter name?
     }
 – [X] Relations: include two chained relations
 - [ ] Relations: filter on joined relation (JOIN ... ON ...)
