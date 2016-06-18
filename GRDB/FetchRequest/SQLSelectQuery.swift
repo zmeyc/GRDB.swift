@@ -271,9 +271,9 @@ public protocol _SQLSource: class {
 /// TODO
 public protocol SQLSource : _SQLSource {
     /// TODO
-    func include(required required: Bool, relation: Relation) -> SQLSource
+    func include(required required: Bool, relation: SQLRelation) -> SQLSource
     /// TODO
-    func join(required required: Bool, relation: Relation) -> SQLSource
+    func join(required required: Bool, relation: SQLRelation) -> SQLSource
 }
 
 extension SQLSource {
@@ -331,11 +331,11 @@ extension _SQLSourceTable : _SQLSource {
 }
 
 extension _SQLSourceTable : SQLSource {
-    func include(required required: Bool, relation: Relation) -> SQLSource {
+    func include(required required: Bool, relation: SQLRelation) -> SQLSource {
         return _SQLRelationTree(leftSource: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
     }
     
-    func join(required required: Bool, relation: Relation) -> SQLSource {
+    func join(required required: Bool, relation: SQLRelation) -> SQLSource {
         return _SQLRelationTree(leftSource: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
     }
 }
@@ -382,12 +382,12 @@ extension _SQLSourceQuery: _SQLSource {
 
 extension _SQLSourceQuery : SQLSource {
     // TODO
-    func include(required required: Bool, relation: Relation) -> SQLSource {
+    func include(required required: Bool, relation: SQLRelation) -> SQLSource {
         return _SQLRelationTree(leftSource: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
     }
     
     // TODO
-    func join(required required: Bool, relation: Relation) -> SQLSource {
+    func join(required required: Bool, relation: SQLRelation) -> SQLSource {
         return _SQLRelationTree(leftSource: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
     }
 }
@@ -451,13 +451,13 @@ extension _SQLRelationTree : _SQLSource {
 
 extension _SQLRelationTree : SQLSource {
     
-    func include(required required: Bool, relation: Relation) -> SQLSource {
+    func include(required required: Bool, relation: SQLRelation) -> SQLSource {
         var joins = self.joins
         joins.append(Join(included: true, kind: required ? .Inner : .Left, relation: relation))
         return _SQLRelationTree(leftSource: leftSource, joins: joins)
     }
     
-    func join(required required: Bool, relation: Relation) -> SQLSource {
+    func join(required required: Bool, relation: SQLRelation) -> SQLSource {
         var joins = self.joins
         joins.append(Join(included: false, kind: required ? .Inner : .Left, relation: relation))
         return _SQLRelationTree(leftSource: leftSource, joins: joins)

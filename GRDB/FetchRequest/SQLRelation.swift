@@ -11,14 +11,14 @@
 #endif
 
 /// TODO
-public protocol _Relation {
+public protocol _SQLRelation {
     /// TODO
     @warn_unused_result
     func fork() -> Self
     
     /// TODO
     @warn_unused_result
-    func aliased(alias: String) -> Relation
+    func aliased(alias: String) -> SQLRelation
     
     /// TODO
     @warn_unused_result
@@ -44,35 +44,35 @@ public protocol _Relation {
 }
 
 /// TODO
-public protocol Relation : _Relation {
+public protocol SQLRelation : _SQLRelation {
 }
 
-extension Relation {
+extension SQLRelation {
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func include(required required: Bool = false, _ relations: Relation...) -> Relation {
+    public func include(required required: Bool = false, _ relations: SQLRelation...) -> SQLRelation {
         return include(required: required, relations)
     }
     
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func include(required required: Bool = false, _ relations: [Relation]) -> Relation {
+    public func include(required required: Bool = false, _ relations: [SQLRelation]) -> SQLRelation {
         return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: true, kind: required ? .Inner : .Left, relation: $0.fork()) })
     }
     
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func join(required required: Bool = false, _ relations: Relation...) -> Relation {
+    public func join(required required: Bool = false, _ relations: SQLRelation...) -> SQLRelation {
         return join(required: required, relations)
     }
     
     /// TODO
     /// extension Method
     @warn_unused_result
-    public func join(required required: Bool = false, _ relations: [Relation]) -> Relation {
+    public func join(required required: Bool = false, _ relations: [SQLRelation]) -> SQLRelation {
         return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: false, kind: required ? .Inner : .Left, relation: $0.fork()) })
     }
 }
@@ -87,7 +87,7 @@ public enum _JoinKind : String {
 struct Join {
     let included: Bool
     let kind: _JoinKind
-    let relation: Relation
+    let relation: SQLRelation
     
     func fork() -> Join {
         return Join(included: included, kind: kind, relation: relation.fork())
@@ -103,18 +103,18 @@ struct Join {
 }
 
 struct ChainedRelation {
-    let baseRelation: Relation
+    let baseRelation: SQLRelation
     let joins: [Join]
 }
 
-extension ChainedRelation : Relation {
+extension ChainedRelation : SQLRelation {
     /// TODO
     func fork() -> ChainedRelation {
         return ChainedRelation(baseRelation: baseRelation.fork(), joins: joins.map { $0.fork() })
     }
     
     /// TODO
-    func aliased(alias: String) -> Relation {
+    func aliased(alias: String) -> SQLRelation {
         return ChainedRelation(baseRelation: baseRelation.aliased(alias), joins: joins)
     }
     
@@ -216,7 +216,7 @@ public struct ForeignRelation {
     }
 }
 
-extension ForeignRelation : Relation {
+extension ForeignRelation : SQLRelation {
     /// TODO
     public func fork() -> ForeignRelation {
         var relation = self
@@ -226,7 +226,7 @@ extension ForeignRelation : Relation {
     
     /// TODO
     @warn_unused_result
-    public func aliased(alias: String) -> Relation {
+    public func aliased(alias: String) -> SQLRelation {
         var relation = self
         relation.rightSource = rightSource.fork()
         relation.rightSource.name = alias
@@ -275,14 +275,14 @@ extension ForeignRelation : Relation {
 extension QueryInterfaceRequest {
     /// TODO: doc
     @warn_unused_result
-    public func include(required required: Bool = false, _ relations: Relation...) -> QueryInterfaceRequest<T> {
+    public func include(required required: Bool = false, _ relations: SQLRelation...) -> QueryInterfaceRequest<T> {
         return include(required: required, relations)
     }
     
     /// TODO: doc
     /// TODO: test that request.include([assoc1, assoc2]) <=> request.include([assoc1]).include([assoc2])
     @warn_unused_result
-    public func include(required required: Bool = false, _ relations: [Relation]) -> QueryInterfaceRequest<T> {
+    public func include(required required: Bool = false, _ relations: [SQLRelation]) -> QueryInterfaceRequest<T> {
         var query = self.query
         var source = query.source!
         for relation in relations {
@@ -295,14 +295,14 @@ extension QueryInterfaceRequest {
     
     /// TODO: doc
     @warn_unused_result
-    public func join(required required: Bool = false, _ relations: Relation...) -> QueryInterfaceRequest<T> {
+    public func join(required required: Bool = false, _ relations: SQLRelation...) -> QueryInterfaceRequest<T> {
         return join(required: required, relations)
     }
     
     /// TODO: doc
     /// TODO: test that request.join([assoc1, assoc2]) <=> request.join([assoc1]).join([assoc2])
     @warn_unused_result
-    public func join(required required: Bool = false, _ relations: [Relation]) -> QueryInterfaceRequest<T> {
+    public func join(required required: Bool = false, _ relations: [SQLRelation]) -> QueryInterfaceRequest<T> {
         var query = self.query
         var source = query.source!
         for relation in relations {
@@ -317,25 +317,25 @@ extension QueryInterfaceRequest {
 extension TableMapping {
     /// TODO: doc
     @warn_unused_result
-    public static func include(required required: Bool = false, _ relations: Relation...) -> QueryInterfaceRequest<Self> {
+    public static func include(required required: Bool = false, _ relations: SQLRelation...) -> QueryInterfaceRequest<Self> {
         return all().include(required: required, relations)
     }
     
     /// TODO: doc
     @warn_unused_result
-    public static func include(required required: Bool = false, _ relations: [Relation]) -> QueryInterfaceRequest<Self> {
+    public static func include(required required: Bool = false, _ relations: [SQLRelation]) -> QueryInterfaceRequest<Self> {
         return all().include(required: required, relations)
     }
     
     /// TODO: doc
     @warn_unused_result
-    public static func join(required required: Bool = false, _ relations: Relation...) -> QueryInterfaceRequest<Self> {
+    public static func join(required required: Bool = false, _ relations: SQLRelation...) -> QueryInterfaceRequest<Self> {
         return all().join(required: required, relations)
     }
     
     /// TODO: doc
     @warn_unused_result
-    public static func join(required required: Bool = false, _ relations: [Relation]) -> QueryInterfaceRequest<Self> {
+    public static func join(required required: Bool = false, _ relations: [SQLRelation]) -> QueryInterfaceRequest<Self> {
         return all().join(required: required, relations)
     }
 }

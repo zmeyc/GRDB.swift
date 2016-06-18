@@ -186,12 +186,12 @@
 		560FC5A81CB00B880014AA8E /* DatabaseQueueFileAttributesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563363DB1C95891E000BE133 /* DatabaseQueueFileAttributesTests.swift */; };
 		560FC5B21CB031E30014AA8E /* SQLiteStatementConvertibleFetchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E8CE0F1BB4FE5B00828BEC /* SQLiteStatementConvertibleFetchTests.swift */; };
 		560FC5B31CB031EA0014AA8E /* NSDataMemoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56EB0AB11BCD787300A3DC55 /* NSDataMemoryTests.swift */; };
-		561150971D0981C80055F80F /* Relation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* Relation.swift */; };
-		561150981D0981C80055F80F /* Relation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* Relation.swift */; };
-		561150991D0981C80055F80F /* Relation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* Relation.swift */; };
-		5611509A1D0981C80055F80F /* Relation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* Relation.swift */; };
-		5611509B1D0981C80055F80F /* Relation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* Relation.swift */; };
-		5611509C1D0981C80055F80F /* Relation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* Relation.swift */; };
+		561150971D0981C80055F80F /* SQLRelation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* SQLRelation.swift */; };
+		561150981D0981C80055F80F /* SQLRelation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* SQLRelation.swift */; };
+		561150991D0981C80055F80F /* SQLRelation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* SQLRelation.swift */; };
+		5611509A1D0981C80055F80F /* SQLRelation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* SQLRelation.swift */; };
+		5611509B1D0981C80055F80F /* SQLRelation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* SQLRelation.swift */; };
+		5611509C1D0981C80055F80F /* SQLRelation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150961D0981C80055F80F /* SQLRelation.swift */; };
 		561150A91D0981EC0055F80F /* BelongsToRelationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150A61D0981EC0055F80F /* BelongsToRelationTests.swift */; };
 		561150AA1D0981EC0055F80F /* BelongsToRelationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150A61D0981EC0055F80F /* BelongsToRelationTests.swift */; };
 		561150AB1D0981EC0055F80F /* BelongsToRelationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561150A61D0981EC0055F80F /* BelongsToRelationTests.swift */; };
@@ -1286,7 +1286,7 @@
 		560FC54D1CB003810014AA8E /* GRDBCipher.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = GRDBCipher.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		560FC5501CB004AD0014AA8E /* sqlcipher.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = sqlcipher.xcodeproj; path = SQLCipher/src/sqlcipher.xcodeproj; sourceTree = "<group>"; };
 		560FC5B01CB00B880014AA8E /* GRDBTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GRDBTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		561150961D0981C80055F80F /* Relation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Relation.swift; sourceTree = "<group>"; };
+		561150961D0981C80055F80F /* SQLRelation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SQLRelation.swift; sourceTree = "<group>"; };
 		561150A61D0981EC0055F80F /* BelongsToRelationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BelongsToRelationTests.swift; sourceTree = "<group>"; };
 		561150A71D0981EC0055F80F /* ComplexRelationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ComplexRelationTests.swift; sourceTree = "<group>"; };
 		561150A81D0981EC0055F80F /* HasOneRelationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HasOneRelationTests.swift; sourceTree = "<group>"; };
@@ -1749,10 +1749,10 @@
 			children = (
 				5687358B1CEDC334009B9116 /* FetchRequest.swift */,
 				56300B6F1C53F592005A543B /* QueryInterfaceRequest.swift */,
-				561150961D0981C80055F80F /* Relation.swift */,
 				5605F1891C6B1A8700235C62 /* SQLCollation.swift */,
 				5605F18A1C6B1A8700235C62 /* SQLFunction.swift */,
 				5605F18B1C6B1A8700235C62 /* SQLOperator.swift */,
+				561150961D0981C80055F80F /* SQLRelation.swift */,
 				5605F18C1C6B1A8700235C62 /* SQLSelectQuery.swift */,
 			);
 			path = FetchRequest;
@@ -3005,7 +3005,7 @@
 				560FC5371CB003810014AA8E /* DatabaseSchemaCache.swift in Sources */,
 				560FC5381CB003810014AA8E /* DatabaseDateComponents.swift in Sources */,
 				56193E961CD8A3E300F95862 /* FetchedRecordsController.swift in Sources */,
-				561150981D0981C80055F80F /* Relation.swift in Sources */,
+				561150981D0981C80055F80F /* SQLRelation.swift in Sources */,
 				560FC5391CB003810014AA8E /* DatabaseReader.swift in Sources */,
 				5687358D1CEDC334009B9116 /* FetchRequest.swift in Sources */,
 				560FC53A1CB003810014AA8E /* NSNull.swift in Sources */,
@@ -3263,7 +3263,7 @@
 				56AFCA0C1CB1A8BB00F48B96 /* DatabaseSchemaCache.swift in Sources */,
 				56AFCA0D1CB1A8BB00F48B96 /* DatabaseDateComponents.swift in Sources */,
 				56AFCA0E1CB1A8BB00F48B96 /* DatabaseReader.swift in Sources */,
-				5611509B1D0981C80055F80F /* Relation.swift in Sources */,
+				5611509B1D0981C80055F80F /* SQLRelation.swift in Sources */,
 				56AFCA0F1CB1A8BB00F48B96 /* NSNull.swift in Sources */,
 				5687358F1CEDC334009B9116 /* FetchRequest.swift in Sources */,
 				56AFCA101CB1A8BB00F48B96 /* DatabaseQueue.swift in Sources */,
@@ -3507,7 +3507,7 @@
 				569531201C907A8C00CF1A2B /* DatabaseSchemaCache.swift in Sources */,
 				5605F15E1C672E4000235C62 /* DatabaseDateComponents.swift in Sources */,
 				563363C11C942C04000BE133 /* DatabaseReader.swift in Sources */,
-				5611509A1D0981C80055F80F /* Relation.swift in Sources */,
+				5611509A1D0981C80055F80F /* SQLRelation.swift in Sources */,
 				5605F1661C672E4000235C62 /* NSNull.swift in Sources */,
 				5687358E1CEDC334009B9116 /* FetchRequest.swift in Sources */,
 				56A238841B9C75030082EB20 /* DatabaseQueue.swift in Sources */,
@@ -3749,7 +3749,7 @@
 				5695311F1C907A8C00CF1A2B /* DatabaseSchemaCache.swift in Sources */,
 				5605F15D1C672E4000235C62 /* DatabaseDateComponents.swift in Sources */,
 				56193E8E1CD8A3E200F95862 /* FetchedRecordsController.swift in Sources */,
-				561150971D0981C80055F80F /* Relation.swift in Sources */,
+				561150971D0981C80055F80F /* SQLRelation.swift in Sources */,
 				563363C01C942C04000BE133 /* DatabaseReader.swift in Sources */,
 				5687358C1CEDC334009B9116 /* FetchRequest.swift in Sources */,
 				5605F1651C672E4000235C62 /* NSNull.swift in Sources */,
@@ -3802,7 +3802,7 @@
 				F3BA80281CFB2891003DC1BA /* StandardLibrary.swift in Sources */,
 				F3BA80331CFB28A4003DC1BA /* Persistable.swift in Sources */,
 				F3BA80351CFB28A4003DC1BA /* RowConvertible.swift in Sources */,
-				5611509C1D0981C80055F80F /* Relation.swift in Sources */,
+				5611509C1D0981C80055F80F /* SQLRelation.swift in Sources */,
 				F3BA80291CFB2895003DC1BA /* Utils.swift in Sources */,
 				F3BA80251CFB288C003DC1BA /* Row+Foundation.swift in Sources */,
 				F3BA80211CFB288C003DC1BA /* NSNull.swift in Sources */,
@@ -3950,7 +3950,7 @@
 				F3BA80841CFB2E67003DC1BA /* StandardLibrary.swift in Sources */,
 				F3BA808F1CFB2E7A003DC1BA /* Persistable.swift in Sources */,
 				F3BA80911CFB2E7A003DC1BA /* RowConvertible.swift in Sources */,
-				561150991D0981C80055F80F /* Relation.swift in Sources */,
+				561150991D0981C80055F80F /* SQLRelation.swift in Sources */,
 				F3BA80851CFB2E6C003DC1BA /* Utils.swift in Sources */,
 				F3BA80811CFB2E61003DC1BA /* Row+Foundation.swift in Sources */,
 				F3BA807D1CFB2E61003DC1BA /* NSNull.swift in Sources */,
