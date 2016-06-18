@@ -371,7 +371,71 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
+                    let request = Table("a").join(b).join(c1, c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") == nil)
+                    XCTAssertTrue(row.variant(named: "c1") == nil)
+                    XCTAssertTrue(row.variant(named: "c2") == nil)
+                }
+                
+                do {
+                    let request = Table("a").join(b, c1).join(c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") == nil)
+                    XCTAssertTrue(row.variant(named: "c1") == nil)
+                    XCTAssertTrue(row.variant(named: "c2") == nil)
+                }
+                
+                do {
+                    let request = Table("a").join(b).join(c1).join(c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") == nil)
+                    XCTAssertTrue(row.variant(named: "c1") == nil)
+                    XCTAssertTrue(row.variant(named: "c2") == nil)
+                }
+                
+                do {
                     let request = Table("a").join(b, c1).include(c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"c2\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") == nil)
+                    XCTAssertTrue(row.variant(named: "c1") == nil)
+                    XCTAssertFalse(row.variant(named: "c2")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").join(b).join(c1).include(c2)
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"c2\".* " +
@@ -419,7 +483,39 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
+                    let request = Table("a").join(b).include(c1).include(c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"c1\".*, \"c2\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") == nil)
+                    XCTAssertFalse(row.variant(named: "c1")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "c2")!.isEmpty)
+                }
+                
+                do {
                     let request = Table("a").include(b).join(c1, c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertTrue(row.variant(named: "c1") == nil)
+                    XCTAssertTrue(row.variant(named: "c2") == nil)
+                }
+                
+                do {
+                    let request = Table("a").include(b).join(c1).join(c2)
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
@@ -467,7 +563,71 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
+                    let request = Table("a").include(b).include(c1).join(c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c1\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "c1")!.isEmpty)
+                    XCTAssertTrue(row.variant(named: "c2") == nil)
+                }
+                
+                do {
                     let request = Table("a").include(b, c1, c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c1\".*, \"c2\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "c1")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "c2")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(b).include(c1, c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c1\".*, \"c2\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "c1")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "c2")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(b, c1).include(c2)
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".*, \"c1\".*, \"c2\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c1\" ON (\"c1\".\"a1ID\" = \"a\".\"id\") " +
+                        "LEFT JOIN \"c\" \"c2\" ON (\"c2\".\"a2ID\" = \"a\".\"id\")")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "c1")!.isEmpty)
+                    XCTAssertFalse(row.variant(named: "c2")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(b).include(c1).include(c2)
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".*, \"c1\".*, \"c2\".* " +
