@@ -39,6 +39,7 @@
 - [X] Relations: Type.join() instead of Type.all().join()
 - [X] Relations: .include() adds columns in the fetches row and a variant, .join() does not columns, nor variant
 – [?] Relations: distinguishing BelongsTo and HasOne could help verifying that the right table of belongsTo has a unique index on the joined columns. For HasOne, we have to trust the user. 
+- [ ] NSUUID - store them as blobs?
 - [ ] FetchedRecordsController: see if we can replace identity comparison function with a function that returns an Equatable value (beware the generics trouble). See if this can help optimize memory use, and use a sortedMerge() algorithm.
 - [ ] GRDBCipher: remove limitations on iOS or OS X versions
 - [ ] FetchedRecordsController: take inspiration from https://github.com/jflinter/Dwifft

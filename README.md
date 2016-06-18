@@ -600,7 +600,7 @@ Unlike row arrays that contain copies of the database rows, row sequences are cl
 
 ```swift
 let name: String = row.value(atIndex: 0)    // 0 is the leftmost column
-let name: String = row.value(named: "name") // lookup is case-insensitive
+let name: String = row.value(named: "name") // leftmost matching column - lookup is case-insensitive
 ```
 
 Make sure to ask for an optional when the value may be NULL:
@@ -693,7 +693,7 @@ Generally speaking, you can extract the type you need, *provided it can be conve
 
 ```swift
 let dbv = row.databaseValue(atIndex: 0)    // 0 is the leftmost column
-let dbv = row.databaseValue(named: "name") // lookup is case-insensitive
+let dbv = row.databaseValue(named: "name") // leftmost matching column - lookup is case-insensitive
 
 // Check for NULL:
 dbv.isNull    // Bool
@@ -1371,10 +1371,10 @@ citizenshipsPk.rowIDColumn // nil
 
 **Row adapters let you map column names for easier row consumption.**
 
-They basically help two incompatible row interfaces to work together. For example, a row consumer expects a column named "consumed", but the produced column has a column named "produced":
+They basically help two incompatible row interfaces to work together. For example, a row consumer expects a column named "consumed", but the produced row has a column named "produced":
 
 ```swift
-// An adapter that maps column 'produced' to column 'consumed':
+// An adapter that maps column 'consumed' to column 'produced':
 let adapter = ColumnMapping(["consumed": "produced"])
 
 // Fetch a column named 'produced', and apply adapter:
@@ -2056,9 +2056,14 @@ let count = Wine.filter(color == Color.Red).fetchCount(db)
 let wines = Wine.filter(origin == "Burgundy").order(price).fetchAll(db)
 ```
 
-Please bear in mind that the query interface can not generate all possible SQL queries. You may also *prefer* writing SQL, and this is just OK:
+Please bear in mind that the query interface can not generate all possible SQL queries. You may also *prefer* writing SQL, and this is just OK. From little snippets to full SQL queries, your SQL skills are welcome:
 
 ```swift
+// SQL snippets
+let count = Wine.filter(sql: "color = ?", arguments: [Color.Red]).fetchCount(db)
+let wines = Wine.filter(sql: "origin = ?", arguments: ["Burgundy"]).order(sql: "price").fetchAll(db)
+
+// Full SQL
 let count = Int.fetchOne(db, "SELECT COUNT(*) FROM wines WHERE color = ?", arguments [Color.Red])!
 let wines = Wine.fetchAll(db, "SELECT * FROM wines WHERE origin = ? ORDER BY price", arguments: ["Burgundy"])
 ```
@@ -2209,12 +2214,13 @@ Person                          // SELECT * FROM "persons"
 ```
 
 
-Raw SQL snippets are also accepted:
+Raw SQL snippets are also accepted, with eventual arguments:
 
 ```swift
-// SELECT DATE(creationDate), COUNT(*) FROM "persons" GROUP BY date(creationDate)
+// SELECT DATE(creationDate), COUNT(*) FROM "persons" WHERE name = 'Arthur' GROUP BY date(creationDate)
 Person
     .select(sql: "DATE(creationDate), COUNT(*)")
+    .filter(sql: "name = ?", arguments: ["Arthur"])
     .group(sql: "DATE(creationDate)")
 ```
 

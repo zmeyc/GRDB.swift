@@ -34,7 +34,7 @@ public protocol _Relation {
     var rightSource: _SQLSource { get }
     
     /// TODO
-    func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String
+    func sql(db: Database, inout _ arguments: StatementArguments, leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String
     
     /// TODO
     func selection(included included: Bool) -> [_SQLSelectable]
@@ -140,13 +140,13 @@ extension ChainedRelation : Relation {
     }
     
     /// TODO
-    func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
-        var sql = try baseRelation.sql(db, &bindings, leftSourceName: leftSourceName, joinKind: joinKind, innerJoinForbidden: innerJoinForbidden)
+    func sql(db: Database, inout _ arguments: StatementArguments, leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
+        var sql = try baseRelation.sql(db, &arguments, leftSourceName: leftSourceName, joinKind: joinKind, innerJoinForbidden: innerJoinForbidden)
         if !joins.isEmpty {
             let innerJoinForbidden = (joinKind == .Left)
             sql += " "
             sql += try joins.map {
-                try $0.relation.sql(db, &bindings, leftSourceName: baseRelation.rightSource.name!, joinKind: $0.kind, innerJoinForbidden: innerJoinForbidden)
+                try $0.relation.sql(db, &arguments, leftSourceName: baseRelation.rightSource.name!, joinKind: $0.kind, innerJoinForbidden: innerJoinForbidden)
                 }.joinWithSeparator(" ")
         }
         return sql
@@ -229,11 +229,11 @@ extension ForeignRelation : Relation {
     }
     
     /// TODO
-    public func sql(db: Database, inout _ bindings: [DatabaseValueConvertible?], leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
+    public func sql(db: Database, inout _ arguments: StatementArguments, leftSourceName: String, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
         if innerJoinForbidden && joinKind != .Left {
             throw DatabaseError(code: SQLITE_MISUSE, message: "Invalid required relation after a non-required relation.")
         }
-        var sql = try joinKind.rawValue + " " + rightSource.sql(db, &bindings) + " ON "
+        var sql = try joinKind.rawValue + " " + rightSource.sql(db, &arguments) + " ON "
         sql += foreignKey.map({ (leftColumn, rightColumn) -> String in
             "\(rightSource.name!.quotedDatabaseIdentifier).\(rightColumn.quotedDatabaseIdentifier) = \(leftSourceName.quotedDatabaseIdentifier).\(leftColumn.quotedDatabaseIdentifier)"
         }).joinWithSeparator(" AND ")
