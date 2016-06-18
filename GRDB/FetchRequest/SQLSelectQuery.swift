@@ -929,20 +929,12 @@ extension _SQLResultColumn : _SQLSelectable {
 ///
 /// See https://github.com/groue/GRDB.swift#the-query-interface
 public struct SQLColumn {
-    let sourceName: String?
-    
     /// The name of the column
     public let name: String
     
     /// Initializes a column given its name.
     public init(_ name: String) {
         self.name = name
-        self.sourceName = nil
-    }
-    
-    init(_ name: String, sourceName: String?) {
-        self.name = name
-        self.sourceName = sourceName
     }
 }
 
@@ -953,7 +945,7 @@ extension SQLColumn : _SpecificSQLExpressible {
     ///
     /// See https://github.com/groue/GRDB.swift/#the-query-interface
     public var sqlExpression: _SQLExpression {
-        return .Identifier(identifier: name, sourceName: sourceName)
+        return .Identifier(identifier: name, sourceName: nil)
     }
 }
 
