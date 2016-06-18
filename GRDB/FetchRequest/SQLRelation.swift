@@ -48,6 +48,23 @@ public protocol SQLRelation : _SQLRelation {
 }
 
 extension SQLRelation {
+    
+    /// TODO: doc
+    @warn_unused_result
+    public func include(relation: SQLRelation, inout source rightSource: SQLSource!) -> SQLRelation {
+        // TODO: remove this method when Swift is fixed, and give a default value to required.
+        return include(required: false, relation, source: &rightSource)
+    }
+    
+    /// TODO
+    /// Extension method
+    @warn_unused_result
+    public func include(required required: Bool, _ relation: SQLRelation, inout source rightSource: SQLSource!) -> SQLRelation {
+        let relation = relation.fork()
+        rightSource = relation.rightSource
+        return ChainedRelation(baseRelation: self, joins: [Join(included: true, kind: required ? .Inner : .Left, relation: relation)])
+    }
+    
     /// TODO
     /// Extension method
     @warn_unused_result
@@ -60,6 +77,22 @@ extension SQLRelation {
     @warn_unused_result
     public func include(required required: Bool = false, _ relations: [SQLRelation]) -> SQLRelation {
         return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: true, kind: required ? .Inner : .Left, relation: $0.fork()) })
+    }
+    
+    /// TODO: doc
+    @warn_unused_result
+    public func join(relation: SQLRelation, inout source rightSource: SQLSource!) -> SQLRelation {
+        // TODO: remove this method when Swift is fixed, and give a default value to required.
+        return join(required: false, relation, source: &rightSource)
+    }
+    
+    /// TODO
+    /// Extension method
+    @warn_unused_result
+    public func join(required required: Bool, _ relation: SQLRelation, inout source rightSource: SQLSource!) -> SQLRelation {
+        let relation = relation.fork()
+        rightSource = relation.rightSource
+        return ChainedRelation(baseRelation: self, joins: [Join(included: false, kind: required ? .Inner : .Left, relation: relation)])
     }
     
     /// TODO
@@ -273,6 +306,27 @@ extension ForeignRelation : SQLRelation {
 }
 
 extension QueryInterfaceRequest {
+    
+    /// TODO: doc
+    @warn_unused_result
+    public func include(relation: SQLRelation, inout source rightSource: SQLSource!) -> QueryInterfaceRequest<T> {
+        // TODO: remove this method when Swift is fixed, and give a default value to required.
+        return include(required: false, relation, source: &rightSource)
+    }
+    
+    /// TODO: doc
+    @warn_unused_result
+    public func include(required required: Bool, _ relation: SQLRelation, inout source rightSource: SQLSource!) -> QueryInterfaceRequest<T> {
+        var query = self.query
+        var source = query.source!
+        var relation = relation
+        source = source.include(required: required, relation: &relation)
+        rightSource = relation.rightSource
+        query.selection.appendContentsOf(relation.selection(included: true))
+        query.source = source
+        return QueryInterfaceRequest(query: query)
+    }
+    
     /// TODO: doc
     @warn_unused_result
     public func include(required required: Bool = false, _ relations: SQLRelation...) -> QueryInterfaceRequest<T> {
@@ -290,6 +344,26 @@ extension QueryInterfaceRequest {
             source = source.include(required: required, relation: &relation)
             query.selection.appendContentsOf(relation.selection(included: true))
         }
+        query.source = source
+        return QueryInterfaceRequest(query: query)
+    }
+    
+    /// TODO: doc
+    @warn_unused_result
+    public func join(relation: SQLRelation, inout source rightSource: SQLSource!) -> QueryInterfaceRequest<T> {
+        // TODO: remove this method when Swift is fixed, and give a default value to required.
+        return join(required: false, relation, source: &rightSource)
+    }
+    
+    /// TODO: doc
+    @warn_unused_result
+    public func join(required required: Bool, _ relation: SQLRelation, inout source rightSource: SQLSource!) -> QueryInterfaceRequest<T> {
+        var query = self.query
+        var source = query.source!
+        var relation = relation
+        source = source.include(required: required, relation: &relation)
+        rightSource = relation.rightSource
+        query.selection.appendContentsOf(relation.selection(included: false))
         query.source = source
         return QueryInterfaceRequest(query: query)
     }
