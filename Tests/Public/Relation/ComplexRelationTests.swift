@@ -914,13 +914,13 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO a (id, foo) VALUES (NULL, ?)", arguments: ["foo"])
                 try db.execute("INSERT INTO b (id, aID, bar) VALUES (NULL, ?, ?)", arguments: [db.lastInsertedRowID, "bar"])
                 
-                let fooColumn = SQLColumn("foo")
+                let barColumn = SQLColumn("bar")
                 let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
-                    .filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
+                    .filter { $0["bar"] == "bar" }
                 let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
-                    .filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
+                    .filter { $0[barColumn] == "bar" }
                 let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
-                    .filter { (a, b) in a[fooColumn] == "foo" && b["bar"] == "bar" }
+                    .filter { $0[barColumn] == "bar" }
                 
                 do {
                     let request = Table("a").include(bRelationUnnamed)
@@ -928,7 +928,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"b\".\"bar\" = 'bar')))")
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (\"b\".\"bar\" = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -941,7 +941,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"bAlias\".\"bar\" = 'bar')))")
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -954,7 +954,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"b\".\"bar\" = 'bar')))")
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (\"b\".\"bar\" = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -967,7 +967,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"bAlias\".\"bar\" = 'bar')))")
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -980,7 +980,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bVariant\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bVariant\" ON ((\"bVariant\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"bVariant\".\"bar\" = 'bar')))")
+                        "LEFT JOIN \"b\" \"bVariant\" ON ((\"bVariant\".\"aID\" = \"a\".\"id\") AND (\"bVariant\".\"bar\" = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "bVariant") != nil)
@@ -993,7 +993,101 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND ((\"a\".\"foo\" = 'foo') AND (\"bAlias\".\"bar\" = 'bar')))")
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "bVariant") != nil)
+                    XCTAssertFalse(row.variant(named: "bVariant")!.isEmpty)
+                }
+            }
+        }
+    }
+    
+    func testRelationFilterLiteral() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, foo TEXT)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
+                try db.execute("INSERT INTO a (id, foo) VALUES (NULL, ?)", arguments: ["foo"])
+                try db.execute("INSERT INTO b (id, aID, bar) VALUES (NULL, ?, ?)", arguments: [db.lastInsertedRowID, "bar"])
+                
+                let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
+                let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
+                let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
+                
+                do {
+                    let request = Table("a").include(bRelationUnnamed.filter(sql: "b.bar = ?", arguments: ["bar"]))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (\"b\".\"bar\" = 'bar'))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationUnnamed.aliased("bAlias").filter(sql: "bAlias.bar = ?", arguments: ["bar"]))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bAlias\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationNamedAsTable.filter(sql: "b.bar = ?", arguments: ["bar"]))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (\"b\".\"bar\" = 'bar'))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationNamedAsTable.aliased("bAlias").filter(sql: "bAlias.bar = ?", arguments: ["bar"]))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bAlias\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "b") != nil)
+                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationNamed.filter(sql: "bVariant.bar = ?", arguments: ["bar"]))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bVariant\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bVariant\" ON ((\"bVariant\".\"aID\" = \"a\".\"id\") AND (\"bVariant\".\"bar\" = 'bar'))")
+                    
+                    let row = Row.fetchOne(db, request)!
+                    XCTAssertTrue(row.variant(named: "bVariant") != nil)
+                    XCTAssertFalse(row.variant(named: "bVariant")!.isEmpty)
+                }
+                
+                do {
+                    let request = Table("a").include(bRelationNamed.aliased("bAlias").filter(sql: "bAlias.bar = ?", arguments: ["bar"]))
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"bAlias\".* " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "bVariant") != nil)

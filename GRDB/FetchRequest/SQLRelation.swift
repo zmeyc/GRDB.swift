@@ -200,13 +200,18 @@ public struct ForeignRelation {
     }
     
     /// TODO
-    public func filter(predicate: (left: SQLSource, right: SQLSource) -> _SQLExpressible) -> ForeignRelation {
+    public func filter(predicate: (source: SQLSource) -> _SQLExpressible) -> ForeignRelation {
         var relation = self
         let existingPredicate = self.predicate
         relation.predicate = { (left, right) in
-            existingPredicate(left: left, right: right).sqlExpression && predicate(left: left, right: right).sqlExpression
+            existingPredicate(left: left, right: right).sqlExpression && predicate(source: right).sqlExpression
         }
         return relation
+    }
+    
+    /// TODO
+    public func filter(sql sql: String, arguments: StatementArguments? = nil) -> ForeignRelation {
+        return filter { _ in _SQLExpression.Literal(sql, arguments) }
     }
     
     init(variantName: String, rightSource: SQLSource, foreignKey: [String: String]) {
