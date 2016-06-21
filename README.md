@@ -25,7 +25,7 @@ You should give it a try.
 
 ---
 
-**June 9, 2016: GRDB.swift 0.72.0 is out** ([changelog](CHANGELOG.md)). Follow [@groue](http://twitter.com/groue) on Twitter for release announcements and usage tips.
+**June 20, 2016: GRDB.swift 0.73.0 is out** ([changelog](CHANGELOG.md)). Follow [@groue](http://twitter.com/groue) on Twitter for release announcements and usage tips.
 
 **Requirements**: iOS 8.0+ / OSX 10.9+, Xcode 7.3+
 
@@ -143,7 +143,7 @@ Documentation
 
 **Reference**
 
-- [GRDB Reference](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/index.html) (on cocoadocs.org)
+- [GRDB Reference](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/index.html) (on cocoadocs.org)
 
 **Getting started**
 
@@ -189,7 +189,7 @@ To use GRDB with CocoaPods, specify in your Podfile:
 source 'https://github.com/CocoaPods/Specs.git'
 use_frameworks!
 
-pod 'GRDB.swift', '~> 0.72.0'
+pod 'GRDB.swift', '~> 0.73.0'
 ```
 
 > :point_up: **Note**: [SQLCipher](#encryption) and [custom SQLite builds](#custom-sqlite-builds) are not available via CocoaPods.
@@ -202,7 +202,7 @@ pod 'GRDB.swift', '~> 0.72.0'
 To use GRDB with Carthage, specify in your Cartfile:
 
 ```
-github "groue/GRDB.swift" ~> 0.72.0
+github "groue/GRDB.swift" ~> 0.73.0
 ```
 
 > :point_up: **Note**: [custom SQLite builds](#custom-sqlite-builds) are not available via Carthage.
@@ -311,7 +311,7 @@ let dbQueue = try DatabaseQueue(
     configuration: config)
 ```
 
-See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Structs/Configuration.html) for more details.
+See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Structs/Configuration.html) for more details.
 
 
 ## Database Pools
@@ -391,7 +391,7 @@ let dbPool = try DatabasePool(
     configuration: config)
 ```
 
-See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Structs/Configuration.html) for more details.
+See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Structs/Configuration.html) for more details.
 
 
 Database pools are more memory-hungry than database queues. See [Memory Management](#memory-management) for more information.
@@ -791,7 +791,7 @@ GRDB ships with built-in support for the following value types:
 
 - **Swift Standard Library**: Bool, Double, Float, Int, Int32, Int64, String, [Swift enums](#swift-enums).
     
-- **Foundation**: [NSData](#nsdata-and-memory-savings), [NSDate](#nsdate-and-nsdatecomponents), [NSDateComponents](#nsdate-and-nsdatecomponents), NSNull, [NSNumber](#nsnumber-and-nsdecimalnumber), NSString, NSURL.
+- **Foundation**: [NSData](#nsdata-and-memory-savings), [NSDate](#nsdate-and-nsdatecomponents), [NSDateComponents](#nsdate-and-nsdatecomponents), NSNull, [NSNumber](#nsnumber-and-nsdecimalnumber), NSString, NSURL, [NSUUID](#nsuuid).
     
 - **CoreGraphics**: CGFloat.
 
@@ -1001,6 +1001,11 @@ let integer = Int64.fetchOne(db, "SELECT SUM(amount) FROM transfers")! // 100
 let amount = NSDecimalNumber(longLong: integer)                        // 0.1
     .decimalNumberByMultiplyingByPowerOf10(-2)
 ```
+
+
+### NSUUID
+
+**NSUUID** can be stored and fetched from the database just like other [values](#values). GRDB stores uuids as 16-bytes data blobs.
 
 
 ### Swift Enums
@@ -1472,10 +1477,10 @@ for person in Person.fetch(db, sql, adapter: adapter) {
 
 For more information about row adapters, see the documentation of:
 
-- [RowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Protocols/RowAdapter.html): the protocol that lets you define your custom row adapters
-- [ColumnMapping](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Structs/ColumnMapping.html): a row adapter that renames row columns
-- [SuffixRowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Structs/SuffixRowAdapter.html): a row adapter that hides the first columns of a row
-- [VariantRowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Structs/VariantRowAdapter.html): the row adapter that groups several adapters together to define named variants
+- [RowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Protocols/RowAdapter.html): the protocol that lets you define your custom row adapters
+- [ColumnMapping](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Structs/ColumnMapping.html): a row adapter that renames row columns
+- [SuffixRowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Structs/SuffixRowAdapter.html): a row adapter that hides the first columns of a row
+- [VariantRowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Structs/VariantRowAdapter.html): the row adapter that groups several adapters together to define named variants
 
 
 ## Raw SQLite Pointers
@@ -2056,15 +2061,10 @@ let count = Wine.filter(color == Color.Red).fetchCount(db)
 let wines = Wine.filter(origin == "Burgundy").order(price).fetchAll(db)
 ```
 
-Please bear in mind that the query interface can not generate all possible SQL queries. You may also *prefer* writing SQL, and this is just OK. From little snippets to full SQL queries, your SQL skills are welcome:
+Please bear in mind that the query interface can not generate all possible SQL queries. You may also *prefer* writing SQL, and this is just OK. From little snippets to full queries, your SQL skills are welcome:
 
 ```swift
-// SQL snippets
 let count = Wine.filter(sql: "color = ?", arguments: [Color.Red]).fetchCount(db)
-let wines = Wine.filter(sql: "origin = ?", arguments: ["Burgundy"]).order(sql: "price").fetchAll(db)
-
-// Full SQL
-let count = Int.fetchOne(db, "SELECT COUNT(*) FROM wines WHERE color = ?", arguments [Color.Red])!
 let wines = Wine.fetchAll(db, "SELECT * FROM wines WHERE origin = ? ORDER BY price", arguments: ["Burgundy"])
 ```
 
@@ -2567,7 +2567,7 @@ dbQueue.addTransactionObserver(observer)
 
 Database holds weak references to its transaction observers: they are not retained, and stop getting notifications after they are deallocated.
 
-**A transaction observer is notified of all database changes**, inserts, updates and deletes, including indirect ones triggered by ON DELETE and ON UPDATE actions associated to [foreign keys](https://www.sqlite.org/foreignkeys.html#fk_actions).
+Unless specified otherwise (see below), **a transaction observer is notified of all database changes**: inserts, updates and deletes, including indirect ones triggered by ON DELETE and ON UPDATE actions associated to [foreign keys](https://www.sqlite.org/foreignkeys.html#fk_actions).
 
 Changes are not actually applied until `databaseDidCommit` is called. On the other side, `databaseDidRollback` confirms their invalidation:
 
@@ -2634,6 +2634,50 @@ do {
 [FetchedRecordsController](#fetchedrecordscontroller) is based on the TransactionObserverType protocol.
 
 See also [TableChangeObserver.swift](https://gist.github.com/groue/2e21172719e634657dfd), which shows a transaction observer that notifies of modified database tables with NSNotificationCenter.
+
+
+### Filtering Database Events
+
+**Transaction observers can avoid being notified of some database changes they are not interested in.**
+
+At first sight, this looks somewhat redundant with the checks that observers can perform in their `databaseDidChangeWithEvent` method. But the code below is inefficient:
+
+```swift
+// BAD: An inefficient way to track the "persons" table:
+class PersonObserver: TransactionObserverType {
+    func databaseDidChangeWithEvent(event: DatabaseEvent) {
+        guard event.tableName == "persons" else {
+            return
+        }
+        // Process change to the "persons" table
+    }
+}
+```
+
+The `databaseDidChangeWithEvent` method is invoked for each insertion, deletion, and update of individual rows. When there are many changed rows, the observer will spend of a lot of time performing the same check again and again.
+
+More, when you're interested in specific table columns, you're out of luck, because `databaseDidChangeWithEvent` does not know about columns: it just knows that a row has been inserted, deleted, or updated, without further detail.
+
+Instead, provide an event filter to the `addTransactionObserver` method, as below:
+
+```swift
+// This observer will only be notified of changes to the "name" column
+// of the "persons" table.
+dbQueue.addTransactionObserver(observer, forDatabaseEvents: { event in
+    switch event {
+    case .Insert(let tableName):
+        return tableName == "persons"
+    case .Delete(let tableName):
+        return tableName == "persons"
+    case .Update(let tableName, let columnNames):
+        return tableName == "persons" && columnNames.contains("name")
+    }
+})
+```
+
+This technique is *much more* efficient, because GRDB will apply the filter only once for each update statement, instead of once for each modified row.
+
+> :point_up: **Note**: avoid referring to the observer itself in the event filter closure, because the database would then keep a strong reference to the observer - this is usually undesired.
 
 
 ### Support for SQLite Pre-Update Hooks
@@ -3297,7 +3341,7 @@ let count2 = dbQueue.inDatabase { db in
 
 SQLite concurrency is a wiiide topic.
 
-First have a detailed look at the full API of [DatabaseQueue](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Classes/DatabaseQueue.html) and [DatabasePool](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Classes/DatabasePool.html). Both adopt the [DatabaseReader](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Protocols/DatabaseReader.html) and [DatabaseWriter](http://cocoadocs.org/docsets/GRDB.swift/0.72.0/Protocols/DatabaseWriter.html) protocols, so that you can write code that targets both classes.
+First have a detailed look at the full API of [DatabaseQueue](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Classes/DatabaseQueue.html) and [DatabasePool](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Classes/DatabasePool.html). Both adopt the [DatabaseReader](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Protocols/DatabaseReader.html) and [DatabaseWriter](http://cocoadocs.org/docsets/GRDB.swift/0.73.0/Protocols/DatabaseWriter.html) protocols, so that you can write code that targets both classes.
 
 If the built-in queues and pools do not fit your needs, or if you can not guarantee that a single queue or pool is accessing your database file, you may have a look at:
 

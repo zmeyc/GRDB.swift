@@ -82,7 +82,8 @@ public final class Database {
     private var isInsideExplicitTransaction: Bool = false
     
     // Transaction observers
-    private var transactionObservers = [WeakTransactionObserver]()
+    private var databaseEventObservers = [DatabaseEventObserver]()
+    private var statementEventObservers = [DatabaseEventObserver]()  // subset of databaseEventObservers, set in updateStatementWillExecute
     private var transactionState: TransactionState = .WaitForTransactionCompletion
     private var savepointStack = SavePointStack()
     
@@ -503,7 +504,8 @@ extension Database {
                         database: self,
                         sqliteStatement: sqliteStatement,
                         invalidatesDatabaseSchemaCache: observer.invalidatesDatabaseSchemaCache,
-                        savepointAction: observer.savepointAction)
+                        savepointAction: observer.savepointAction,
+                        databaseEventKinds: observer.databaseEventKinds)
                     let arguments = try consumeArguments(statement)
                     statement.unsafeSetArguments(arguments)
                     try statement.execute()
@@ -1027,15 +1029,18 @@ public struct PrimaryKey {
 final class StatementCompilationObserver {
     let database: Database
     
-    // The list of tables queried by a statement
-    var sourceTables: Set<String> = []
+    /// A dictionary [tablename: Set<columnName>] of accessed columns
+    var readTables: [String: Set<String>] = [:]
     
-    // True if a statement alter the schema in a way that required schema cache
-    // invalidation. Adding a column to a table does invalidate the schema
-    // cache, but not adding a table.
+    /// What this statement does to the database
+    var databaseEventKinds: [DatabaseEventKind] = []
+    
+    /// True if a statement alter the schema in a way that required schema cache
+    /// invalidation. Adding a column to a table does invalidate the schema
+    /// cache, but not adding a table.
     var invalidatesDatabaseSchemaCache = false
     
-    // Not nil if a statement is a BEGIN/RELEASE/ROLLBACK savepoint statement.
+    /// Not nil if a statement is a BEGIN/RELEASE/ROLLBACK savepoint statement.
     var savepointAction: (name: String, action: SavepointActionKind)?
     
     init(_ database: Database) {
@@ -1052,7 +1057,16 @@ final class StatementCompilationObserver {
                 observer.invalidatesDatabaseSchemaCache = true
             case SQLITE_READ:
                 let observer = unsafeBitCast(observerPointer, StatementCompilationObserver.self)
-                observer.sourceTables.insert(String.fromCString(CString1)!)
+                observer.insertRead(tableName: String.fromCString(CString1)!, columnName: String.fromCString(CString2)!)
+            case SQLITE_INSERT:
+                let observer = unsafeBitCast(observerPointer, StatementCompilationObserver.self)
+                observer.databaseEventKinds.append(.Insert(tableName: String.fromCString(CString1)!))
+            case SQLITE_DELETE:
+                let observer = unsafeBitCast(observerPointer, StatementCompilationObserver.self)
+                observer.databaseEventKinds.append(.Delete(tableName: String.fromCString(CString1)!))
+            case SQLITE_UPDATE:
+                let observer = unsafeBitCast(observerPointer, StatementCompilationObserver.self)
+                observer.insertUpdateEventKind(tableName: String.fromCString(CString1)!, columnName: String.fromCString(CString2)!)
             case SQLITE_SAVEPOINT:
                 let observer = unsafeBitCast(observerPointer, StatementCompilationObserver.self)
                 let name = String.fromCString(CString2)!
@@ -1067,9 +1081,30 @@ final class StatementCompilationObserver {
     
     // Call this method between two calls to calling sqlite3_prepare_v2()
     func reset() {
-        sourceTables = []
+        readTables = [:]
+        databaseEventKinds = []
         invalidatesDatabaseSchemaCache = false
         savepointAction = nil
+    }
+    
+    func insertRead(tableName tableName: String, columnName: String) {
+        if readTables[tableName] != nil {
+           readTables[tableName]!.insert(columnName)
+        } else {
+           readTables[tableName] = [columnName]
+        }
+    }
+    
+    func insertUpdateEventKind(tableName tableName: String, columnName: String) {
+        for (index, eventKind) in databaseEventKinds.enumerate() {
+            if case .Update(let t, let columnNames) = eventKind where t == tableName {
+                var columnNames = columnNames
+                columnNames.insert(columnName)
+                databaseEventKinds[index] = .Update(tableName: tableName, columnNames: columnNames)
+                return
+            }
+        }
+        databaseEventKinds.append(.Update(tableName: tableName, columnNames: [columnName]))
     }
     
     func stop() {
@@ -1284,15 +1319,21 @@ extension Database {
         isInsideExplicitTransaction = false
     }
     
-    /// Add a transaction observer, so that it gets notified of all
+    /// Add a transaction observer, so that it gets notified of
     /// database changes.
     ///
     /// The transaction observer is weakly referenced: it is not retained, and
     /// stops getting notifications after it is deallocated.
-    public func addTransactionObserver(transactionObserver: TransactionObserverType) {
+    ///
+    /// - parameters:
+    ///     - transactionObserver: A transaction observer.
+    ///     - filter: An optional database event filter. When nil (the default),
+    ///       all events are notified to the observer. When not nil, only events
+    ///       that pass the filter are notified.
+    public func addTransactionObserver(transactionObserver: TransactionObserverType, forDatabaseEvents filter: ((DatabaseEventKind) -> Bool)? = nil) {
         DatabaseScheduler.preconditionValidQueue(self)
-        transactionObservers.append(WeakTransactionObserver(transactionObserver))
-        if transactionObservers.count == 1 {
+        databaseEventObservers.append(DatabaseEventObserver(transactionObserver: transactionObserver, filter: filter))
+        if databaseEventObservers.count == 1 {
             installTransactionObserverHooks()
         }
     }
@@ -1300,17 +1341,17 @@ extension Database {
     /// Remove a transaction observer.
     public func removeTransactionObserver(transactionObserver: TransactionObserverType) {
         DatabaseScheduler.preconditionValidQueue(self)
-        transactionObservers.removeFirst { $0.observer === transactionObserver }
-        if transactionObservers.isEmpty {
+        databaseEventObservers.removeFirst { $0.transactionObserver === transactionObserver }
+        if databaseEventObservers.isEmpty {
             uninstallTransactionObserverHooks()
         }
     }
     
     /// Clears references to deallocated observers, and uninstall transaction
     /// hooks if there is no remaining observers.
-    private func cleanupTransactionObservers() {
-        transactionObservers = transactionObservers.filter { $0.observer != nil }
-        if transactionObservers.isEmpty {
+    private func cleanupDatabaseEventObservers() {
+        databaseEventObservers = databaseEventObservers.filter { $0.transactionObserver != nil }
+        if databaseEventObservers.isEmpty {
             uninstallTransactionObserverHooks()
         }
     }
@@ -1324,12 +1365,24 @@ extension Database {
     /// An INSERT statement will pass, but not DROP TABLE (which invalidates the
     /// database cache), or RELEASE SAVEPOINT (which alters the savepoint stack)
     static func preconditionValidSelectStatement(sql sql: String, observer: StatementCompilationObserver) {
-        GRDBPrecondition(!observer.invalidatesDatabaseSchemaCache, "Invalid statement type for query \(String(reflecting: sql)): use UpdateStatement instead.")
+        GRDBPrecondition(observer.invalidatesDatabaseSchemaCache == false, "Invalid statement type for query \(String(reflecting: sql)): use UpdateStatement instead.")
         GRDBPrecondition(observer.savepointAction == nil, "Invalid statement type for query \(String(reflecting: sql)): use UpdateStatement instead.")
+        GRDBPrecondition(observer.databaseEventKinds.isEmpty, "Invalid statement type for query \(String(reflecting: sql)): use UpdateStatement instead.")
+    }
+    
+    func updateStatementWillExecute(statement: UpdateStatement) {
+        let databaseEventKinds = statement.databaseEventKinds
+        statementEventObservers = databaseEventObservers.filter { databaseEventObserver in
+            guard let filter = databaseEventObserver.filter else { return true }
+            return databaseEventKinds.indexOf(filter) != nil
+        }
     }
     
     /// Some failed statements interest transaction observers.
     func updateStatementDidFail(statement: UpdateStatement) throws {
+        // Wait for next statement
+        statementEventObservers = []
+        
         // Reset transactionState before didRollback eventually executes
         // other statements.
         let transactionState = self.transactionState
@@ -1356,6 +1409,9 @@ extension Database {
     /// Some succeeded statements invalidate the database cache, others interest
     /// transaction observers, and others modify the savepoint stack.
     func updateStatementDidExecute(statement: UpdateStatement) {
+        // Wait for next statement
+        statementEventObservers = []
+        
         if statement.invalidatesDatabaseSchemaCache {
             clearSchemaCache()
         }
@@ -1369,8 +1425,8 @@ extension Database {
                 if savepointStack.isEmpty {
                     let eventsBuffer = savepointStack.eventsBuffer
                     savepointStack.clear()
-                    for observer in transactionObservers.flatMap({ $0.observer }) {
-                        for event in eventsBuffer {
+                    for (event, notifiedObservers) in eventsBuffer {
+                        for observer in notifiedObservers.flatMap({ $0.transactionObserver }) {
                             event.send(to: observer)
                         }
                     }
@@ -1399,24 +1455,34 @@ extension Database {
     private func willCommit() throws {
         let eventsBuffer = savepointStack.eventsBuffer
         savepointStack.clear()
-        for observer in transactionObservers.flatMap({ $0.observer }) {
-            for event in eventsBuffer {
+        
+        var notifiedObserversForCommit: [TransactionObserverType] = databaseEventObservers.flatMap({ $0.transactionObserver })
+        for (event, notifiedObservers) in eventsBuffer {
+            for observer in notifiedObservers.flatMap({ $0.transactionObserver }) {
                 event.send(to: observer)
+                if !notifiedObserversForCommit.contains({ $0 === observer }) {
+                    notifiedObserversForCommit.append(observer)
+                }
             }
+        }
+        for observer in notifiedObserversForCommit {
             try observer.databaseWillCommit()
         }
     }
     
 #if SQLITE_ENABLE_PREUPDATE_HOOK
     /// Transaction hook
-    private func willChangeWithEvent(event: DatabasePreUpdateEvent)
-    {
+    private func willChangeWithEvent(event: DatabasePreUpdateEvent) {
         if savepointStack.isEmpty {
-            for observer in transactionObservers.flatMap({ $0.observer }) {
+            // Don't notify all databaseEventObservers about the database event.
+            // Only notify those that are interested in the event, and have been
+            // isolated in updateStatementWillExecute().
+            for observer in statementEventObservers.flatMap({ $0.transactionObserver }) {
                 observer.databaseWillChangeWithEvent(event)
             }
         } else {
-            savepointStack.eventsBuffer.append(event.copy())
+            // Buffer both event and the observers that should be notified of the event.
+            savepointStack.eventsBuffer.append((event: event.copy(), notifiedObservers: statementEventObservers))
         }
     }
 #endif
@@ -1424,29 +1490,33 @@ extension Database {
     /// Transaction hook
     private func didChangeWithEvent(event: DatabaseEvent) {
         if savepointStack.isEmpty {
-            for observer in transactionObservers.flatMap({ $0.observer }) {
+            // Don't notify all databaseEventObservers about the database event.
+            // Only notify those that are interested in the event, and have been
+            // isolated in updateStatementWillExecute().
+            for observer in statementEventObservers.flatMap({ $0.transactionObserver }) {
                 observer.databaseDidChangeWithEvent(event)
             }
         } else {
-            savepointStack.eventsBuffer.append(event.copy())
+            // Buffer both event and the observers that should be notified of the event.
+            savepointStack.eventsBuffer.append((event: event.copy(), notifiedObservers: statementEventObservers))
         }
     }
     
     /// Transaction hook
     private func didCommit() {
-        for observer in transactionObservers.flatMap({ $0.observer }) {
+        for observer in databaseEventObservers.flatMap({ $0.transactionObserver }) {
             observer.databaseDidCommit(self)
         }
-        cleanupTransactionObservers()
+        cleanupDatabaseEventObservers()
     }
     
     /// Transaction hook
     private func didRollback() {
         savepointStack.clear()
-        for observer in transactionObservers.flatMap({ $0.observer }) {
+        for observer in databaseEventObservers.flatMap({ $0.transactionObserver }) {
             observer.databaseDidRollback(self)
         }
-        cleanupTransactionObservers()
+        cleanupDatabaseEventObservers()
     }
     
     private func installTransactionObserverHooks() {
@@ -1612,13 +1682,28 @@ public protocol TransactionObserverType : class {
     #endif
 }
 
-/// Database stores WeakTransactionObserver so that it does not retain its
+/// Database stores DatabaseEventObserver so that it does not retain its
 /// transaction observers.
-class WeakTransactionObserver {
-    weak var observer: TransactionObserverType?
-    init(_ observer: TransactionObserverType) {
-        self.observer = observer
+class DatabaseEventObserver {
+    weak var transactionObserver: TransactionObserverType?
+    let filter: ((DatabaseEventKind) -> Bool)?
+    init(transactionObserver: TransactionObserverType, filter: ((DatabaseEventKind) -> Bool)?) {
+        self.transactionObserver = transactionObserver
+        self.filter = filter
     }
+}
+
+/// A kind of database event. See Database.addTransactionObserver()
+/// and DatabaseWriter.addTransactionObserver().
+public enum DatabaseEventKind {
+    /// The insertion of a row in a database table
+    case Insert(tableName: String)
+    
+    /// The deletion of a row in a database table
+    case Delete(tableName: String)
+    
+    /// The update of a set of columns in a database table
+    case Update(tableName: String, columnNames: Set<String>)
 }
 
 protocol DatabaseEventType {
@@ -1980,7 +2065,7 @@ private struct CopiedDatabaseEventImpl : DatabaseEventImpl {
 ///   rollbacked.
 class SavePointStack {
     /// The buffered events. See Database.didChangeWithEvent()
-    var eventsBuffer: [DatabaseEventType] = []
+    var eventsBuffer: [(event: DatabaseEventType, notifiedObservers: [DatabaseEventObserver])] = []
     
     /// The savepoint stack, as an array of tuples (savepointName, index in the eventsBuffer array).
     /// Indexes let us drop rollbacked events from the event buffer.
