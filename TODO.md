@@ -1,3 +1,4 @@
+- [ ] Relation joins: see "Self Join / Tree example" in http://greenrobot.org/greendao/documentation/joins/
 – [ ] Relations: Document Table(tableName) in the Query Interface documentation
 - [?] Relations: include(required: relation) instead of include(required: true, relation)?
 – [ ] Relations: row.isPopulated, row.containsData, row.hasValues, row.hasNonNullValues, something which helps ignoring a joined row variant without values:
