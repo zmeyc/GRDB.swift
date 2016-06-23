@@ -1520,7 +1520,7 @@ class ComplexRelationTests: GRDBTestCase {
                 "SELECT \"persons\".*, \"birthCountry\".* " +
                 "FROM \"persons\" " +
                 "LEFT JOIN \"countries\" \"birthCountry\" ON (\"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
-                "WHERE birthCountry.isoCode == \'FR\'")
+                "WHERE (birthCountry.isoCode == \'FR\')")
             
             dbQueue.inDatabase { db in
                 let persons = request.fetchAll(db)
@@ -1555,7 +1555,7 @@ class ComplexRelationTests: GRDBTestCase {
                 "SELECT \"persons\".* " +
                 "FROM \"persons\" " +
                 "LEFT JOIN \"countries\" \"birthCountry\" ON (\"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
-                "WHERE birthCountry.isoCode == \'FR\'")
+                "WHERE (birthCountry.isoCode == \'FR\')")
             
             dbQueue.inDatabase { db in
                 let persons = request.fetchAll(db)
@@ -1590,7 +1590,7 @@ class ComplexRelationTests: GRDBTestCase {
                 "SELECT \"persons\".*, \"foo\".* " +
                 "FROM \"persons\" " +
                 "LEFT JOIN \"countries\" \"foo\" ON (\"foo\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
-                "WHERE foo.isoCode == \'FR\'")
+                "WHERE (foo.isoCode == \'FR\')")
             
             dbQueue.inDatabase { db in
                 let persons = request.fetchAll(db)

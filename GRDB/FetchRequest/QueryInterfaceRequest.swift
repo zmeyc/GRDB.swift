@@ -167,7 +167,7 @@ extension QueryInterfaceRequest {
     /// eventual set of already applied predicates.
     @warn_unused_result
     public func filter(sql sql: String, arguments: StatementArguments? = nil) -> QueryInterfaceRequest<T> {
-        return filter(_SQLExpression.Literal(sql, arguments))
+        return filter(_SQLExpression.Literal("(\(sql))", arguments))
     }
     
     /// Returns a new QueryInterfaceRequest grouped according to *expressions*.

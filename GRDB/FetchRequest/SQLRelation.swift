@@ -112,7 +112,7 @@ extension SQLRelation {
     /// Extension method
     @warn_unused_result
     public func filter(sql sql: String, arguments: StatementArguments? = nil) -> SQLRelation {
-        return filter { _ in _SQLExpression.Literal(sql, arguments) }
+        return filter { _ in _SQLExpression.Literal("(\(sql))", arguments) }
     }
 
 }
