@@ -21,7 +21,7 @@ public protocol _SQLRelation {
     func numberOfColumns(db: Database) throws -> Int
     
     /// TODO
-    var variantName: String { get }
+    var name: String { get }
     
     /// TODO
     var referencedSources: [_SQLSource] { get }
@@ -165,8 +165,8 @@ extension ChainedRelation : SQLRelation {
     }
     
     /// TODO
-    var variantName: String {
-        return baseRelation.variantName
+    var name: String {
+        return baseRelation.name
     }
     
     /// TODO
@@ -206,7 +206,7 @@ extension ChainedRelation : SQLRelation {
         var variants: [String: RowAdapter] = [:]
         for join in joins {
             if let adapter = join.relation.adapter(included: join.included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex) {
-                variants[join.relation.variantName] = adapter
+                variants[join.relation.name] = adapter
             }
         }
         
@@ -226,7 +226,7 @@ extension ChainedRelation : SQLRelation {
 /// TODO
 public struct ForeignRelation {
     /// TODO
-    public let variantName: String
+    public let name: String
     /// TODO
     public let foreignKey: [String: String] // [leftColumn: rightColumn]
     /// TODO
@@ -235,16 +235,16 @@ public struct ForeignRelation {
     var predicate: ((left: SQLSource, right: SQLSource) -> _SQLExpressible)
     
     /// TODO
-    public init(to tableName: String, through foreignKey: [String: String], variantName: String? = nil) {
+    public init(named name: String? = nil, to tableName: String, through foreignKey: [String: String]) {
         // TODO: doesn't alias need to be validated as valid SQLite identifiers?
-        let variantName = variantName ?? tableName
-        let alias: String? = (variantName == tableName) ? nil : variantName
+        let name = name ?? tableName
+        let alias: String? = (name == tableName) ? nil : name
         let rightSource = _SQLSourceTable(tableName: tableName, alias: alias)
-        self.init(variantName: variantName, rightSource: rightSource, foreignKey: foreignKey)
+        self.init(name: name, rightSource: rightSource, foreignKey: foreignKey)
     }
     
-    init(variantName: String, rightSource: SQLSource, foreignKey: [String: String]) {
-        self.variantName = variantName
+    init(name: String, rightSource: SQLSource, foreignKey: [String: String]) {
+        self.name = name
         self.rightSource = rightSource
         self.foreignKey = foreignKey
         self.predicate = { (left, right) in foreignKey.map { (leftColumn, rightColumn) in right[rightColumn] == left[leftColumn] }.reduce(&&) }

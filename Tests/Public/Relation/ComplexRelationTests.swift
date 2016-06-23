@@ -15,10 +15,10 @@ private final class Person : RowConvertible, TableMapping {
     let birthCountryIsoCode: String?
     
     let birthCountry: Country?
-    static let birthCountry = ForeignRelation(to: "countries", through: ["birthCountryIsoCode": "isoCode"], variantName: "birthCountry")
+    static let birthCountry = ForeignRelation(named: "birthCountry", to: "countries", through: ["birthCountryIsoCode": "isoCode"])
     
     let ruledCountry: Country?
-    static let ruledCountry = ForeignRelation(to: "countries", through: ["id": "leaderID"], variantName: "ruledCountry")
+    static let ruledCountry = ForeignRelation(named: "ruledCountry", to: "countries", through: ["id": "leaderID"])
     
     static func databaseTableName() -> String {
         return "persons"
@@ -29,13 +29,13 @@ private final class Person : RowConvertible, TableMapping {
         name = row.value(named: "name")
         birthCountryIsoCode = row.value(named: "birthCountryIsoCode")
         
-        if let birthCountryRow = row.variant(named: Person.birthCountry.variantName) {
+        if let birthCountryRow = row.variant(named: Person.birthCountry.name) {
             birthCountry = Country(birthCountryRow)
         } else {
             birthCountry = nil
         }
         
-        if let ruledCountryRow = row.variant(named: Person.ruledCountry.variantName) where ruledCountryRow.value(named: "isoCode") != nil {
+        if let ruledCountryRow = row.variant(named: Person.ruledCountry.name) where ruledCountryRow.value(named: "isoCode") != nil {
             ruledCountry = Country(ruledCountryRow)
         } else {
             ruledCountry = nil
@@ -49,14 +49,14 @@ private final class Country: RowConvertible {
     let leaderID: Int64?
     
     let leader: Person?
-    static let leader = ForeignRelation(to: "persons", through: ["leaderID": "id"], variantName: "leader")
+    static let leader = ForeignRelation(named: "leader", to: "persons", through: ["leaderID": "id"])
     
     init(_ row: Row) {
         isoCode = row.value(named: "isoCode")
         name = row.value(named: "name")
         leaderID = row.value(named: "leaderID")
         
-        if let leaderRow = row.variant(named: Country.leader.variantName) {
+        if let leaderRow = row.variant(named: Country.leader.name) {
             leader = Person(leaderRow)
         } else {
             leader = nil
@@ -351,8 +351,8 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO c (id, a1ID, a2ID) VALUES (NULL, ?, ?)", arguments: [a1ID, a2ID])
                 
                 let b = ForeignRelation(to: "b", through: ["id": "aID"])
-                let c1 = ForeignRelation(to: "c", through: ["id": "a1ID"], variantName: "c1")
-                let c2 = ForeignRelation(to: "c", through: ["id": "a2ID"], variantName: "c2")
+                let c1 = ForeignRelation(named: "c1", to: "c", through: ["id": "a1ID"])
+                let c2 = ForeignRelation(named: "c2", to: "c", through: ["id": "a2ID"])
                 
                 do {
                     let request = Table("a").join(b, c1, c2)
@@ -821,8 +821,8 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO b (id, aID) VALUES (NULL, ?)", arguments: [db.lastInsertedRowID])
                 
                 let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
-                let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
-                let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
+                let bRelationNamedAsTable = ForeignRelation(named: "b", to: "b", through: ["id": "aID"])
+                let bRelationNamed = ForeignRelation(named: "bVariant", to: "b", through: ["id": "aID"])
                 
                 do {
                     let request = Table("a").include(bRelationUnnamed)
@@ -917,9 +917,9 @@ class ComplexRelationTests: GRDBTestCase {
                 let barColumn = SQLColumn("bar")
                 let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
                     .filter { $0["bar"] == "bar" }
-                let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
+                let bRelationNamedAsTable = ForeignRelation(named: "b", to: "b", through: ["id": "aID"])
                     .filter { $0[barColumn] == "bar" }
-                let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
+                let bRelationNamed = ForeignRelation(named: "bVariant", to: "b", through: ["id": "aID"])
                     .filter { $0[barColumn] == "bar" }
                 
                 do {
@@ -1013,8 +1013,8 @@ class ComplexRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO b (id, aID, bar) VALUES (NULL, ?, ?)", arguments: [db.lastInsertedRowID, "bar"])
                 
                 let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
-                let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
-                let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
+                let bRelationNamedAsTable = ForeignRelation(named: "b", to: "b", through: ["id": "aID"])
+                let bRelationNamed = ForeignRelation(named: "bVariant", to: "b", through: ["id": "aID"])
                 
                 do {
                     let request = Table("a").include(bRelationUnnamed.filter(sql: "b.bar = ?", arguments: ["bar"]))
@@ -1513,7 +1513,7 @@ class ComplexRelationTests: GRDBTestCase {
             
             let request = Person
                 .include(Person.birthCountry)
-                .filter(sql: "\(Person.birthCountry.variantName).isoCode == 'FR'") // TODO1: pass "FR" as an argument
+                .filter(sql: "\(Person.birthCountry.name).isoCode == 'FR'") // TODO1: pass "FR" as an argument
             
             XCTAssertEqual(
                 sql(dbQueue, request),
@@ -1548,7 +1548,7 @@ class ComplexRelationTests: GRDBTestCase {
             
             let request = Person
                 .join(Person.birthCountry)
-                .filter(sql: "\(Person.birthCountry.variantName).isoCode == 'FR'") // TODO1: pass "FR" as an argument
+                .filter(sql: "\(Person.birthCountry.name).isoCode == 'FR'") // TODO1: pass "FR" as an argument
             
             XCTAssertEqual(
                 sql(dbQueue, request),

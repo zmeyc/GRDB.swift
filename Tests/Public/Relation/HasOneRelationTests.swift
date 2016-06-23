@@ -33,7 +33,7 @@ class HasOneRelationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: relation.variantName)!
+                let variant = row.variant(named: relation.name)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", 100), ("ownerID", 1), ("name", "owned1")]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
@@ -45,7 +45,7 @@ class HasOneRelationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: relation.variantName)!
+                let variant = row.variant(named: relation.name)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", nil), ("ownerID", nil), ("name", nil)]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
@@ -62,7 +62,7 @@ class HasOneRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO persons (id, name, friendID) VALUES (2, 'Barbara', 1)")
             }
             let rootTable = Table("persons")
-            let relation = ForeignRelation(to: "persons", through: ["id": "friendID"], variantName: "friend")
+            let relation = ForeignRelation(named: "friend", to: "persons", through: ["id": "friendID"])
             let request = rootTable.include(relation)
             XCTAssertEqual(sql(dbQueue, request), "SELECT \"persons\".*, \"friend\".* FROM \"persons\" LEFT JOIN \"persons\" \"friend\" ON (\"friend\".\"friendID\" = \"persons\".\"id\")")
             
@@ -77,7 +77,7 @@ class HasOneRelationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: relation.variantName)!
+                let variant = row.variant(named: relation.name)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", 2), ("name", "Barbara"), ("friendID", 1)]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
@@ -89,7 +89,7 @@ class HasOneRelationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: relation.variantName)!
+                let variant = row.variant(named: relation.name)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", nil), ("name", nil), ("friendID", nil)]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
@@ -107,7 +107,7 @@ class HasOneRelationTests: GRDBTestCase {
                 try db.execute("INSERT INTO persons (id, name, friendID) VALUES (3, 'Craig', 2)")
             }
             let rootTable = Table("persons")
-            let relation = ForeignRelation(to: "persons", through: ["id": "friendID"], variantName: "friend")
+            let relation = ForeignRelation(named: "friend", to: "persons", through: ["id": "friendID"])
             let request = rootTable.include(relation.include(relation))
             XCTAssertEqual(sql(dbQueue, request), "SELECT \"persons\".*, \"friend0\".*, \"friend1\".* FROM \"persons\" LEFT JOIN \"persons\" \"friend0\" ON (\"friend0\".\"friendID\" = \"persons\".\"id\") LEFT JOIN \"persons\" \"friend1\" ON (\"friend1\".\"friendID\" = \"friend0\".\"id\")")
             
@@ -122,12 +122,12 @@ class HasOneRelationTests: GRDBTestCase {
                 XCTAssertEqual(Array(row.columnNames), rowPairs.map { $0.0 })
                 XCTAssertEqual(Array(row.databaseValues), rowPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant = row.variant(named: relation.variantName)!
+                let variant = row.variant(named: relation.name)!
                 let variantPairs: [(String, DatabaseValueConvertible?)] = [("id", 2), ("name", "Barbara"), ("friendID", 1), ("id", 3), ("name", "Craig"), ("friendID", 2)]
                 XCTAssertEqual(Array(variant.columnNames), variantPairs.map { $0.0 })
                 XCTAssertEqual(Array(variant.databaseValues), variantPairs.map { $1?.databaseValue ?? .Null })
                 
-                let variant2 = variant.variant(named: relation.variantName)!
+                let variant2 = variant.variant(named: relation.name)!
                 let variant2Pairs: [(String, DatabaseValueConvertible?)] = [("id", 3), ("name", "Craig"), ("friendID", 2)]
                 XCTAssertEqual(Array(variant2.columnNames), variant2Pairs.map { $0.0 })
                 XCTAssertEqual(Array(variant2.databaseValues), variant2Pairs.map { $1?.databaseValue ?? .Null })
