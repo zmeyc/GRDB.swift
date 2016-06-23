@@ -320,6 +320,13 @@ extension TableMapping {
     }
     
     /// Returns a QueryInterfaceRequest with the provided *predicate*.
+    /// TODO: explain the closure
+    @warn_unused_result
+    public static func filter(predicate: (SQLSource) -> _SQLExpressible) -> QueryInterfaceRequest<Self> {
+        return all().filter(predicate)
+    }
+    
+    /// Returns a QueryInterfaceRequest with the provided *predicate*.
     @warn_unused_result
     public static func filter(predicate: _SQLExpressible) -> QueryInterfaceRequest<Self> {
         return all().filter(predicate)

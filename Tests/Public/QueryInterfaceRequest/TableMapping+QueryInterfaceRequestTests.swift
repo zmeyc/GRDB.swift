@@ -193,11 +193,19 @@ class TableMappingQueryInterfaceRequestTests: GRDBTestCase {
             "SELECT * FROM \"readers\" WHERE (id <> 1)")
     }
     
-    func testFilter() {
+    func testFilterExpression() {
         let dbQueue = try! makeDatabaseQueue()
         XCTAssertEqual(
             sql(dbQueue, Reader.filter(true)),
             "SELECT * FROM \"readers\" WHERE 1")
+    }
+    
+    func testFilterClosure() {
+        let dbQueue = try! makeDatabaseQueue()
+        let ageColumn = SQLColumn("age")
+        XCTAssertEqual(
+            sql(dbQueue, Reader.filter { source in source["name"] == "Arthur" && source[ageColumn] >= 18 }),
+            "SELECT * FROM \"readers\" WHERE ((\"readers\".\"name\" = 'Arthur') AND (\"readers\".\"age\" >= 18))")
     }
     
     func testMultipleFilter() {

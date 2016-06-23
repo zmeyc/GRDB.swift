@@ -910,25 +910,22 @@ class ComplexRelationTests: GRDBTestCase {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
                 try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, foo TEXT)")
-                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT, foo TEXT)")
                 try db.execute("INSERT INTO a (id, foo) VALUES (NULL, ?)", arguments: ["foo"])
-                try db.execute("INSERT INTO b (id, aID, bar) VALUES (NULL, ?, ?)", arguments: [db.lastInsertedRowID, "bar"])
+                try db.execute("INSERT INTO b (id, aID, bar, foo) VALUES (NULL, ?, ?, ?)", arguments: [db.lastInsertedRowID, "bar", "foo"])
                 
                 let barColumn = SQLColumn("bar")
                 let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
-                    .filter { $0["bar"] == "bar" }
                 let bRelationNamedAsTable = ForeignRelation(named: "b", to: "b", through: ["id": "aID"])
-                    .filter { $0[barColumn] == "bar" }
                 let bRelationNamed = ForeignRelation(named: "bVariant", to: "b", through: ["id": "aID"])
-                    .filter { $0[barColumn] == "bar" }
                 
                 do {
-                    let request = Table("a").include(bRelationUnnamed)
+                    let request = Table("a").include(bRelationUnnamed.filter { $0["foo"] == "foo" && $0[barColumn] == "bar" })
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (\"b\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND ((\"b\".\"foo\" = 'foo') AND (\"b\".\"bar\" = 'bar')))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -936,12 +933,12 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = Table("a").include(bRelationUnnamed.aliased("bAlias"))
+                    let request = Table("a").include(bRelationUnnamed.aliased("bAlias").filter { $0["foo"] == "foo" && $0[barColumn] == "bar" })
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND ((\"bAlias\".\"foo\" = 'foo') AND (\"bAlias\".\"bar\" = 'bar')))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -949,12 +946,12 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = Table("a").include(bRelationNamedAsTable)
+                    let request = Table("a").include(bRelationNamedAsTable.filter { $0["foo"] == "foo" && $0[barColumn] == "bar" })
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (\"b\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND ((\"b\".\"foo\" = 'foo') AND (\"b\".\"bar\" = 'bar')))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -962,12 +959,12 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = Table("a").include(bRelationNamedAsTable.aliased("bAlias"))
+                    let request = Table("a").include(bRelationNamedAsTable.aliased("bAlias").filter { $0["foo"] == "foo" && $0[barColumn] == "bar" })
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND ((\"bAlias\".\"foo\" = 'foo') AND (\"bAlias\".\"bar\" = 'bar')))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -975,12 +972,12 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = Table("a").include(bRelationNamed)
+                    let request = Table("a").include(bRelationNamed.filter { $0["foo"] == "foo" && $0[barColumn] == "bar" })
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bVariant\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bVariant\" ON ((\"bVariant\".\"aID\" = \"a\".\"id\") AND (\"bVariant\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" \"bVariant\" ON ((\"bVariant\".\"aID\" = \"a\".\"id\") AND ((\"bVariant\".\"foo\" = 'foo') AND (\"bVariant\".\"bar\" = 'bar')))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "bVariant") != nil)
@@ -988,12 +985,12 @@ class ComplexRelationTests: GRDBTestCase {
                 }
                 
                 do {
-                    let request = Table("a").include(bRelationNamed.aliased("bAlias"))
+                    let request = Table("a").include(bRelationNamed.aliased("bAlias").filter { $0["foo"] == "foo" && $0[barColumn] == "bar" })
                     XCTAssertEqual(
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND ((\"bAlias\".\"foo\" = 'foo') AND (\"bAlias\".\"bar\" = 'bar')))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "bVariant") != nil)
