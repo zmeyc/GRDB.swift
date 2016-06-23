@@ -1,7 +1,8 @@
+- [ ] Row "variant" is not a good name. When used in the context of adapters, we'd prefer "adaptation". In the context of relations/joins, we'd prefer something like "source". Can we use "source" even for adapters?
 - [ ] Relation joins: see "Self Join / Tree example" in http://greenrobot.org/greendao/documentation/joins/
 – [ ] Relations: Document Table(tableName) in the Query Interface documentation
 - [?] Relations: include(required: relation) instead of include(required: true, relation)?
-– [ ] Relations: row.isPopulated, row.containsData, row.hasValues, row.hasNonNullValues, something which helps ignoring a joined row variant without values:
+– [ ] Relations: row.isPopulated, row.containsData, row.hasValues, row.hasNonNullValues, row.isNull, something which helps ignoring a joined row variant without values:
     init(_ row: Row)
         if let authorRow = row.variant(named: "author") {
             // Dangerous, because authorRow may be full of NULLs, in case of LEFT JOIIN
@@ -25,11 +26,11 @@
     init(_ row: Row)
         self.author = Person.from(variant: "author", in: row) // Person?
         self.author = Person(row: row, variant: "author")     // Person?
-        self.author = Person(bewareRow: row)                  // Person? - what parameter name?
+        self.author = Person(bewareRow: row.variant(named: "author"))   // Person? - what parameter name?
     }
 – [X] Relations: include two chained relations
 - [X] Relations: filter on joined relation (JOIN ... ON ...)
-- [ ] Relations: filter on joined relation (JOIN ... WHERE ...)
+- [X] Relations: filter on joined relation (JOIN ... WHERE ...)
 – [X] Relations: mandatory true/false (JOIN vs LEFT JOIN)
     - [X] first level: table.include(required: true, relation) 
     - [X] deep level: table.include(required: true, relation.include(required: true, relation))
@@ -39,6 +40,7 @@
 - [X] Relations: Type.include() instead of Type.all().include()
 - [X] Relations: Type.join() instead of Type.all().join()
 - [X] Relations: .include() adds columns in the fetches row and a variant, .join() does not columns, nor variant
+- [ ] Relations: select
 – [?] Relations: distinguishing BelongsTo and HasOne could help verifying that the right table of belongsTo has a unique index on the joined columns. For HasOne, we have to trust the user. 
 - [ ] FetchedRecordsController: see if we can replace identity comparison function with a function that returns an Equatable value (beware the generics trouble). See if this can help optimize memory use, and use a sortedMerge() algorithm.
 - [ ] FetchedRecordsController: see if we can define a IdentifiableRecord protocol which would automatically feed FetchedRecordsController comparison function.
