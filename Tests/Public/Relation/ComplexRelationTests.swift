@@ -1261,52 +1261,6 @@ class ComplexRelationTests: GRDBTestCase {
         }
     }
     
-//    func testRelationSourceWithConflict() {
-//        assertNoError {
-//            let dbQueue = try makeDatabaseQueue()
-//            try dbQueue.inTransaction { db in
-//                // a <- b <- c
-//                try db.execute("PRAGMA defer_foreign_keys = ON")
-//                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, bID REFERENCES b(id), foo TEXT)")
-//                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
-//                try db.execute("INSERT INTO a (id, bID, foo) VALUES (?, ?, ?)", arguments: [1, 1, "foo"])
-//                try db.execute("INSERT INTO b (id, aID, bar) VALUES (?, ?, ?)", arguments: [1, 1, "bar"])
-//                return .Commit
-//            }
-//            
-//            let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
-//            let aRelation = ForeignRelation(to: "a", through: ["id": "bID"])
-//            
-//            dbQueue.inDatabase { db in
-//                var a: SQLSource! = nil
-//                var b: SQLSource! = nil
-//                let request = Table("a").include(bRelation.include(aRelation, source: &a), source: &b)
-//                    .filter(a["foo"] == "foo" && b["bar"] == "bar")
-//                XCTAssertEqual(
-//                    self.sql(db, request),
-//                    "SELECT \"a0\".*, \"b\".*, \"a1\".* " +
-//                    "FROM \"a\" \"a0\" " +
-//                    "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a0\".\"id\") " +
-//                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b\".\"id\")")
-//            }
-//            
-//            dbQueue.inDatabase { db in
-//                var a: SQLSource! = nil
-//                var b1: SQLSource! = nil
-//                var b2: SQLSource! = nil
-//                let request = Table("a").include(bRelation.include(aRelation.include(bRelation, source: &b2), source: &a), source: &b1)
-//                    .filter(a["foo"] == "foo" && b1["bar"] == "bar" && b2["bar"] == "baz")
-//                XCTAssertEqual(
-//                    self.sql(db, request),
-//                    "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
-//                    "FROM \"a\" \"a0\" " +
-//                    "LEFT JOIN \"b\" \"b0\" ON (\"b0\".\"aID\" = \"a0\".\"id\") " +
-//                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b0\".\"id\") " +
-//                    "LEFT JOIN \"b\" \"b1\" ON (\"b1\".\"aID\" = \"a1\".\"id\")")
-//            }
-//        }
-//    }
-    
     func testFirstLevelRequiredRelation() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
@@ -1510,14 +1464,14 @@ class ComplexRelationTests: GRDBTestCase {
             
             let request = Person
                 .include(Person.birthCountry)
-                .filter(sql: "\(Person.birthCountry.name).isoCode == 'FR'") // TODO1: pass "FR" as an argument
+                .filter(sql: "\(Person.birthCountry.name).isoCode = ?", arguments: ["FR"])
             
             XCTAssertEqual(
                 sql(dbQueue, request),
                 "SELECT \"persons\".*, \"birthCountry\".* " +
                 "FROM \"persons\" " +
                 "LEFT JOIN \"countries\" \"birthCountry\" ON (\"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
-                "WHERE (birthCountry.isoCode == \'FR\')")
+                "WHERE (birthCountry.isoCode = 'FR')")
             
             dbQueue.inDatabase { db in
                 let persons = request.fetchAll(db)
@@ -1545,14 +1499,14 @@ class ComplexRelationTests: GRDBTestCase {
             
             let request = Person
                 .join(Person.birthCountry)
-                .filter(sql: "\(Person.birthCountry.name).isoCode == 'FR'") // TODO1: pass "FR" as an argument
+                .filter(sql: "\(Person.birthCountry.name).isoCode = ?", arguments: ["FR"])
             
             XCTAssertEqual(
                 sql(dbQueue, request),
                 "SELECT \"persons\".* " +
                 "FROM \"persons\" " +
                 "LEFT JOIN \"countries\" \"birthCountry\" ON (\"birthCountry\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
-                "WHERE (birthCountry.isoCode == \'FR\')")
+                "WHERE (birthCountry.isoCode = 'FR')")
             
             dbQueue.inDatabase { db in
                 let persons = request.fetchAll(db)
@@ -1580,14 +1534,13 @@ class ComplexRelationTests: GRDBTestCase {
             
             let request = Person
                 .include(Person.birthCountry.aliased("foo"))
-                .filter(sql: "foo.isoCode == 'FR'") // TODO1: pass "FR" as an argument
-                                                    // TODO2: make .filter(SQLColumn("foo.isoCode") == "FR") possible. Today it fails.
+                .filter(sql: "foo.isoCode = ?", arguments: ["FR"])
             XCTAssertEqual(
                 sql(dbQueue, request),
                 "SELECT \"persons\".*, \"foo\".* " +
                 "FROM \"persons\" " +
                 "LEFT JOIN \"countries\" \"foo\" ON (\"foo\".\"isoCode\" = \"persons\".\"birthCountryIsoCode\") " +
-                "WHERE (foo.isoCode == \'FR\')")
+                "WHERE (foo.isoCode = 'FR')")
             
             dbQueue.inDatabase { db in
                 let persons = request.fetchAll(db)
@@ -1600,7 +1553,7 @@ class ComplexRelationTests: GRDBTestCase {
             dbQueue.inDatabase { db in
                 let request = Person
                     .include(Person.birthCountry.aliased("foo"))
-                    .filter(sql: "foo.isoCode == 'US'") // TODO: pass "US" as an argument
+                    .filter(sql: "foo.isoCode = ?", arguments: ["US"])
                 let persons = request.fetchAll(db)
                 
                 XCTAssertEqual(persons.count, 0)
