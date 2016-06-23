@@ -142,17 +142,25 @@ extension QueryInterfaceRequest {
         return QueryInterfaceRequest(query: query)
     }
     
+    /// TODO
+    @warn_unused_result
+    public func filter(predicate: (SQLSource) -> _SQLExpressible) -> QueryInterfaceRequest<T> {
+        var query = self.query
+        if let existingPredicate = query.predicate {
+            query.predicate = { source in
+                existingPredicate(source).sqlExpression && predicate(source!).sqlExpression
+            }
+        } else {
+            query.predicate = { source in predicate(source!) }
+        }
+        return QueryInterfaceRequest(query: query)
+    }
+    
     /// Returns a new QueryInterfaceRequest with the provided *predicate* added to the
     /// eventual set of already applied predicates.
     @warn_unused_result
     public func filter(predicate: _SQLExpressible) -> QueryInterfaceRequest<T> {
-        var query = self.query
-        if let whereExpression = query.whereExpression {
-            query.whereExpression = .InfixOperator("AND", whereExpression, predicate.sqlExpression)
-        } else {
-            query.whereExpression = predicate.sqlExpression
-        }
-        return QueryInterfaceRequest(query: query)
+        return filter { _ in predicate }
     }
     
     /// Returns a new QueryInterfaceRequest with the provided *predicate* added to the

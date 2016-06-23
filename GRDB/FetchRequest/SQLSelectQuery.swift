@@ -21,7 +21,7 @@ public struct _SQLSelectQuery {
     var selection: [_SQLSelectable]
     var distinct: Bool
     var source: SQLSource?
-    var whereExpression: _SQLExpression?
+    var predicate: ((SQLSource?) -> _SQLExpressible)?
     var groupByExpressions: [_SQLExpression]
     var orderings: [_SQLOrdering]
     var reversed: Bool
@@ -32,7 +32,7 @@ public struct _SQLSelectQuery {
         select selection: [_SQLSelectable],
         distinct: Bool = false,
         from source: SQLSource? = nil,
-        filter whereExpression: _SQLExpression? = nil,
+        predicate: ((SQLSource?) -> _SQLExpressible)? = nil,
         groupBy groupByExpressions: [_SQLExpression] = [],
         orderBy orderings: [_SQLOrdering] = [],
         reversed: Bool = false,
@@ -42,7 +42,7 @@ public struct _SQLSelectQuery {
         self.selection = selection
         self.distinct = distinct
         self.source = source
-        self.whereExpression = whereExpression
+        self.predicate = predicate
         self.groupByExpressions = groupByExpressions
         self.orderings = orderings
         self.reversed = reversed
@@ -87,8 +87,8 @@ public struct _SQLSelectQuery {
             sql += try " FROM " + source.sql(db, &arguments)
         }
         
-        if let whereExpression = whereExpression {
-            sql += try " WHERE " + whereExpression.sql(db, &arguments)
+        if let predicate = predicate {
+            sql += try " WHERE " + predicate(source).sqlExpression.sql(db, &arguments)
         }
         
         if !groupByExpressions.isEmpty {

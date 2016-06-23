@@ -1022,7 +1022,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (\"b\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (b.bar = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -1035,7 +1035,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (bAlias.bar = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -1048,7 +1048,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"b\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (\"b\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a\".\"id\") AND (b.bar = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -1061,7 +1061,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (bAlias.bar = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "b") != nil)
@@ -1074,7 +1074,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bVariant\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bVariant\" ON ((\"bVariant\".\"aID\" = \"a\".\"id\") AND (\"bVariant\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" \"bVariant\" ON ((\"bVariant\".\"aID\" = \"a\".\"id\") AND (bVariant.bar = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "bVariant") != nil)
@@ -1087,7 +1087,7 @@ class ComplexRelationTests: GRDBTestCase {
                         self.sql(db, request),
                         "SELECT \"a\".*, \"bAlias\".* " +
                         "FROM \"a\" " +
-                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (\"bAlias\".\"bar\" = 'bar'))")
+                        "LEFT JOIN \"b\" \"bAlias\" ON ((\"bAlias\".\"aID\" = \"a\".\"id\") AND (bAlias.bar = 'bar'))")
                     
                     let row = Row.fetchOne(db, request)!
                     XCTAssertTrue(row.variant(named: "bVariant") != nil)
