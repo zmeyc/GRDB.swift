@@ -1208,58 +1208,58 @@ class ComplexRelationTests: GRDBTestCase {
         }
     }
     
-//    func testRelationFilterWithConflict() {
-//        assertNoError {
-//            let dbQueue = try makeDatabaseQueue()
-//            try dbQueue.inTransaction { db in
-//                // a <- b <- c
-//                try db.execute("PRAGMA defer_foreign_keys = ON")
-//                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, bID REFERENCES b(id), foo TEXT)")
-//                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
-//                try db.execute("INSERT INTO a (id, bID, foo) VALUES (?, ?, ?)", arguments: [1, 1, "foo"])
-//                try db.execute("INSERT INTO b (id, aID, bar) VALUES (?, ?)", arguments: [1, 1, "bar"])
-//                return .Commit
-//            }
-//            
-//            let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
-//            let aRelation = ForeignRelation(to: "a", through: ["id": "bID"])
-//            
-//            dbQueue.inDatabase { db in
-//                let request = Table("a").include(bRelation.include(aRelation))
-//                XCTAssertEqual(
-//                    self.sql(db, request),
-//                    "SELECT \"a0\".*, \"b\".*, \"a1\".* " +
-//                    "FROM \"a\" \"a0\" " +
-//                    "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a0\".\"id\") " +
-//                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b\".\"id\")")
-//                
-//                let row = Row.fetchOne(db, request)!
-//                XCTAssertTrue(row.variant(named: "b") != nil)
-//                XCTAssertFalse(row.variant(named: "b")!.isEmpty)
-//                XCTAssertTrue(row.variant(named: "b")!.variant(named: "a") != nil)
-//                XCTAssertFalse(row.variant(named: "b")!.variant(named: "a")!.isEmpty)
-//            }
-//            
-//            dbQueue.inDatabase { db in
-//                let request = Table("a").include(bRelation.include(aRelation.include(bRelation)))
-//                XCTAssertEqual(
-//                    self.sql(db, request),
-//                    "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
-//                    "FROM \"a\" \"a0\" " +
-//                    "LEFT JOIN \"b\" \"b0\" ON (\"b0\".\"aID\" = \"a0\".\"id\") " +
-//                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b0\".\"id\") " +
-//                    "LEFT JOIN \"b\" \"b1\" ON (\"b1\".\"aID\" = \"a1\".\"id\")")
-//                
-//                let row = Row.fetchOne(db, request)!
-//                XCTAssertTrue(row.variant(named: "b") != nil)
-//                XCTAssertFalse(row.variant(named: "b")!.isEmpty)
-//                XCTAssertTrue(row.variant(named: "b")!.variant(named: "a") != nil)
-//                XCTAssertFalse(row.variant(named: "b")!.variant(named: "a")!.isEmpty)
-//                XCTAssertTrue(row.variant(named: "b")!.variant(named: "a")!.variant(named: "b") != nil)
-//                XCTAssertFalse(row.variant(named: "b")!.variant(named: "a")!.variant(named: "b")!.isEmpty)
-//            }
-//        }
-//    }
+    func testRelationFilterWithConflict() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inTransaction { db in
+                // a <- b <- c
+                try db.execute("PRAGMA defer_foreign_keys = ON")
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, bID REFERENCES b(id), foo TEXT)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
+                try db.execute("INSERT INTO a (id, bID, foo) VALUES (?, ?, ?)", arguments: [1, 1, "foo"])
+                try db.execute("INSERT INTO b (id, aID, bar) VALUES (?, ?, ?)", arguments: [1, 1, "bar"])
+                return .Commit
+            }
+            
+            let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
+            let aRelation = ForeignRelation(to: "a", through: ["id": "bID"])
+            
+            dbQueue.inDatabase { db in
+                let request = Table("a")
+                    .filter { $0["foo"] == "foo1" }
+                    .include(bRelation
+                        .filter { $0["bar"] == "bar" }
+                        .include(aRelation
+                            .filter { $0["foo"] == "foo2" }))
+                XCTAssertEqual(
+                    self.sql(db, request),
+                    "SELECT \"a0\".*, \"b\".*, \"a1\".* " +
+                    "FROM \"a\" \"a0\" " +
+                    "LEFT JOIN \"b\" ON ((\"b\".\"aID\" = \"a0\".\"id\") AND (\"b\".\"bar\" = 'bar')) " +
+                    "LEFT JOIN \"a\" \"a1\" ON ((\"a1\".\"bID\" = \"b\".\"id\") AND (\"a1\".\"foo\" = 'foo2')) " +
+                    "WHERE (\"a0\".\"foo\" = 'foo1')")
+            }
+            
+            dbQueue.inDatabase { db in
+                let request = Table("a")
+                    .filter { $0["foo"] == "foo1" }
+                    .include(bRelation
+                        .filter { $0["bar"] == "bar1" }
+                        .include(aRelation
+                            .filter { $0["foo"] == "foo2" }
+                            .include(bRelation
+                                .filter { $0["bar"] == "bar2" })))
+                XCTAssertEqual(
+                    self.sql(db, request),
+                    "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
+                    "FROM \"a\" \"a0\" " +
+                    "LEFT JOIN \"b\" \"b0\" ON ((\"b0\".\"aID\" = \"a0\".\"id\") AND (\"b0\".\"bar\" = 'bar1')) " +
+                    "LEFT JOIN \"a\" \"a1\" ON ((\"a1\".\"bID\" = \"b0\".\"id\") AND (\"a1\".\"foo\" = 'foo2')) " +
+                    "LEFT JOIN \"b\" \"b1\" ON ((\"b1\".\"aID\" = \"a1\".\"id\") AND (\"b1\".\"bar\" = 'bar2')) " +
+                    "WHERE (\"a0\".\"foo\" = 'foo1')")
+            }
+        }
+    }
     
 //    func testRelationSourceWithConflict() {
 //        assertNoError {
