@@ -1094,72 +1094,10 @@ class ComplexRelationTests: GRDBTestCase {
         }
     }
     
-//    func testRelationSource() {
-//        assertNoError {
-//            let dbQueue = try makeDatabaseQueue()
-//            try dbQueue.inDatabase { db in
-//                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, foo TEXT)")
-//                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
-//                try db.execute("INSERT INTO a (id, foo) VALUES (NULL, ?)", arguments: ["foo"])
-//                try db.execute("INSERT INTO b (id, aID, bar) VALUES (NULL, ?, ?)", arguments: [db.lastInsertedRowID, "bar"])
-//                
-//                let bRelationUnnamed = ForeignRelation(to: "b", through: ["id": "aID"])
-//                let bRelationNamedAsTable = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "b")
-//                let bRelationNamed = ForeignRelation(to: "b", through: ["id": "aID"], variantName: "bVariant")
-//                
-//                do {
-//                    var b: SQLSource! = nil
-//                    let request = Table("a").include(bRelationUnnamed, source: &b).filter(b["bar"] == "bar")
-//                    XCTAssertEqual(
-//                        self.sql(db, request),
-//                        "SELECT \"a\".*, \"b\".* " +
-//                        "FROM \"a\" " +
-//                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
-//                        "WHERE (\"b\".\"bar\" = 'bar')")
-//                    
-//                    let row = Row.fetchOne(db, request)!
-//                    XCTAssertTrue(row.variant(named: "b") != nil)
-//                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
-//                }
-//                
-//                do {
-//                    var b: SQLSource! = nil
-//                    let request = Table("a").include(bRelationNamedAsTable, source: &b).filter(b["bar"] == "bar")
-//                    XCTAssertEqual(
-//                        self.sql(db, request),
-//                        "SELECT \"a\".*, \"b\".* " +
-//                        "FROM \"a\" " +
-//                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\") " +
-//                        "WHERE (\"b\".\"bar\" = 'bar')")
-//                    
-//                    let row = Row.fetchOne(db, request)!
-//                    XCTAssertTrue(row.variant(named: "b") != nil)
-//                    XCTAssertFalse(row.variant(named: "b")!.isEmpty)
-//                }
-//                
-//                do {
-//                    var b: SQLSource! = nil
-//                    let request = Table("a").include(bRelationNamed, source: &b).filter(b["bar"] == "bar")
-//                    XCTAssertEqual(
-//                        self.sql(db, request),
-//                        "SELECT \"a\".*, \"bVariant\".* " +
-//                        "FROM \"a\" " +
-//                        "LEFT JOIN \"b\" \"bVariant\" ON (\"bVariant\".\"aID\" = \"a\".\"id\") " +
-//                        "WHERE (\"bVariant\".\"bar\" = 'bar')")
-//                    
-//                    let row = Row.fetchOne(db, request)!
-//                    XCTAssertTrue(row.variant(named: "bVariant") != nil)
-//                    XCTAssertFalse(row.variant(named: "bVariant")!.isEmpty)
-//                }
-//            }
-//        }
-//    }
-    
     func testRelationWithConflict() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inTransaction { db in
-                // a <- b <- c
                 try db.execute("PRAGMA defer_foreign_keys = ON")
                 try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, bID REFERENCES b(id))")
                 try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id))")
@@ -1212,7 +1150,6 @@ class ComplexRelationTests: GRDBTestCase {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inTransaction { db in
-                // a <- b <- c
                 try db.execute("PRAGMA defer_foreign_keys = ON")
                 try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, bID REFERENCES b(id), foo TEXT)")
                 try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
