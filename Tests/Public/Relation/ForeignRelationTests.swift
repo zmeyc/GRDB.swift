@@ -64,7 +64,7 @@ private final class Country: RowConvertible {
     }
 }
 
-class ComplexRelationTests: GRDBTestCase {
+class ForeignRelationTests: GRDBTestCase {
     func testAvailableVariantsWithNestedRelations() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
@@ -1381,6 +1381,80 @@ class ComplexRelationTests: GRDBTestCase {
                 } catch let error as DatabaseError {
                     XCTAssertEqual(error.code, 21) // SQLITE_MISUSE
                 }
+            }
+        }
+    }
+    
+    func testRelationSelection() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, foo TEXT)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT, foo TEXT)")
+                try db.execute("INSERT INTO a (id, foo) VALUES (NULL, ?)", arguments: ["foo"])
+                try db.execute("INSERT INTO b (id, aID, bar, foo) VALUES (NULL, ?, ?, ?)", arguments: [db.lastInsertedRowID, "bar", "foo"])
+                
+                let barColumn = SQLColumn("bar")
+                let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
+                
+                do {
+                    let request = Table("a").include(bRelation.select { [$0["foo"], $0[barColumn]] })
+                    XCTAssertEqual(
+                        self.sql(db, request),
+                        "SELECT \"a\".*, \"b\".\"foo\", \"b\".\"bar\" " +
+                        "FROM \"a\" " +
+                        "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a\".\"id\")")
+                }
+            }
+        }
+    }
+    
+    func testRelationSelectionWithConflict() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inTransaction { db in
+                try db.execute("PRAGMA defer_foreign_keys = ON")
+                try db.execute("CREATE TABLE a (id INTEGER PRIMARY KEY, bID REFERENCES b(id), foo TEXT)")
+                try db.execute("CREATE TABLE b (id INTEGER PRIMARY KEY, aID REFERENCES a(id), bar TEXT)")
+                try db.execute("INSERT INTO a (id, bID, foo) VALUES (?, ?, ?)", arguments: [1, 1, "foo"])
+                try db.execute("INSERT INTO b (id, aID, bar) VALUES (?, ?, ?)", arguments: [1, 1, "bar"])
+                return .Commit
+            }
+            
+            let bRelation = ForeignRelation(to: "b", through: ["id": "aID"])
+            let aRelation = ForeignRelation(to: "a", through: ["id": "bID"])
+            
+            dbQueue.inDatabase { db in
+                let request = Table("a")
+                    .select { [$0["foo"]] }
+                    .include(bRelation
+                        .select { [$0["bar"]] }
+                        .include(aRelation
+                            .select { [$0["id"]] }))
+                XCTAssertEqual(
+                    self.sql(db, request),
+                    "SELECT \"a0\".\"foo\", \"b\".\"bar\", \"a1\".\"id\" " +
+                    "FROM \"a\" \"a0\" " +
+                    "LEFT JOIN \"b\" ON (\"b\".\"aID\" = \"a0\".\"id\") " +
+                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b\".\"id\")")
+            }
+            
+            dbQueue.inDatabase { db in
+                let request = Table("a")
+                    .select { [$0["foo"]] }
+                    .include(bRelation
+                        .select { [$0["bar"]] }
+                        .include(aRelation
+                            .select { [$0["id"]] }
+                            .include(bRelation
+                                .select { [$0["id"]] })))
+                XCTAssertEqual(
+                    self.sql(db, request),
+                    "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
+                    "FROM \"a\" \"a0\" " +
+                    "LEFT JOIN \"b\" \"b0\" ON (\"b0\".\"aID\" = \"a0\".\"id\") " +
+                    "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b0\".\"id\") " +
+                    "LEFT JOIN \"b\" \"b1\" ON (\"b1\".\"aID\" = \"a1\".\"id\")")
             }
         }
     }

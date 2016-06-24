@@ -221,23 +221,19 @@ public struct _SQLSelectQuery {
         // Our sources define variant based on selection index:
         //
         //      SELECT a.*, b.* FROM a JOIN b ...
-        //                  ^ variant at selection index 1
+        //                  ^ variant at *selection* index 1
         //
         // Now that we have a statement, we can turn those indexes into
         // column indexes:
         //
         //      SELECT a.id, a.name, b.id, b.title FROM a JOIN b ...
-        //                           ^ variant at column index 2
+        //                           ^ variant at *column* index 2
         var columnIndex = 0
         var columnIndexForSelectionIndex: [Int: Int] = [:]
+        let db = statement.database
         for (selectionIndex, selectable) in selection.enumerate() {
             columnIndexForSelectionIndex[selectionIndex] = columnIndex
-            switch selectable.sqlSelectableKind {
-            case .Expression:
-                columnIndex += 1
-            case .Star(let source):
-                columnIndex += try source.numberOfColumns(statement.database)
-            }
+            columnIndex += try selectable.numberOfColumns(db)
         }
         
         return source.adapter(columnIndexForSelectionIndex)
@@ -889,7 +885,13 @@ extension _SQLExpression : _SpecificSQLExpressible {
     }
 }
 
-extension _SQLExpression : _SQLSelectable {}
+extension _SQLExpression : _SQLSelectable {
+    /// TODO
+    public func numberOfColumns(db: Database) throws -> Int {
+        return 1
+    }
+}
+
 extension _SQLExpression : _SQLOrdering {}
 
 
@@ -902,6 +904,7 @@ extension _SQLExpression : _SQLOrdering {}
 public protocol _SQLSelectable {
     func resultColumnSQL(db: Database, inout _ arguments: StatementArguments) throws -> String
     func countedSQL(db: Database, inout _ arguments: StatementArguments) throws -> String
+    func numberOfColumns(db: Database) throws -> Int
     var sqlSelectableKind: _SQLSelectableKind { get }
 }
 
@@ -951,6 +954,15 @@ extension _SQLResultColumn : _SQLSelectable {
             return .Expression(expression)
         }
     }
+
+    func numberOfColumns(db: Database) throws -> Int {
+        switch self {
+        case .Star(let source):
+            return try source.numberOfColumns(db)
+        case .Expression:
+            return 1
+        }
+    }
 }
 
 
@@ -987,5 +999,11 @@ extension SQLColumn : _SpecificSQLExpressible {
     }
 }
 
-extension SQLColumn : _SQLSelectable {}
+extension SQLColumn : _SQLSelectable {
+    /// TODO
+    public func numberOfColumns(db: Database) throws -> Int {
+        return 1
+    }
+}
+
 extension SQLColumn : _SQLOrdering {}

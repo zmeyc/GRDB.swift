@@ -147,15 +147,10 @@ struct ChainedRelation {
     let joins: [Join]
 }
 
-extension ChainedRelation : SQLRelation {
+extension ChainedRelation : _SQLRelation {
     /// TODO
     func fork() -> ChainedRelation {
         return ChainedRelation(baseRelation: baseRelation.fork(), joins: joins.map { $0.fork() })
-    }
-    
-    /// TODO
-    func aliased(alias: String) -> SQLRelation {
-        return ChainedRelation(baseRelation: baseRelation.aliased(alias), joins: joins)
     }
     
     /// TODO
@@ -216,6 +211,14 @@ extension ChainedRelation : SQLRelation {
         
         return (baseAdapter ?? ColumnMapping([:])).adapterWithVariants(variants)
     }
+}
+
+extension ChainedRelation : SQLRelation {
+    
+    /// TODO
+    func aliased(alias: String) -> SQLRelation {
+        return ChainedRelation(baseRelation: baseRelation.aliased(alias), joins: joins)
+    }
     
     /// TODO
     func filter(predicate: (SQLSource) -> _SQLExpressible) -> SQLRelation {
@@ -233,6 +236,7 @@ public struct ForeignRelation {
     public private(set) var rightSource: SQLSource
     
     var predicate: ((left: SQLSource, right: SQLSource) -> _SQLExpressible)
+    var selection: (SQLSource) -> [_SQLSelectable]
     
     /// TODO
     public init(named name: String? = nil, to tableName: String, through foreignKey: [String: String]) {
@@ -248,10 +252,21 @@ public struct ForeignRelation {
         self.rightSource = rightSource
         self.foreignKey = foreignKey
         self.predicate = { (left, right) in foreignKey.map { (leftColumn, rightColumn) in right[rightColumn] == left[leftColumn] }.reduce(&&) }
+        self.selection = { (right) in [_SQLResultColumn.Star(right)] }
     }
 }
 
-extension ForeignRelation : SQLRelation {
+extension ForeignRelation {
+    /// TODO
+    @warn_unused_result
+    public func select(selection: (SQLSource) -> [_SQLSelectable]) -> ForeignRelation {
+        var relation = self
+        relation.selection = selection
+        return relation
+    }
+}
+
+extension ForeignRelation : _SQLRelation {
     /// TODO
     public func fork() -> ForeignRelation {
         var relation = self
@@ -261,17 +276,8 @@ extension ForeignRelation : SQLRelation {
     
     /// TODO
     @warn_unused_result
-    public func aliased(alias: String) -> SQLRelation {
-        var relation = self
-        relation.rightSource = rightSource.fork()
-        relation.rightSource.name = alias
-        return relation
-    }
-    
-    /// TODO
-    @warn_unused_result
     public func numberOfColumns(db: Database) throws -> Int {
-        return try rightSource.numberOfColumns(db)
+        return try selection(included: true).reduce(0) { (count, selectable) in try count + selectable.numberOfColumns(db) }
     }
     
     /// TODO
@@ -291,10 +297,7 @@ extension ForeignRelation : SQLRelation {
     
     /// TODO
     public func selection(included included: Bool) -> [_SQLSelectable] {
-        guard included else {
-            return []
-        }
-        return [_SQLResultColumn.Star(rightSource)]
+        return included ? selection(rightSource) : []
     }
     
     /// TODO
@@ -304,6 +307,17 @@ extension ForeignRelation : SQLRelation {
         }
         defer { selectionIndex += 1 }
         return SuffixRowAdapter(fromIndex: columnIndexForSelectionIndex[selectionIndex]!)
+    }
+}
+
+extension ForeignRelation : SQLRelation {
+    /// TODO
+    @warn_unused_result
+    public func aliased(alias: String) -> SQLRelation {
+        var relation = self
+        relation.rightSource = rightSource.fork()
+        relation.rightSource.name = alias
+        return relation
     }
     
     /// TODO
