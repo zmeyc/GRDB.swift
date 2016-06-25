@@ -10,105 +10,105 @@
     #endif
 #endif
 
-/// TODO
+/// TODO: documentation
 public protocol _SQLRelation {
-    /// TODO
+    /// TODO: documentation
     @warn_unused_result
     func fork() -> Self
     
-    /// TODO
+    /// TODO: documentation
     @warn_unused_result
     func numberOfColumns(db: Database) throws -> Int
     
-    /// TODO
+    /// TODO: documentation
     var name: String { get }
     
-    /// TODO
+    /// TODO: documentation
     var referencedSources: [_SQLSource] { get }
     
-    /// TODO
+    /// TODO: documentation
     var rightSource: SQLSource { get }
     
-    /// TODO
+    /// TODO: documentation
     func sql(db: Database, inout _ arguments: StatementArguments, leftSource: SQLSource, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String
     
-    /// TODO
+    /// TODO: documentation
     func selection(included included: Bool) -> [_SQLSelectable]
     
-    /// TODO
+    /// TODO: documentation
     func adapter(included included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter?
 }
 
-/// TODO
+/// TODO: documentation
 public protocol SQLRelation : _SQLRelation {
-    /// TODO
+    /// TODO: documentation
     @warn_unused_result
     func aliased(alias: String) -> SQLRelation
     
-    /// TODO
+    /// TODO: documentation
     @warn_unused_result
     func filter(predicate: (SQLSource) -> _SQLExpressible) -> SQLRelation
 }
 
 extension SQLRelation {
     
-    /// TODO
+    /// TODO: documentation
     /// Extension method
     @warn_unused_result
     public func include(relations: SQLRelation...) -> SQLRelation {
         return include(required: false, relations)
     }
     
-    /// TODO
+    /// TODO: documentation
     /// Extension method
     @warn_unused_result
     public func include(required required: Bool, _ relations: SQLRelation...) -> SQLRelation {
         return include(required: required, relations)
     }
     
-    /// TODO
+    /// TODO: documentation
     /// Extension method
     @warn_unused_result
     public func include(relations: [SQLRelation]) -> SQLRelation {
         return include(required: false, relations)
     }
     
-    /// TODO
+    /// TODO: documentation
     /// Extension method
     @warn_unused_result
     public func include(required required: Bool, _ relations: [SQLRelation]) -> SQLRelation {
         return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: true, kind: required ? .Inner : .Left, relation: $0.fork()) })
     }
     
-    /// TODO
+    /// TODO: documentation
     /// Extension method
     @warn_unused_result
     public func join(relations: SQLRelation...) -> SQLRelation {
         return join(required: false, relations)
     }
     
-    /// TODO
+    /// TODO: documentation
     /// Extension method
     @warn_unused_result
     public func join(required required: Bool, _ relations: SQLRelation...) -> SQLRelation {
         return join(required: required, relations)
     }
     
-    /// TODO
+    /// TODO: documentation
     /// Extension method
     @warn_unused_result
     public func join(relations: [SQLRelation]) -> SQLRelation {
         return join(required: false, relations)
     }
     
-    /// TODO
+    /// TODO: documentation
     /// Extension method
     @warn_unused_result
     public func join(required required: Bool, _ relations: [SQLRelation]) -> SQLRelation {
         return ChainedRelation(baseRelation: self, joins: relations.map { Join(included: false, kind: required ? .Inner : .Left, relation: $0.fork()) })
     }
     
-    /// TODO
+    /// TODO: documentation
     /// Extension method
     @warn_unused_result
     public func filter(sql sql: String, arguments: StatementArguments? = nil) -> SQLRelation {
@@ -117,7 +117,7 @@ extension SQLRelation {
 
 }
 
-/// TODO
+/// TODO: documentation
 public enum _JoinKind : String {
     case Inner = "JOIN"
     case Left = "LEFT JOIN"
@@ -148,33 +148,33 @@ struct ChainedRelation {
 }
 
 extension ChainedRelation : _SQLRelation {
-    /// TODO
+    /// TODO: documentation
     func fork() -> ChainedRelation {
         return ChainedRelation(baseRelation: baseRelation.fork(), joins: joins.map { $0.fork() })
     }
     
-    /// TODO
+    /// TODO: documentation
     @warn_unused_result
     func numberOfColumns(db: Database) throws -> Int {
         return try joins.reduce(baseRelation.numberOfColumns(db)) { try $0 + $1.numberOfColumns(db) }
     }
     
-    /// TODO
+    /// TODO: documentation
     var name: String {
         return baseRelation.name
     }
     
-    /// TODO
+    /// TODO: documentation
     var referencedSources: [_SQLSource] {
         return joins.reduce(baseRelation.referencedSources) { $0 + $1.relation.referencedSources }
     }
     
-    /// TODO
+    /// TODO: documentation
     var rightSource: SQLSource {
         return baseRelation.rightSource
     }
     
-    /// TODO
+    /// TODO: documentation
     func sql(db: Database, inout _ arguments: StatementArguments, leftSource: SQLSource, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
         var sql = try baseRelation.sql(db, &arguments, leftSource: leftSource, joinKind: joinKind, innerJoinForbidden: innerJoinForbidden)
         if !joins.isEmpty {
@@ -187,14 +187,14 @@ extension ChainedRelation : _SQLRelation {
         return sql
     }
     
-    /// TODO
+    /// TODO: documentation
     func selection(included included: Bool) -> [_SQLSelectable] {
         return joins.reduce(baseRelation.selection(included: included)) { (selection, join) in
             selection + join.relation.selection(included: join.included)
         }
     }
     
-    /// TODO
+    /// TODO: documentation
     func adapter(included included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         let baseAdapter = baseRelation.adapter(included: included, selectionIndex: &selectionIndex, columnIndexForSelectionIndex: columnIndexForSelectionIndex)
         
@@ -215,30 +215,30 @@ extension ChainedRelation : _SQLRelation {
 
 extension ChainedRelation : SQLRelation {
     
-    /// TODO
+    /// TODO: documentation
     func aliased(alias: String) -> SQLRelation {
         return ChainedRelation(baseRelation: baseRelation.aliased(alias), joins: joins)
     }
     
-    /// TODO
+    /// TODO: documentation
     func filter(predicate: (SQLSource) -> _SQLExpressible) -> SQLRelation {
         return ChainedRelation(baseRelation: baseRelation.filter(predicate), joins: joins)
     }
 }
 
-/// TODO
+/// TODO: documentation
 public struct ForeignRelation {
-    /// TODO
+    /// TODO: documentation
     public let name: String
-    /// TODO
+    /// TODO: documentation
     public let foreignKey: [String: String] // [leftColumn: rightColumn]
-    /// TODO
+    /// TODO: documentation
     public private(set) var rightSource: SQLSource
     
     var predicate: ((left: SQLSource, right: SQLSource) -> _SQLExpressible)
     var selection: (SQLSource) -> [_SQLSelectable]
     
-    /// TODO
+    /// TODO: documentation
     public init(named name: String? = nil, to tableName: String, through foreignKey: [String: String]) {
         // TODO: doesn't alias need to be validated as valid SQLite identifiers?
         let name = name ?? tableName
@@ -257,7 +257,7 @@ public struct ForeignRelation {
 }
 
 extension ForeignRelation {
-    /// TODO
+    /// TODO: documentation
     @warn_unused_result
     public func select(selection: (SQLSource) -> [_SQLSelectable]) -> ForeignRelation {
         var relation = self
@@ -267,25 +267,25 @@ extension ForeignRelation {
 }
 
 extension ForeignRelation : _SQLRelation {
-    /// TODO
+    /// TODO: documentation
     public func fork() -> ForeignRelation {
         var relation = self
         relation.rightSource = rightSource.fork()
         return relation
     }
     
-    /// TODO
+    /// TODO: documentation
     @warn_unused_result
     public func numberOfColumns(db: Database) throws -> Int {
         return try selection(included: true).reduce(0) { (count, selectable) in try count + selectable.numberOfColumns(db) }
     }
     
-    /// TODO
+    /// TODO: documentation
     public var referencedSources: [_SQLSource] {
         return rightSource.referencedSources
     }
     
-    /// TODO
+    /// TODO: documentation
     public func sql(db: Database, inout _ arguments: StatementArguments, leftSource: SQLSource, joinKind: _JoinKind, innerJoinForbidden: Bool) throws -> String {
         if innerJoinForbidden && joinKind != .Left {
             throw DatabaseError(code: SQLITE_MISUSE, message: "Invalid required relation after a non-required relation.")
@@ -295,12 +295,12 @@ extension ForeignRelation : _SQLRelation {
         return sql
     }
     
-    /// TODO
+    /// TODO: documentation
     public func selection(included included: Bool) -> [_SQLSelectable] {
         return included ? selection(rightSource) : []
     }
     
-    /// TODO
+    /// TODO: documentation
     public func adapter(included included: Bool, inout selectionIndex: Int, columnIndexForSelectionIndex: [Int: Int]) -> RowAdapter? {
         guard included else {
             return nil
@@ -311,7 +311,7 @@ extension ForeignRelation : _SQLRelation {
 }
 
 extension ForeignRelation : SQLRelation {
-    /// TODO
+    /// TODO: documentation
     @warn_unused_result
     public func aliased(alias: String) -> SQLRelation {
         var relation = self
@@ -320,7 +320,7 @@ extension ForeignRelation : SQLRelation {
         return relation
     }
     
-    /// TODO
+    /// TODO: documentation
     public func filter(predicate: (SQLSource) -> _SQLExpressible) -> SQLRelation {
         var relation = self
         let existingPredicate = self.predicate

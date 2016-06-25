@@ -266,7 +266,7 @@ public struct _SQLSelectQuery {
 
 // MARK: - _SQLSource
 
-/// TODO
+/// TODO: documentation
 public protocol _SQLSource: class {
     var name: String? { get set }
     var referencedSources: [_SQLSource] { get }
@@ -278,17 +278,17 @@ public protocol _SQLSource: class {
     func join(required required: Bool, inout relation: SQLRelation) -> SQLSource
 }
 
-/// TODO
+/// TODO: documentation
 public protocol SQLSource : _SQLSource {
 }
 
 extension SQLSource {
-    /// TODO
+    /// TODO: documentation
     public subscript(columnName: String) -> SQLColumn {
         return SQLColumn(name: columnName, source: self)
     }
     
-    /// TODO
+    /// TODO: documentation
     public subscript(column: SQLColumn) -> SQLColumn {
         return self[column.name]
     }
@@ -898,7 +898,7 @@ extension _SQLExpression : _SpecificSQLExpressible {
 }
 
 extension _SQLExpression : _SQLSelectable {
-    /// TODO
+    /// TODO: documentation
     public func numberOfColumns(db: Database) throws -> Int {
         return 1
     }
@@ -1012,7 +1012,7 @@ extension SQLColumn : _SpecificSQLExpressible {
 }
 
 extension SQLColumn : _SQLSelectable {
-    /// TODO
+    /// TODO: documentation
     public func numberOfColumns(db: Database) throws -> Int {
         return 1
     }
