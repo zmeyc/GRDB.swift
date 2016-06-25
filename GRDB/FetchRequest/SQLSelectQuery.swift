@@ -18,6 +18,13 @@
 ///
 /// See https://github.com/groue/GRDB.swift/#the-query-interface
 public struct _SQLSelectQuery {
+    // TODO: decide if predicate, selection, groups, having clause, etc. should be late bound to source with closure, or not.
+    // Now we have a mix.
+    // 
+    // Predicate is late bound so that user can use late name of source.
+    // Groups, orderings and having should be late bound for the same reason.
+    //
+    // If mainSelection was late bound as well, we could change the source in aliased() function.
     var mainSelection: [_SQLSelectable]
     var joinedSelection: [_SQLSelectable]
     var distinct: Bool
