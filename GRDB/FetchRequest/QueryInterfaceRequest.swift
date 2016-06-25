@@ -116,6 +116,13 @@ extension QueryInterfaceRequest {
     }
     
     /// Returns a new QueryInterfaceRequest with a new net of selected columns.
+    /// TODO: document the closure
+    @warn_unused_result
+    public func select(selection: (SQLSource) -> [_SQLSelectable]) -> QueryInterfaceRequest<T> {
+        return select(selection(query.source!))
+    }
+    
+    /// Returns a new QueryInterfaceRequest with a new net of selected columns.
     @warn_unused_result
     public func select(selection: _SQLSelectable...) -> QueryInterfaceRequest<T> {
         return select(selection)
@@ -125,7 +132,7 @@ extension QueryInterfaceRequest {
     @warn_unused_result
     public func select(selection: [_SQLSelectable]) -> QueryInterfaceRequest<T> {
         var query = self.query
-        query.selection = selection
+        query.mainSelection = selection
         return QueryInterfaceRequest(query: query)
     }
     
@@ -299,6 +306,13 @@ extension TableMapping {
     @warn_unused_result
     public static func aliased(alias: String) -> QueryInterfaceRequest<Self> {
         return all().aliased(alias)
+    }
+    
+    /// Returns a QueryInterfaceRequest which selects *selection*.
+    /// TODO: document the closure
+    @warn_unused_result
+    public static func select(selection: (SQLSource) -> [_SQLSelectable]) -> QueryInterfaceRequest<Self> {
+        return all().select(selection)
     }
     
     /// Returns a QueryInterfaceRequest which selects *selection*.

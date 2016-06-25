@@ -360,7 +360,7 @@ extension QueryInterfaceRequest {
         for relation in relations {
             var relation = relation
             source = source.include(required: required, relation: &relation)
-            query.selection.appendContentsOf(relation.selection(included: true))
+            query.joinedSelection.appendContentsOf(relation.selection(included: true))
         }
         query.source = source
         return QueryInterfaceRequest(query: query)
@@ -393,7 +393,7 @@ extension QueryInterfaceRequest {
         for relation in relations {
             var relation = relation
             source = source.join(required: required, relation: &relation)
-            query.selection.appendContentsOf(relation.selection(included: false))
+            query.joinedSelection.appendContentsOf(relation.selection(included: false))
         }
         query.source = source
         return QueryInterfaceRequest(query: query)

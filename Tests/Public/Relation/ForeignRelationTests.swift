@@ -1450,7 +1450,7 @@ class ForeignRelationTests: GRDBTestCase {
                                 .select { [$0["id"]] })))
                 XCTAssertEqual(
                     self.sql(db, request),
-                    "SELECT \"a0\".*, \"b0\".*, \"a1\".*, \"b1\".* " +
+                    "SELECT \"a0\".\"foo\", \"b0\".\"bar\", \"a1\".\"id\", \"b1\".\"id\" " +
                     "FROM \"a\" \"a0\" " +
                     "LEFT JOIN \"b\" \"b0\" ON (\"b0\".\"aID\" = \"a0\".\"id\") " +
                     "LEFT JOIN \"a\" \"a1\" ON (\"a1\".\"bID\" = \"b0\".\"id\") " +

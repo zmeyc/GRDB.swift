@@ -18,7 +18,8 @@
 ///
 /// See https://github.com/groue/GRDB.swift/#the-query-interface
 public struct _SQLSelectQuery {
-    var selection: [_SQLSelectable]
+    var mainSelection: [_SQLSelectable]
+    var joinedSelection: [_SQLSelectable]
     var distinct: Bool
     var source: SQLSource?
     var predicate: ((SQLSource?) -> _SQLExpressible)?
@@ -39,7 +40,8 @@ public struct _SQLSelectQuery {
         having havingExpression: _SQLExpression? = nil,
         limit: _SQLLimit? = nil)
     {
-        self.selection = selection
+        self.mainSelection = selection
+        self.joinedSelection = []
         self.distinct = distinct
         self.source = source
         self.predicate = predicate
@@ -76,6 +78,7 @@ public struct _SQLSelectQuery {
             sql += " DISTINCT"
         }
         
+        let selection = mainSelection + joinedSelection
         assert(!selection.isEmpty)
         if case .Star(let starSource) = selection[0].sqlSelectableKind where starSource === source {
             sql += " *"
@@ -143,9 +146,10 @@ public struct _SQLSelectQuery {
             return trivialCountQuery
         }
         
+        let selection = mainSelection + joinedSelection
         assert(!selection.isEmpty)
         if selection.count == 1 {
-            let selectable = self.selection[0]
+            let selectable = selection[0]
             switch selectable.sqlSelectableKind {
             case .Star(source: let source):
                 guard !distinct else {
@@ -160,7 +164,8 @@ public struct _SQLSelectQuery {
                 // ->
                 // SELECT COUNT(*) FROM tableName ...
                 var countQuery = unorderedQuery
-                countQuery.selection = [_SQLExpression.Count(selectable)]
+                countQuery.mainSelection = [_SQLExpression.Count(selectable)]
+                countQuery.joinedSelection = []
                 return countQuery
                 
             case .Expression(let expression):
@@ -171,14 +176,16 @@ public struct _SQLSelectQuery {
                     // SELECT COUNT(DISTINCT expr) FROM tableName ...
                     var countQuery = unorderedQuery
                     countQuery.distinct = false
-                    countQuery.selection = [_SQLExpression.CountDistinct(expression)]
+                    countQuery.mainSelection = [_SQLExpression.CountDistinct(expression)]
+                    countQuery.joinedSelection = []
                     return countQuery
                 } else {
                     // SELECT expr FROM tableName ...
                     // ->
                     // SELECT COUNT(*) FROM tableName ...
                     var countQuery = unorderedQuery
-                    countQuery.selection = [_SQLExpression.Count(_SQLResultColumn.Star(table))]
+                    countQuery.mainSelection = [_SQLExpression.Count(_SQLResultColumn.Star(table))]
+                    countQuery.joinedSelection = []
                     return countQuery
                 }
             }
@@ -193,7 +200,8 @@ public struct _SQLSelectQuery {
             // ->
             // SELECT COUNT(*) FROM tableName ...
             var countQuery = unorderedQuery
-            countQuery.selection = [_SQLExpression.Count(_SQLResultColumn.Star(table))]
+            countQuery.mainSelection = [_SQLExpression.Count(_SQLResultColumn.Star(table))]
+            countQuery.joinedSelection = []
             return countQuery
         }
     }
@@ -231,6 +239,7 @@ public struct _SQLSelectQuery {
         var columnIndex = 0
         var columnIndexForSelectionIndex: [Int: Int] = [:]
         let db = statement.database
+        let selection = mainSelection + joinedSelection
         for (selectionIndex, selectable) in selection.enumerate() {
             columnIndexForSelectionIndex[selectionIndex] = columnIndex
             columnIndex += try selectable.numberOfColumns(db)
@@ -240,6 +249,7 @@ public struct _SQLSelectQuery {
     }
     
     func numberOfColumns(db: Database) throws -> Int {
+        let selection = mainSelection + joinedSelection
         return try selection.reduce(0) { (count, let selectable) in
             switch selectable.sqlSelectableKind {
             case .Expression:
