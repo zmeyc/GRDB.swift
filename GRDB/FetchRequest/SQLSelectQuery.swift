@@ -80,7 +80,7 @@ public struct _SQLSelectQuery {
         
         let selection = mainSelection + joinedSelection
         assert(!selection.isEmpty)
-        if case .Star(let starSource) = selection[0].sqlSelectableKind where starSource === source {
+        if selection.count == 1, case .Star(let starSource) = selection[0].sqlSelectableKind where starSource === source {
             sql += " *"
         } else {
             sql += try " " + selection.map { try $0.resultColumnSQL(db, &arguments) }.joinWithSeparator(", ")
@@ -251,12 +251,7 @@ public struct _SQLSelectQuery {
     func numberOfColumns(db: Database) throws -> Int {
         let selection = mainSelection + joinedSelection
         return try selection.reduce(0) { (count, let selectable) in
-            switch selectable.sqlSelectableKind {
-            case .Expression:
-                return count + 1
-            case .Star(let source):
-                return try count + source.numberOfColumns(db)
-            }
+            try count + selectable.numberOfColumns(db)
         }
     }
 }
