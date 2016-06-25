@@ -1,5 +1,5 @@
 - [ ] Row "variant" is not a good name. When used in the context of adapters, we'd prefer "adaptation". In the context of relations/joins, we'd prefer something like "source". Can we use "source" even for adapters?
-- [ ] Relations: split column subscripting from SQLSource. Try to keep _SQLSource internal.
+- [?] Relations: split column subscripting from SQLSource. Try to keep _SQLSource internal.
 - [ ] Relation joins: see "Self Join / Tree example" in http://greenrobot.org/greendao/documentation/joins/
 – [ ] Relations: Document Table(tableName) in the Query Interface documentation
 - [?] Relations: include(required: relation) instead of include(required: true, relation)?
