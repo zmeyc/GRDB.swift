@@ -1,10 +1,13 @@
 - [ ] Query Interface: `Post.objects.all().annotate(Count('comments'))` https://news.ycombinator.com/item?id=11982344
-- [ ] Row "variant" is not a good name. When used in the context of adapters, we'd prefer "adaptation". In the context of relations/joins, we'd prefer something like "source". Can we use "source" even for adapters?
-- [?] Relations: split column subscripting from SQLSource. Try to keep _SQLSource internal.
+- [ ] Row "variant" is not a good name. Use `scope` instead (https://github.com/groue/GRDB.swift/issues/73#issuecomment-231154414)
+– [ ] Give up with the Table type in the query interface
+
+- [ ] NOT SURE Relations: split column subscripting from SQLSource. Try to keep _SQLSource internal.
 - [ ] Relation joins: see "Self Join / Tree example" in http://greenrobot.org/greendao/documentation/joins/
-– [ ] Relations: Document Table(tableName) in the Query Interface documentation
-- [?] Relations: include(required: relation) instead of include(required: true, relation)?
+- [ ] NOT SURE Relations: include(required: relation) instead of include(required: true, relation)?
 – [ ] Relations: row.isPopulated, row.containsData, row.hasValues, row.hasNonNullValues, row.isNull, something which helps ignoring a joined row variant without values:
+    
+    ```swift
     init(_ row: Row)
         if let authorRow = row.variant(named: "author") {
             // Dangerous, because authorRow may be full of NULLs, in case of LEFT JOIIN
@@ -30,6 +33,7 @@
         self.author = Person(row: row, variant: "author")     // Person?
         self.author = Person(bewareRow: row.variant(named: "author"))   // Person? - what parameter name?
     }
+    ```
 – [X] Relations: include two chained relations
 - [X] Relations: filter on joined relation (JOIN ... ON ...)
 - [X] Relations: filter on joined relation (JOIN ... WHERE ...)
@@ -43,7 +47,8 @@
 - [X] Relations: Type.join() instead of Type.all().join()
 - [X] Relations: .include() adds columns in the fetches row and a variant, .join() does not columns, nor variant
 - [ ] Relations: select
-– [?] Relations: distinguishing BelongsTo and HasOne could help verifying that the right table of belongsTo has a unique index on the joined columns. For HasOne, we have to trust the user. 
+- [ ] NOT SURE Relations: distinguishing BelongsTo and HasOne could help verifying that the right table of belongsTo has a unique index on the joined columns. For HasOne, we have to trust the user.
+
 - [ ] FetchedRecordsController: see if we can replace identity comparison function with a function that returns an Equatable value (beware the generics trouble). See if this can help optimize memory use, and use a sortedMerge() algorithm.
 - [ ] FetchedRecordsController: see if we can define a IdentifiableRecord protocol which would automatically feed FetchedRecordsController comparison function.
 - [ ] GRDBCipher: remove limitations on iOS or OS X versions
@@ -97,8 +102,4 @@ Reading list:
 - List of documentation keywords: https://swift.org/documentation/api-design-guidelines.html#special-instructions
 - https://www.zetetic.net/sqlcipher/
 - https://sqlite.org/sharedcache.html
-<<<<<<< HEAD
 - https://www.sqlite.org/foreignkeys.html
-=======
-- Amazing tip from Xcode labs: add a EXCLUDED_SOURCE_FILE_NAMES build setting to conditionally exclude sources for different configuration: https://twitter.com/zats/status/743862987602026496
->>>>>>> ed847279388e1062c58207042030988ac0c63685
