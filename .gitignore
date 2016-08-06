@@ -99,3 +99,8 @@ xcuserdata
 # GRDBCustomSQLite USER configuration files
 SQLiteCustom/GRDBCustomSQLite-USER.h
 SQLiteCustom/GRDBCustomSQLite-USER.xcconfig
+
+# SPM
+.build/
+GRDB.swift.xcodeproj/
+
