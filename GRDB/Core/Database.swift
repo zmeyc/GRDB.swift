@@ -79,22 +79,22 @@ public final class Database {
     public var isInsideTransaction: Bool { return isInsideExplicitTransaction || !savepointStack.isEmpty }
     
     // Set by beginTransaction, rollback and commit. Not set by savepoints.
-    private var isInsideExplicitTransaction: Bool = false
+    fileprivate var isInsideExplicitTransaction: Bool = false
     
     // Transaction observers
-    private var databaseEventObservers = [DatabaseEventObserver]()
-    private var statementEventObservers = [DatabaseEventObserver]()  // subset of databaseEventObservers, set in updateStatementWillExecute
-    private var transactionState: TransactionState = .waitForTransactionCompletion
-    private var savepointStack = SavePointStack()
+    fileprivate var databaseEventObservers = [DatabaseEventObserver]()
+    fileprivate var statementEventObservers = [DatabaseEventObserver]()  // subset of databaseEventObservers, set in updateStatementWillExecute
+    fileprivate var transactionState: TransactionState = .waitForTransactionCompletion
+    fileprivate var savepointStack = SavePointStack()
     
     /// See setupBusyMode()
     private var busyCallback: BusyCallback?
     
     /// Available functions
-    private var functions = Set<DatabaseFunction>()
+    fileprivate var functions = Set<DatabaseFunction>()
     
     /// Available collations
-    private var collations = Set<DatabaseCollation>()
+    fileprivate var collations = Set<DatabaseCollation>()
     
     /// Schema Cache
     var schemaCache: DatabaseSchemaCache    // internal so that it can be tested
@@ -102,8 +102,8 @@ public final class Database {
     /// Statement cache. Not part of the schema cache because statements belong
     /// to this connection, while schema cache can be shared with
     /// other connections.
-    private var selectStatementCache: [String: SelectStatement] = [:]
-    private var updateStatementCache: [String: UpdateStatement] = [:]
+    fileprivate var selectStatementCache: [String: SelectStatement] = [:]
+    fileprivate var updateStatementCache: [String: UpdateStatement] = [:]
     
     init(path: String, configuration: Configuration, schemaCache: DatabaseSchemaCache) throws {
         // See https://www.sqlite.org/c3ref/open.html
@@ -210,10 +210,10 @@ public final class Database {
             
             sqlite3_busy_handler(
                 sqliteConnection,
-                { (dbPointer: UnsafeMutablePointer<Void>?, numberOfTries: Int32) in
+                { (dbPointer: UnsafeMutableRawPointer?, numberOfTries: Int32) in
                     let database = unsafeBitCast(dbPointer, to: Database.self)
                     let callback = database.busyCallback!
-                    return callback(numberOfTries: Int(numberOfTries)) ? 1 : 0
+                    return callback(Int(numberOfTries)) ? 1 : 0
                 },
                 dbPointer)
         }
@@ -303,7 +303,7 @@ enum ThreadingMode {
 
 
 /// See BusyMode and https://www.sqlite.org/c3ref/busy_handler.html
-public typealias BusyCallback = (numberOfTries: Int) -> Bool
+public typealias BusyCallback = (_ numberOfTries: Int) -> Bool
 
 /// When there are several connections to a database, a connection may try to
 /// access the database while it is locked by another connection.
@@ -467,7 +467,7 @@ extension Database {
         
         // Execute statements
         
-        let sqlCodeUnits = sql.nulTerminatedUTF8
+        let sqlCodeUnits = sql.utf8CString
         var error: Error?
         
         // During the execution of sqlite3_prepare_v2, the observer listens to
@@ -492,7 +492,7 @@ extension Database {
                 
                 guard sqliteStatement != nil else {
                     // The remaining string contains only whitespace
-                    assert(String(data: Data(bytesNoCopy: UnsafeMutablePointer<UInt8>(statementStart), count: statementEnd! - statementStart, deallocator: .none), encoding: .utf8)!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    assert(String(data: Data(bytesNoCopy: UnsafeMutablePointer<UInt8>(OpaquePointer(statementStart)), count: statementEnd! - statementStart, deallocator: .none), encoding: .utf8)!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     break
                 }
                 
@@ -634,7 +634,7 @@ public final class DatabaseFunction {
     ///       as Int, String, NSDate, etc. The array is guaranteed to have
     ///       exactly *argumentCount* elements, provided *argumentCount* is
     ///       not nil.
-    public init(_ name: String, argumentCount: Int32? = nil, pure: Bool = false, function: ([DatabaseValue]) throws -> DatabaseValueConvertible?) {
+    public init(_ name: String, argumentCount: Int32? = nil, pure: Bool = false, function: @escaping ([DatabaseValue]) throws -> DatabaseValueConvertible?) {
         self.name = name
         self.argumentCount = argumentCount ?? -1
         self.pure = pure
@@ -701,7 +701,7 @@ extension Database {
 /// A Collation is a string comparison function used by SQLite.
 public final class DatabaseCollation {
     public let name: String
-    let function: (Int32, UnsafePointer<Void>?, Int32, UnsafePointer<Void>?) -> ComparisonResult
+    let function: (Int32, UnsafeRawPointer?, Int32, UnsafeRawPointer?) -> ComparisonResult
     
     /// Returns a collation.
     ///
@@ -714,12 +714,12 @@ public final class DatabaseCollation {
     /// - parameters:
     ///     - name: The function name.
     ///     - function: A function that compares two strings.
-    public init(_ name: String, function: (String, String) -> ComparisonResult) {
+    public init(_ name: String, function: @escaping (String, String) -> ComparisonResult) {
         self.name = name
         self.function = { (length1, buffer1, length2, buffer2) in
             // Buffers are not C strings: they do not end with \0.
-            let string1 = String(bytesNoCopy: UnsafeMutablePointer<Void>(buffer1.unsafelyUnwrapped), length: Int(length1), encoding: .utf8, freeWhenDone: false)!
-            let string2 = String(bytesNoCopy: UnsafeMutablePointer<Void>(buffer2.unsafelyUnwrapped), length: Int(length2), encoding: .utf8, freeWhenDone: false)!
+            let string1 = String(bytesNoCopy: UnsafeMutableRawPointer(OpaquePointer(buffer1.unsafelyUnwrapped)), length: Int(length1), encoding: .utf8, freeWhenDone: false)!
+            let string2 = String(bytesNoCopy: UnsafeMutableRawPointer(OpaquePointer(buffer2.unsafelyUnwrapped)), length: Int(length2), encoding: .utf8, freeWhenDone: false)!
             return function(string1, string2)
         }
     }
@@ -1849,7 +1849,7 @@ public struct DatabaseEvent {
         return impl.copy(self)
     }
     
-    private init(kind: Kind, rowID: Int64, impl: DatabaseEventImpl) {
+    fileprivate init(kind: Kind, rowID: Int64, impl: DatabaseEventImpl) {
         self.kind = kind
         self.rowID = rowID
         self.impl = impl
@@ -2095,7 +2095,7 @@ private struct CopiedDatabaseEventImpl : DatabaseEventImpl {
                     finalDatabaseValues: finalDatabaseValues))
         }
     
-        private func preupdate_getValues(_ connection: SQLiteConnection, sqlite_func: (connection: SQLiteConnection, column: CInt, value: inout SQLiteValue? ) -> CInt ) -> [DatabaseValue]?
+        private func preupdate_getValues(_ connection: SQLiteConnection, sqlite_func: (_ connection: SQLiteConnection, _ column: CInt, _ value: inout SQLiteValue? ) -> CInt ) -> [DatabaseValue]?
         {
             let columnCount = sqlite3_preupdate_count(connection)
             guard columnCount > 0 else { return nil }
@@ -2110,7 +2110,7 @@ private struct CopiedDatabaseEventImpl : DatabaseEventImpl {
             return columnValues
         }
         
-        private func getValue(_ connection: SQLiteConnection, column: CInt, sqlite_func: (connection: SQLiteConnection, column: CInt, value: inout SQLiteValue? ) -> CInt ) -> DatabaseValue?
+        private func getValue(_ connection: SQLiteConnection, column: CInt, sqlite_func: (_ connection: SQLiteConnection, _ column: CInt, _ value: inout SQLiteValue? ) -> CInt ) -> DatabaseValue?
         {
             var value : SQLiteValue? = nil
             guard sqlite_func(connection: connection, column: column, value: &value) == SQLITE_OK else { return nil }

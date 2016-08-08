@@ -14,7 +14,7 @@ extension Row {
             guard let columnName = key as? String else {
                 return nil
             }
-            guard let databaseValue = DatabaseValue(object: value) else {
+            guard let databaseValue = DatabaseValue(object: value as AnyObject) else {
                 return nil
             }
             initDictionary[columnName] = databaseValue

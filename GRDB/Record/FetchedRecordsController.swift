@@ -1,3 +1,5 @@
+import Foundation
+
 /// You use FetchedRecordsController to track changes in the results of an
 /// SQLite request.
 ///
@@ -72,7 +74,7 @@ public final class FetchedRecordsController<Record: RowConvertible> {
         }
     }
     
-    private init(_ databaseWriter: DatabaseWriter, request: FetchRequest, queue: DispatchQueue, isSameItemFactory: (Database) -> (Item<Record>, Item<Record>) -> Bool) {
+    fileprivate init(_ databaseWriter: DatabaseWriter, request: FetchRequest, queue: DispatchQueue, isSameItemFactory: @escaping (Database) -> (Item<Record>, Item<Record>) -> Bool) {
         self.request = request
         self.databaseWriter = databaseWriter
         self.isSameItem = { _ in return false }
@@ -149,18 +151,18 @@ public final class FetchedRecordsController<Record: RowConvertible> {
     ///       removed, moved, or updated.
     ///     - recordsDidChange: Invoked after records have been updated.
     public func trackChanges(
-        recordsWillChange: ((controller: FetchedRecordsController<Record>) -> ())? = nil,
-        tableViewEvent: ((controller: FetchedRecordsController<Record>, record: Record, event: TableViewEvent) -> ())? = nil,
-        recordsDidChange: ((controller: FetchedRecordsController<Record>) -> ())? = nil)
+        recordsWillChange: ((_ controller: FetchedRecordsController<Record>) -> ())? = nil,
+        tableViewEvent: ((_ controller: FetchedRecordsController<Record>, _ record: Record, _ event: TableViewEvent) -> ())? = nil,
+        recordsDidChange: ((_ controller: FetchedRecordsController<Record>) -> ())? = nil)
     {
-        let recordsWillChangeWithVoidAlongside: ((controller: FetchedRecordsController<Record>, fetchedAlongside: Void) -> ())?
+        let recordsWillChangeWithVoidAlongside: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: Void) -> ())?
         if let recordsWillChange = recordsWillChange {
             recordsWillChangeWithVoidAlongside = { (controller, _) in recordsWillChange(controller: controller) }
         } else {
             recordsWillChangeWithVoidAlongside = nil
         }
         
-        let recordsDidChangeWithVoidAlongside: ((controller: FetchedRecordsController<Record>, fetchedAlongside: Void) -> ())?
+        let recordsDidChangeWithVoidAlongside: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: Void) -> ())?
         if let recordsDidChange = recordsDidChange {
             recordsDidChangeWithVoidAlongside = { (controller, _) in recordsDidChange(controller: controller) }
         } else {
@@ -180,19 +182,19 @@ public final class FetchedRecordsController<Record: RowConvertible> {
     ///     - recordsWillChange: Invoked before records are updated.
     ///     - recordsDidChange: Invoked after records have been updated.
     public func trackChanges(
-        recordsWillChange: ((controller: FetchedRecordsController<Record>) -> ())? = nil,
-        recordsDidChange: ((controller: FetchedRecordsController<Record>) -> ())? = nil)
+        recordsWillChange: ((_ controller: FetchedRecordsController<Record>) -> ())? = nil,
+        recordsDidChange: ((_ controller: FetchedRecordsController<Record>) -> ())? = nil)
     {
-        let recordsWillChangeWithVoidAlongside: ((controller: FetchedRecordsController<Record>, fetchedAlongside: Void) -> ())?
+        let recordsWillChangeWithVoidAlongside: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: Void) -> ())?
         if let recordsWillChange = recordsWillChange {
-            recordsWillChangeWithVoidAlongside = { (controller, _) in recordsWillChange(controller: controller) }
+            recordsWillChangeWithVoidAlongside = { (controller, _) in recordsWillChange(controller) }
         } else {
             recordsWillChangeWithVoidAlongside = nil
         }
         
-        let recordsDidChangeWithVoidAlongside: ((controller: FetchedRecordsController<Record>, fetchedAlongside: Void) -> ())?
+        let recordsDidChangeWithVoidAlongside: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: Void) -> ())?
         if let recordsDidChange = recordsDidChange {
-            recordsDidChangeWithVoidAlongside = { (controller, _) in recordsDidChange(controller: controller) }
+            recordsDidChangeWithVoidAlongside = { (controller, _) in recordsDidChange(controller) }
         } else {
             recordsDidChangeWithVoidAlongside = nil
         }
@@ -220,9 +222,9 @@ public final class FetchedRecordsController<Record: RowConvertible> {
     ///     - recordsDidChange: Invoked after records have been updated.
     public func trackChanges<T>(
         fetchAlongside: (Database) -> T,
-        recordsWillChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())? = nil,
-        tableViewEvent: ((controller: FetchedRecordsController<Record>, record: Record, event: TableViewEvent) -> ())? = nil,
-        recordsDidChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())? = nil)
+        recordsWillChange: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())? = nil,
+        tableViewEvent: ((_ controller: FetchedRecordsController<Record>, _ record: Record, _ event: TableViewEvent) -> ())? = nil,
+        recordsDidChange: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())? = nil)
     {
         // If some changes are currently processed, make sure they are
         // discarded because they would trigger previously set callbacks.
@@ -272,9 +274,9 @@ public final class FetchedRecordsController<Record: RowConvertible> {
     ///     - recordsWillChange: Invoked before records are updated.
     ///     - recordsDidChange: Invoked after records have been updated.
     public func trackChanges<T>(
-        fetchAlongside: (Database) -> T,
-        recordsWillChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())? = nil,
-        recordsDidChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())? = nil)
+        fetchAlongside: @escaping (Database) -> T,
+        recordsWillChange: (@escaping (_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())? = nil,
+        recordsDidChange: (@escaping (_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())? = nil)
     {
         // If some changes are currently processed, make sure they are
         // discarded because they would trigger previously set callbacks.
@@ -333,7 +335,7 @@ public final class FetchedRecordsController<Record: RowConvertible> {
     
     
     // The items
-    private var fetchedItems: [Item<Record>]?
+    fileprivate var fetchedItems: [Item<Record>]?
     
     // The record comparator
     private var isSameItem: (Item<Record>, Item<Record>) -> Bool
@@ -345,7 +347,7 @@ public final class FetchedRecordsController<Record: RowConvertible> {
     private let isSameItemFactory: (Database) -> (Item<Record>, Item<Record>) -> Bool
     
     /// The request
-    private var request: FetchRequest {
+    fileprivate var request: FetchRequest {
         didSet {
             guard let observer = observer else { return }
             databaseWriter.write { _ in
@@ -442,20 +444,20 @@ private class FetchedChangesController<Record: RowConvertible, T> {
     // called, such unowned reference would have an opportunity to crash.
     weak var controller: FetchedRecordsController<Record>?
     let fetchAlongside: (Database) -> T
-    let recordsWillChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())?
-    let recordsDidChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())?
+    let recordsWillChange: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?
+    let recordsDidChange: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?
 
     #if os(iOS)
     let isSameItem: (Item<Record>, Item<Record>) -> Bool
-    var tableViewEvent: ((controller: FetchedRecordsController<Record>, record: Record, event: TableViewEvent) -> ())?
+    var tableViewEvent: ((_ controller: FetchedRecordsController<Record>, _ record: Record, _ event: TableViewEvent) -> ())?
     
     init(
         controller: FetchedRecordsController<Record>,
         isSameItem: (Item<Record>, Item<Record>) -> Bool,
         fetchAlongside: (Database) -> T,
-        recordsWillChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())?,
-        tableViewEvent: ((controller: FetchedRecordsController<Record>, record: Record, event: TableViewEvent) -> ())?,
-        recordsDidChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())?)
+        recordsWillChange: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?,
+        tableViewEvent: ((_ controller: FetchedRecordsController<Record>, _ record: Record, _ event: TableViewEvent) -> ())?,
+        recordsDidChange: ((_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?)
     {
         self.controller = controller
         self.isSameItem = isSameItem
@@ -467,9 +469,9 @@ private class FetchedChangesController<Record: RowConvertible, T> {
     #else
     init(
         controller: FetchedRecordsController<Record>,
-        fetchAlongside: (Database) -> T,
-        recordsWillChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())?,
-        recordsDidChange: ((controller: FetchedRecordsController<Record>, fetchedAlongside: T) -> ())?)
+        fetchAlongside: @escaping (Database) -> T,
+        recordsWillChange: (@escaping (_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?,
+        recordsDidChange: (@escaping (_ controller: FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?)
     {
         self.controller = controller
         self.fetchAlongside = fetchAlongside
@@ -572,7 +574,7 @@ private class FetchedChangesController<Record: RowConvertible, T> {
                 guard let controller = self.controller else { return }
                 
                 if let recordsWillChange = self.recordsWillChange {
-                    recordsWillChange(controller: controller, fetchedAlongside: fetchedAlongside)
+                    recordsWillChange(controller, fetchedAlongside)
                 }
                 
                 controller.fetchedItems = fetchedItems
@@ -586,7 +588,7 @@ private class FetchedChangesController<Record: RowConvertible, T> {
                 #endif
                 
                 if let recordsDidChange = self.recordsDidChange {
-                    recordsDidChange(controller: controller, fetchedAlongside: fetchedAlongside)
+                    recordsDidChange(controller, fetchedAlongside)
                 }
             }
         }
@@ -605,7 +607,7 @@ private final class FetchedRecordsObserver<Record: RowConvertible> : Transaction
     let queue: DispatchQueue // protects items
     var checkForChanges: (FetchedRecordsObserver<Record>) -> ()
     
-    init(_ checkForChanges: (FetchedRecordsObserver<Record>) -> ()) {
+    init(_ checkForChanges: @escaping (FetchedRecordsObserver<Record>) -> ()) {
         self.isValid = true
         self.items = nil
         self.needsComputeChanges = false

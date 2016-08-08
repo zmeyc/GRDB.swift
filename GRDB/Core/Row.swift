@@ -365,14 +365,14 @@ extension Row {
     
     // MARK: - Helpers
     
-    private static func statementColumnConvertible<Value: StatementColumnConvertible>(atUncheckedIndex index: Int, in sqliteStatement: SQLiteStatement) -> Value? {
+    fileprivate static func statementColumnConvertible<Value: StatementColumnConvertible>(atUncheckedIndex index: Int, in sqliteStatement: SQLiteStatement) -> Value? {
         guard sqlite3_column_type(sqliteStatement, Int32(index)) != SQLITE_NULL else {
             return nil
         }
         return Value.init(sqliteStatement: sqliteStatement, index: Int32(index))
     }
     
-    private static func statementColumnConvertible<Value: StatementColumnConvertible>(atUncheckedIndex index: Int, in sqliteStatement: SQLiteStatement) -> Value {
+    fileprivate static func statementColumnConvertible<Value: StatementColumnConvertible>(atUncheckedIndex index: Int, in sqliteStatement: SQLiteStatement) -> Value {
         guard sqlite3_column_type(sqliteStatement, Int32(index)) != SQLITE_NULL else {
             fatalError("could not convert database NULL value to \(Value.self)")
         }
@@ -915,7 +915,7 @@ private struct StatementRowImpl : RowImpl {
             return nil
         }
         let count = Int(sqlite3_column_bytes(sqliteStatement, Int32(index)))
-        return Data(bytesNoCopy: UnsafeMutablePointer<UInt8>(bytes), count: count, deallocator: .none)
+        return Data(bytesNoCopy: UnsafeMutableRawPointer(OpaquePointer(bytes)), count: count, deallocator: .none)
     }
     
     func databaseValue(atUncheckedIndex index: Int) -> DatabaseValue {

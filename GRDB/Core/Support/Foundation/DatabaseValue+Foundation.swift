@@ -28,7 +28,7 @@ extension DatabaseValue {
         case .string(let string):
             return string as NSString
         case .blob(let data):
-            return data
+            return NSData(data: data)
         }
     }
 }
