@@ -4,7 +4,7 @@ extension DatabaseFunction {
     /// Returns an SQL expression that applies the function.
     ///
     /// See https://github.com/groue/GRDB.swift/#sql-functions
-    public func apply(_ arguments: _SQLExpressible...) -> _SQLExpression {
+    public func apply(_ arguments: SQLExpressible...) -> _SQLExpression {
         return .function(name, arguments.map { $0.sqlExpression })
     }
 }
@@ -55,19 +55,29 @@ public func count(distinct value: _SpecificSQLExpressible) -> _SQLExpression {
 /// Returns an SQL expression.
 ///
 /// See https://github.com/groue/GRDB.swift/#sql-functions
-public func ?? (lhs: _SpecificSQLExpressible, rhs: _SQLExpressible) -> _SQLExpression {
+public func ?? (lhs: _SpecificSQLExpressible, rhs: SQLExpressible) -> _SQLExpression {
     return .function("IFNULL", [lhs.sqlExpression, rhs.sqlExpression])
 }
 
 /// Returns an SQL expression.
 ///
 /// See https://github.com/groue/GRDB.swift/#sql-functions
-public func ?? (lhs: _SQLExpressible?, rhs: _SpecificSQLExpressible) -> _SQLExpression {
+public func ?? (lhs: SQLExpressible?, rhs: _SpecificSQLExpressible) -> _SQLExpression {
     if let lhs = lhs {
         return .function("IFNULL", [lhs.sqlExpression, rhs.sqlExpression])
     } else {
         return rhs.sqlExpression
     }
+}
+
+
+// MARK: - LENGTH(...)
+
+/// Returns an SQL expression.
+///
+/// See https://github.com/groue/GRDB.swift/#sql-functions
+public func length(_ value: _SpecificSQLExpressible) -> _SQLExpression {
+    return .function("LENGTH", [value.sqlExpression])
 }
 
 
@@ -107,7 +117,7 @@ extension _SpecificSQLExpressible {
     /// Returns an SQL expression that applies the Swift's built-in
     /// capitalized String property. It is NULL for non-String arguments.
     ///
-    ///     let nameColumn = SQLColumn("name")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.select(nameColumn.capitalized)
     ///     let names = String.fetchAll(dbQueue, request)   // [String]
     public var capitalized: _SQLExpression {
@@ -117,7 +127,7 @@ extension _SpecificSQLExpressible {
     /// Returns an SQL expression that applies the Swift's built-in
     /// lowercased String property. It is NULL for non-String arguments.
     ///
-    ///     let nameColumn = SQLColumn("name")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.select(nameColumn.lowercased())
     ///     let names = String.fetchAll(dbQueue, request)   // [String]
     public var lowercased: _SQLExpression {
@@ -127,7 +137,7 @@ extension _SpecificSQLExpressible {
     /// Returns an SQL expression that applies the Swift's built-in
     /// uppercased String property. It is NULL for non-String arguments.
     ///
-    ///     let nameColumn = SQLColumn("name")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.select(nameColumn.uppercased())
     ///     let names = String.fetchAll(dbQueue, request)   // [String]
     public var uppercased: _SQLExpression {
@@ -140,7 +150,7 @@ extension _SpecificSQLExpressible {
     /// Returns an SQL expression that applies the Swift's built-in
     /// localizedCapitalized String property. It is NULL for non-String arguments.
     ///
-    ///     let nameColumn = SQLColumn("name")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.select(nameColumn.localizedCapitalized)
     ///     let names = String.fetchAll(dbQueue, request)   // [String]
     public var localizedCapitalized: _SQLExpression {
@@ -150,7 +160,7 @@ extension _SpecificSQLExpressible {
     /// Returns an SQL expression that applies the Swift's built-in
     /// localizedLowercased String property. It is NULL for non-String arguments.
     ///
-    ///     let nameColumn = SQLColumn("name")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.select(nameColumn.localizedLowercased)
     ///     let names = String.fetchAll(dbQueue, request)   // [String]
     public var localizedLowercased: _SQLExpression {
@@ -160,7 +170,7 @@ extension _SpecificSQLExpressible {
     /// Returns an SQL expression that applies the Swift's built-in
     /// localizedUppercased String property. It is NULL for non-String arguments.
     ///
-    ///     let nameColumn = SQLColumn("name")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.select(nameColumn.localizedUppercased)
     ///     let names = String.fetchAll(dbQueue, request)   // [String]
     public var localizedUppercased: _SQLExpression {

@@ -515,8 +515,8 @@ extension Row {
     
     /// Returns a sequence of rows fetched from a fetch request.
     ///
-    ///     let idColumn = SQLColumn("id")
-    ///     let nameColumn = SQLColumn("name")
+    ///     let idColumn = Column("id")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.select(idColumn, nameColumn)
     ///     for row in Row.fetch(db, request) {
     ///         let id: Int64 = row.value(atIndex: 0)
@@ -549,8 +549,8 @@ extension Row {
     
     /// Returns an array of rows fetched from a fetch request.
     ///
-    ///     let idColumn = SQLColumn("id")
-    ///     let nameColumn = SQLColumn("name")
+    ///     let idColumn = Column("id")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.select(idColumn, nameColumn)
     ///     let rows = Row.fetchAll(db, request)
     ///
@@ -562,8 +562,8 @@ extension Row {
     
     /// Returns a single row fetched from a fetch request.
     ///
-    ///     let idColumn = SQLColumn("id")
-    ///     let nameColumn = SQLColumn("name")
+    ///     let idColumn = Column("id")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.select(idColumn, nameColumn)
     ///     let row = Row.fetchOne(db, request)
     ///
@@ -848,7 +848,7 @@ private struct StatementCopyRowImpl : RowImpl {
     
     init(sqliteStatement: SQLiteStatement, columnNames: [String]) {
         let sqliteStatement = sqliteStatement
-        self.databaseValues = ContiguousArray((0..<sqlite3_column_count(sqliteStatement)).lazy.map { DatabaseValue(sqliteStatement: sqliteStatement, index: $0) })
+        self.databaseValues = ContiguousArray((0..<sqlite3_column_count(sqliteStatement)).map { DatabaseValue(sqliteStatement: sqliteStatement, index: $0) } as [DatabaseValue])
         self.columnNames = columnNames
     }
     

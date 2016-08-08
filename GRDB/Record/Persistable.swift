@@ -204,7 +204,7 @@ public extension MutablePersistable {
     /// - throws: A DatabaseError is thrown whenever an SQLite error occurs.
     ///   PersistenceError.NotFound is thrown if the primary key does not
     ///   match any row in the database.
-    func update<Sequence: Swift.Sequence>(_ db: Database, columns: Sequence) throws where Sequence.Iterator.Element == SQLColumn {
+    func update<Sequence: Swift.Sequence>(_ db: Database, columns: Sequence) throws where Sequence.Iterator.Element == Column {
         try update(db, columns: Set(columns.map { $0.name }))
     }
     
@@ -517,7 +517,7 @@ final class DataMapper {
     let databaseTableName: String
     
     /// The table primary key
-    let primaryKey: PrimaryKey?
+    let primaryKey: PrimaryKeyInfo?
     
     init(_ db: Database, _ persistable: MutablePersistable) {
         // Fail early if database table does not exist.

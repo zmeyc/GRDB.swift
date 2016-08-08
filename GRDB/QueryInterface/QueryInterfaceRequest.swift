@@ -39,7 +39,7 @@ extension QueryInterfaceRequest where T: RowConvertible {
     
     /// Returns a sequence of values.
     ///
-    ///     let nameColumn = SQLColumn("name")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.order(nameColumn)
     ///     let persons = request.fetch(db) // DatabaseSequence<Person>
     ///
@@ -60,7 +60,7 @@ extension QueryInterfaceRequest where T: RowConvertible {
     
     /// Returns an array of values fetched from a fetch request.
     ///
-    ///     let nameColumn = SQLColumn("name")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.order(nameColumn)
     ///     let persons = request.fetchAll(db) // [Person]
     ///
@@ -71,7 +71,7 @@ extension QueryInterfaceRequest where T: RowConvertible {
     
     /// Returns a single value fetched from a fetch request.
     ///
-    ///     let nameColumn = SQLColumn("name")
+    ///     let nameColumn = Column("name")
     ///     let request = Person.order(nameColumn)
     ///     let person = request.fetchOne(db) // Person?
     ///
@@ -100,7 +100,7 @@ extension QueryInterfaceRequest {
     
     /// Returns a new QueryInterfaceRequest with a new net of selected columns.
     public func select(sql: String, arguments: StatementArguments? = nil) -> QueryInterfaceRequest<T> {
-        return select(_SQLExpression.SQLLiteral(sql, arguments))
+        return select(_SQLExpression.sqlLiteral(sql, arguments))
     }
     
     /// Returns a new QueryInterfaceRequest which returns distinct rows.
@@ -112,7 +112,7 @@ extension QueryInterfaceRequest {
     
     /// Returns a new QueryInterfaceRequest with the provided *predicate* added to the
     /// eventual set of already applied predicates.
-    public func filter(_ predicate: _SQLExpressible) -> QueryInterfaceRequest<T> {
+    public func filter(_ predicate: SQLExpressible) -> QueryInterfaceRequest<T> {
         var query = self.query
         if let whereExpression = query.whereExpression {
             query.whereExpression = .infixOperator("AND", whereExpression, predicate.sqlExpression)
@@ -125,16 +125,16 @@ extension QueryInterfaceRequest {
     /// Returns a new QueryInterfaceRequest with the provided *predicate* added to the
     /// eventual set of already applied predicates.
     public func filter(sql: String, arguments: StatementArguments? = nil) -> QueryInterfaceRequest<T> {
-        return filter(_SQLExpression.SQLLiteral(sql, arguments))
+        return filter(_SQLExpression.sqlLiteral(sql, arguments))
     }
     
     /// Returns a new QueryInterfaceRequest grouped according to *expressions*.
-    public func group(_ expressions: _SQLExpressible...) -> QueryInterfaceRequest<T> {
+    public func group(_ expressions: SQLExpressible...) -> QueryInterfaceRequest<T> {
         return group(expressions)
     }
     
     /// Returns a new QueryInterfaceRequest grouped according to *expressions*.
-    public func group(_ expressions: [_SQLExpressible]) -> QueryInterfaceRequest<T> {
+    public func group(_ expressions: [SQLExpressible]) -> QueryInterfaceRequest<T> {
         var query = self.query
         query.groupByExpressions = expressions.map { $0.sqlExpression }
         return QueryInterfaceRequest(query: query)
@@ -142,12 +142,12 @@ extension QueryInterfaceRequest {
     
     /// Returns a new QueryInterfaceRequest with a new grouping.
     public func group(sql: String, arguments: StatementArguments? = nil) -> QueryInterfaceRequest<T> {
-        return group(_SQLExpression.SQLLiteral(sql, arguments))
+        return group(_SQLExpression.sqlLiteral(sql, arguments))
     }
     
     /// Returns a new QueryInterfaceRequest with the provided *predicate* added to the
     /// eventual set of already applied predicates.
-    public func having(_ predicate: _SQLExpressible) -> QueryInterfaceRequest<T> {
+    public func having(_ predicate: SQLExpressible) -> QueryInterfaceRequest<T> {
         var query = self.query
         if let havingExpression = query.havingExpression {
             query.havingExpression = (havingExpression && predicate).sqlExpression
@@ -160,18 +160,18 @@ extension QueryInterfaceRequest {
     /// Returns a new QueryInterfaceRequest with the provided *sql* added to
     /// the eventual set of already applied predicates.
     public func having(sql: String, arguments: StatementArguments? = nil) -> QueryInterfaceRequest<T> {
-        return having(_SQLExpression.SQLLiteral(sql, arguments))
+        return having(_SQLExpression.sqlLiteral(sql, arguments))
     }
     
     /// Returns a new QueryInterfaceRequest with the provided *orderings* added to
     /// the eventual set of already applied orderings.
-    public func order(_ orderings: _SQLOrdering...) -> QueryInterfaceRequest<T> {
+    public func order(_ orderings: _SQLOrderable...) -> QueryInterfaceRequest<T> {
         return order(orderings)
     }
     
     /// Returns a new QueryInterfaceRequest with the provided *orderings* added to
     /// the eventual set of already applied orderings.
-    public func order(_ orderings: [_SQLOrdering]) -> QueryInterfaceRequest<T> {
+    public func order(_ orderings: [_SQLOrderable]) -> QueryInterfaceRequest<T> {
         var query = self.query
         query.orderings = orderings
         return QueryInterfaceRequest(query: query)
@@ -180,7 +180,7 @@ extension QueryInterfaceRequest {
     /// Returns a new QueryInterfaceRequest with the provided *sql* added to the
     /// eventual set of already applied orderings.
     public func order(sql: String, arguments: StatementArguments? = nil) -> QueryInterfaceRequest<T> {
-        return order([_SQLExpression.SQLLiteral(sql, arguments)])
+        return order([_SQLExpression.sqlLiteral(sql, arguments)])
     }
     
     /// Returns a new QueryInterfaceRequest sorted in reversed order.
@@ -219,7 +219,7 @@ extension QueryInterfaceRequest {
     
     /// Returns an SQL expression that checks the inclusion of a value in
     /// the results of another request.
-    public func contains(_ element: _SQLExpressible) -> _SQLExpression {
+    public func contains(_ element: SQLExpressible) -> _SQLExpression {
         return .inSubQuery(query, element.sqlExpression)
     }
     
@@ -256,7 +256,7 @@ extension TableMapping {
     }
     
     /// Returns a QueryInterfaceRequest with the provided *predicate*.
-    public static func filter(_ predicate: _SQLExpressible) -> QueryInterfaceRequest<Self> {
+    public static func filter(_ predicate: SQLExpressible) -> QueryInterfaceRequest<Self> {
         return all().filter(predicate)
     }
     
@@ -267,13 +267,13 @@ extension TableMapping {
     
     /// Returns a QueryInterfaceRequest sorted according to the
     /// provided *orderings*.
-    public static func order(_ orderings: _SQLOrdering...) -> QueryInterfaceRequest<Self> {
+    public static func order(_ orderings: _SQLOrderable...) -> QueryInterfaceRequest<Self> {
         return all().order(orderings)
     }
     
     /// Returns a QueryInterfaceRequest sorted according to the
     /// provided *orderings*.
-    public static func order(_ orderings: [_SQLOrdering]) -> QueryInterfaceRequest<Self> {
+    public static func order(_ orderings: [_SQLOrderable]) -> QueryInterfaceRequest<Self> {
         return all().order(orderings)
     }
     
