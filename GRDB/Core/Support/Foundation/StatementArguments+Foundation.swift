@@ -29,7 +29,7 @@ extension StatementArguments {
         //    }
         var values = [DatabaseValueConvertible?]()
         for object in array {
-            guard let databaseValue = DatabaseValue(object: object) else {
+            guard let databaseValue = DatabaseValue(object: object as AnyObject) else {
                 return nil
             }
             values.append(databaseValue)
@@ -69,7 +69,7 @@ extension StatementArguments {
             guard let columnName = key as? String else {
                 return nil
             }
-            guard let databaseValue = DatabaseValue(object: value) else {
+            guard let databaseValue = DatabaseValue(object: value as AnyObject) else {
                 return nil
             }
             initDictionary[columnName] = databaseValue

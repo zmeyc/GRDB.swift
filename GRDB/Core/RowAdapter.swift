@@ -12,6 +12,8 @@ import Foundation
     #endif
 #endif
 
+import Foundation
+
 /// ConcreteColumnMapping is a type that supports the RowAdapter protocol.
 public struct ConcreteColumnMapping {
     let columns: [(Int, String)]         // [(baseRowIndex, adaptedColumn), ...]

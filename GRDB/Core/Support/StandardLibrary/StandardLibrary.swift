@@ -286,7 +286,7 @@ extension String: DatabaseValueConvertible, StatementColumnConvertible {
     ///     - sqliteStatement: A pointer to an SQLite statement.
     ///     - index: The column index.
     public init(sqliteStatement: SQLiteStatement, index: Int32) {
-        let cString = UnsafePointer<Int8>(sqlite3_column_text(sqliteStatement, Int32(index)))
+        let cString = sqlite3_column_text(sqliteStatement, Int32(index))
         self = String(cString: cString!)
     }
     

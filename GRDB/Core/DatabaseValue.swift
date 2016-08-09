@@ -125,7 +125,7 @@ public struct DatabaseValue {
         case SQLITE_FLOAT:
             storage = .double(sqlite3_value_double(sqliteValue))
         case SQLITE_TEXT:
-            let cString = UnsafePointer<Int8>(sqlite3_value_text(sqliteValue))
+            let cString = sqlite3_value_text(sqliteValue)
             storage = .string(String(cString: cString!))
         case SQLITE_BLOB:
             let bytes = unsafeBitCast(sqlite3_value_blob(sqliteValue), to: UnsafePointer<UInt8>.self)
@@ -231,7 +231,7 @@ extension DatabaseValue : StatementColumnConvertible {
         case SQLITE_FLOAT:
             storage = .double(sqlite3_column_double(sqliteStatement, Int32(index)))
         case SQLITE_TEXT:
-            let cString = UnsafePointer<Int8>(sqlite3_column_text(sqliteStatement, Int32(index)))
+            let cString = sqlite3_column_text(sqliteStatement, Int32(index))
             storage = .string(String(cString: cString!))
         case SQLITE_BLOB:
             let bytes = unsafeBitCast(sqlite3_column_blob(sqliteStatement, Int32(index)), to: UnsafePointer<UInt8>.self)

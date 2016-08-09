@@ -27,6 +27,6 @@ public struct DatabaseCoder: DatabaseValueConvertible {
         guard let data = Data.fromDatabaseValue(databaseValue) else {
             return nil
         }
-        return DatabaseCoder(NSKeyedUnarchiver.unarchiveObject(with: data))
+        return DatabaseCoder(NSKeyedUnarchiver.unarchiveObject(with: data) as AnyObject?)
     }
 }

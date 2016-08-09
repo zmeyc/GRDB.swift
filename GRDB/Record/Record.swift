@@ -115,7 +115,7 @@ public class Record : RowConvertible, TableMapping, Persistable {
     ///
     /// - returns: A copy of self.
     public func copy() -> Self {
-        let copy = self.dynamicType.init(row: Row(persistentDictionary))
+        let copy = type(of: self).init(row: Row(persistentDictionary))
         copy.referenceRow = referenceRow
         return copy
     }

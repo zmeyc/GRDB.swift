@@ -273,7 +273,7 @@ public final class TableDefinition {
         checkConstraints.append(_SQLExpression.sqlLiteral(sql, nil))
     }
     
-    private func sql(_ db: Database) throws -> String {
+    fileprivate func sql(_ db: Database) throws -> String {
         var chunks: [String] = []
         chunks.append("CREATE")
         if temporary {
@@ -391,7 +391,7 @@ public final class TableAlteration {
         return column
     }
     
-    private func sql(_ db: Database) throws -> String {
+    fileprivate func sql(_ db: Database) throws -> String {
         var statements: [String] = []
         
         for column in addedColumns {
@@ -602,7 +602,7 @@ public final class ColumnDefinition {
         return self
     }
     
-    private func sql(_ db: Database) throws -> String {
+    fileprivate func sql(_ db: Database) throws -> String {
         var chunks: [String] = []
         chunks.append(name.quotedDatabaseIdentifier)
         chunks.append(type.rawValue)
@@ -681,7 +681,7 @@ public final class ColumnDefinition {
     }
 }
 
-private struct IndexDefinition {
+fileprivate struct IndexDefinition {
     let name: String
     let table: String
     let columns: [String]
