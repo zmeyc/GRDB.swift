@@ -1,5 +1,7 @@
 #if !USING_BUILTIN_SQLITE
-    #if os(OSX)
+    #if SWIFT_PACKAGE
+        import CSQLite
+    #elseif os(OSX)
         import SQLiteMacOSX
     #elseif os(iOS)
         #if (arch(i386) || arch(x86_64))

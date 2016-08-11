@@ -1,4 +1,7 @@
 import Foundation
+#if os(Linux)
+    import Dispatch
+#endif
 
 /// SchedulingWatchdog makes sure that databases connections are used on correct
 /// dispatch queues, and warns the user with a fatal error whenever she misuses

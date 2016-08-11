@@ -1,4 +1,7 @@
 import Foundation
+#if os(Linux)
+    import Dispatch
+#endif
 
 /// You use FetchedRecordsController to track changes in the results of an
 /// SQLite request.

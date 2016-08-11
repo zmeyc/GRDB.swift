@@ -1,24 +1,36 @@
 import Foundation
+#if os(Linux)
+    import Dispatch
+#endif
+
+#if os(Linux)
+    public typealias FileAttributeKey = String
+#endif
 
 /// DatabaseStore is responsible for applying Configuration.fileAttributes to
 /// all database files (db.sqlite, db.sqlite-wal, db.sqlite-shm,
 /// db.sqlite-journal, etc.)
 class DatabaseStore {
     let path: String
+    #if !os(Linux)
     private let source: DispatchSourceFileSystemObject?
     private let queue: DispatchQueue?
+    #endif
     
     init(path: String, attributes: [FileAttributeKey: AnyObject]?) throws {
         self.path = path
         
         guard let attributes = attributes else {
+            #if !os(Linux)
             self.queue = nil
             self.source = nil
+            #endif
             return
         }
         
-        let databaseFileName = (path as NSString).lastPathComponent
-        let directoryPath = (path as NSString).deletingLastPathComponent
+        let pathUrl = NSURL(fileURLWithPath: path)
+        let databaseFileName = pathUrl.lastPathComponent ?? ""
+        let directoryPath = pathUrl.deletingLastPathComponent?.path ?? ""
         
         // Apply file attributes on existing files
         DatabaseStore.setFileAttributes(
@@ -26,6 +38,9 @@ class DatabaseStore {
             databaseFileName: databaseFileName,
             attributes: attributes)
         
+        #if os(Linux)
+        print("WARNING: file monitoring is not implemented on Linux, attributes won't be applied to newly created files")
+        #else
         // We use a dispatch_source to monitor the contents of the database file
         // parent directory, and apply file attributes.
         //
@@ -55,12 +70,15 @@ class DatabaseStore {
             close(directoryDescriptor)
         }
         source.resume()
+        #endif
     }
     
     deinit {
+        #if !os(Linux)
         if let source = source {
             source.cancel()
         }
+        #endif
     }
     
     private static func setFileAttributes(directoryPath: String, databaseFileName: String, attributes: [FileAttributeKey: AnyObject]) {
@@ -75,9 +93,16 @@ class DatabaseStore {
         let fileNames = try! fm.contentsOfDirectory(atPath: directoryPath).filter({ $0.hasPrefix(databaseFileName) })
         for fileName in fileNames {
             do {
-                try fm.setAttributes(attributes, ofItemAtPath: (directoryPath as NSString).appendingPathComponent(fileName))
+                let directoryPathUrl = NSURL(fileURLWithPath: directoryPath)
+                let path = directoryPathUrl.appendingPathComponent(fileName)?.path ?? ""
+                try fm.setAttributes(attributes, ofItemAtPath: path)
             } catch let error as NSError {
-                guard error.domain == NSCocoaErrorDomain && error.code == NSFileNoSuchFileError else {
+                #if os(Linux)
+                let noSuchFileError = NSCocoaError.FileNoSuchFileError.rawValue
+                #else
+                let noSuchFileError = NSFileNoSuchFileError
+                #endif
+                guard error.domain == NSCocoaErrorDomain && error.code == noSuchFileError else {
                     try! { throw error }()
                     preconditionFailure()
                 }

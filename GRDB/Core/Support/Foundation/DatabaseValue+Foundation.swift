@@ -26,7 +26,7 @@ extension DatabaseValue {
         case .double(let double):
             return NSNumber(value: double)
         case .string(let string):
-            return string as NSString
+            return NSString(string: string)
         case .blob(let data):
             return NSData(data: data)
         }

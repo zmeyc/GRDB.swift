@@ -1,5 +1,9 @@
 import Foundation
 
+#if os(Linux)
+typealias UUID = NSUUID
+#else
+
 /// NSUUID adopts DatabaseValueConvertible
 extension UUID: DatabaseValueConvertible {
     
@@ -26,3 +30,5 @@ extension UUID: DatabaseValueConvertible {
         }
     }
 }
+#endif
+

@@ -1,7 +1,7 @@
-import Foundation
-
 #if !USING_BUILTIN_SQLITE
-    #if os(OSX)
+    #if SWIFT_PACKAGE
+        import CSQLite
+    #elseif os(OSX)
         import SQLiteMacOSX
     #elseif os(iOS)
         #if (arch(i386) || arch(x86_64))
@@ -12,6 +12,10 @@ import Foundation
     #endif
 #endif
 
+import Foundation
+#if os(Linux)
+    import Dispatch
+#endif
 
 // MARK: - Public
 
@@ -100,7 +104,8 @@ final class ReadWriteBox<T> {
     
     init(_ value: T) {
         self._value = value
-        self.queue = DispatchQueue(label: "GRDB.ReadWriteBox", attributes: [.concurrent])
+        // Linux needs fully qualified name for .concurrent (conflicts with deprecated DispatchQueueAttributes.concurrent)
+        self.queue = DispatchQueue(label: "GRDB.ReadWriteBox", attributes: [DispatchQueue.Attributes.concurrent])
     }
     
     func read<U>(_ block: (T) -> U) -> U {
