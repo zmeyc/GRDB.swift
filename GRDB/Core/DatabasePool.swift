@@ -1,5 +1,5 @@
 #if !USING_BUILTIN_SQLITE
-    #if SWIFT_PACKAGE
+    #if SWIFT_PACKAGE || Xcode
         import CSQLite
     #elseif os(OSX)
         import SQLiteMacOSX
