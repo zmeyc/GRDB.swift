@@ -79,7 +79,7 @@ public final class DatabaseQueue {
     ///
     /// - parameter block: A block that accesses the database.
     /// - throws: The error thrown by the block.
-    public func inDatabase<T>(_ block: @noescape (_ db: Database) throws -> T) rethrows -> T {
+    public func inDatabase<T>(_ block: (Database) throws -> T) rethrows -> T {
         return try serializedDatabase.sync(block)
     }
     
@@ -104,7 +104,7 @@ public final class DatabaseQueue {
     ///     - block: A block that executes SQL statements and return either
     ///       .commit or .rollback.
     /// - throws: The error thrown by the block.
-    public func inTransaction(_ kind: TransactionKind? = nil, _ block: @noescape (_ db: Database) throws -> TransactionCompletion) throws {
+    public func inTransaction(_ kind: TransactionKind? = nil, _ block: (Database) throws -> TransactionCompletion) throws {
         try serializedDatabase.sync { db in
             try db.inTransaction(kind) {
                 try block(db)
@@ -223,14 +223,14 @@ extension DatabaseQueue : DatabaseReader {
     /// Alias for inDatabase
     ///
     /// This method is part of the DatabaseReader protocol adoption.
-    public func read<T>(_ block: @noescape (_ db: Database) throws -> T) rethrows -> T {
+    public func read<T>(_ block: (Database) throws -> T) rethrows -> T {
         return try serializedDatabase.sync(block)
     }
     
     /// Alias for inDatabase
     ///
     /// This method is part of the DatabaseReader protocol adoption.
-    public func nonIsolatedRead<T>(_ block: @noescape (_ db: Database) throws -> T) rethrows -> T {
+    public func nonIsolatedRead<T>(_ block: (Database) throws -> T) rethrows -> T {
         return try serializedDatabase.sync(block)
     }
     
@@ -300,7 +300,7 @@ extension DatabaseQueue : DatabaseWriter {
     /// Alias for inDatabase
     ///
     /// This method is part of the DatabaseWriter protocol adoption.
-    public func write<T>(_ block: @noescape (_ db: Database) throws -> T) rethrows -> T {
+    public func write<T>(_ block: (Database) throws -> T) rethrows -> T {
         return try serializedDatabase.sync(block)
     }
 
@@ -308,7 +308,7 @@ extension DatabaseQueue : DatabaseWriter {
     ///
     /// This method is part of the DatabaseWriter protocol adoption, and must
     /// be called from the protected database dispatch queue.
-    public func readFromWrite(_ block: @escaping (_ db: Database) -> Void) {
+    public func readFromWrite(_ block: @escaping (Database) -> Void) {
         serializedDatabase.execute(block)
     }
 }

@@ -17,7 +17,7 @@ class DatabaseStore {
     private let queue: DispatchQueue?
     #endif
     
-    init(path: String, attributes: [FileAttributeKey: AnyObject]?) throws {
+    init(path: String, attributes: [FileAttributeKey: Any]?) throws {
         self.path = path
         
         guard let attributes = attributes else {
@@ -81,7 +81,7 @@ class DatabaseStore {
         #endif
     }
     
-    private static func setFileAttributes(directoryPath: String, databaseFileName: String, attributes: [FileAttributeKey: AnyObject]) {
+    private static func setFileAttributes(directoryPath: String, databaseFileName: String, attributes: [FileAttributeKey: Any]) {
         let fm = FileManager.default
         // TODO: handle symbolic links:
         //

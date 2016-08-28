@@ -26,11 +26,11 @@ extension NSUUID: DatabaseValueConvertible {
         //return self.init(UUIDBytes: UnsafePointer<UInt8>(OpaquePointer(data.bytes)))
         // Workaround:
         let coder = NSCoder()
-        let uuid = NSUUID(UUIDBytes: UnsafePointer<UInt8>(OpaquePointer(data.bytes)))
+        let uuid = NSUUID(UUIDBytes: data.bytes.assumingMemoryBound(to: UInt8.self))
         uuid.encode(with: coder)
         return self.init(coder: coder)
         #else
-        return self.init(uuidBytes: UnsafePointer<UInt8>(OpaquePointer(data.bytes)))
+        return self.init(uuidBytes: data.bytes.assumingMemoryBound(to: UInt8.self))
         #endif
     }
 }

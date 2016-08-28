@@ -53,7 +53,7 @@ public class Statement {
             let sqlStart = UnsafePointer<Int8>(codeUnits.baseAddress)!
             var sqlEnd: UnsafePointer<Int8>? = nil
             code = sqlite3_prepare_v2(database.sqliteConnection, sqlStart, -1, &sqliteStatement, &sqlEnd)
-            let remainingData = Data(bytesNoCopy: UnsafeMutableRawPointer(OpaquePointer(sqlEnd!)), count: sqlStart + sqlCodeUnits.count - sqlEnd! - 1, deallocator: .none)
+            let remainingData = Data(bytesNoCopy: UnsafeMutableRawPointer(mutating: sqlEnd!), count: sqlStart + sqlCodeUnits.count - sqlEnd! - 1, deallocator: .none)
             remainingSQL = String(data: remainingData, encoding: .utf8)!.trimmingCharacters(in: .whitespacesAndNewlines)
         }
         
@@ -470,6 +470,23 @@ public struct StatementArguments {
         values = sequence.map { $0 }
     }
     
+    /// Initializes arguments from [Any].
+    ///
+    /// The result is nil unless all objects adopt DatabaseValueConvertible.
+    ///
+    /// - parameter array: An array
+    /// - returns: A StatementArguments.
+    public init?(_ array: [Any]) {
+        var values = [DatabaseValueConvertible?]()
+        for value in array {
+            guard let databaseValue = DatabaseValue(value: value) else {
+                return nil
+            }
+            values.append(databaseValue)
+        }
+        self.init(values)
+    }
+    
     
     // MARK: Named Arguments
     
@@ -495,6 +512,27 @@ public struct StatementArguments {
     /// - returns: A StatementArguments.
     public init<Sequence: Swift.Sequence>(_ sequence: Sequence) where Sequence.Iterator.Element == (String, DatabaseValueConvertible?) {
         namedValues = Dictionary(keyValueSequence: sequence)
+    }
+    
+    /// Initializes arguments from [AnyHashable: Any].
+    ///
+    /// The result is nil unless all dictionary keys are strings, and values
+    /// adopt DatabaseValueConvertible.
+    ///
+    /// - parameter dictionary: A dictionary.
+    /// - returns: A StatementArguments.
+    public init?(_ dictionary: [AnyHashable: Any]) {
+        var initDictionary = [String: DatabaseValueConvertible?]()
+        for (key, value) in dictionary {
+            guard let columnName = key as? String else {
+                return nil
+            }
+            guard let databaseValue = DatabaseValue(value: value) else {
+                return nil
+            }
+            initDictionary[columnName] = databaseValue
+        }
+        self.init(initDictionary)
     }
     
     

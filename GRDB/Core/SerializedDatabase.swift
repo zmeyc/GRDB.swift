@@ -54,7 +54,7 @@ final class SerializedDatabase {
     /// its result.
     ///
     /// This method is *not* reentrant.
-    func sync<T>(_ block: @noescape (_ db: Database) throws -> T) rethrows -> T {
+    func sync<T>(_ block: (Database) throws -> T) rethrows -> T {
         // Three different cases:
         //
         // 1. A database is invoked from some queue like the main queue:
@@ -128,7 +128,7 @@ final class SerializedDatabase {
     }
     
     /// Asynchronously executes a block in the serialized dispatch queue.
-    func async(_ block: @escaping (_ db: Database) -> Void) {
+    func async(_ block: @escaping (Database) -> Void) {
         queue.async {
             block(self.db)
         }
@@ -137,7 +137,7 @@ final class SerializedDatabase {
     /// Executes the block in the current queue.
     ///
     /// - precondition: the current dispatch queue is valid.
-    func execute<T>(_ block: @noescape (_ db: Database) throws -> T) rethrows -> T {
+    func execute<T>(_ block: (Database) throws -> T) rethrows -> T {
         preconditionValidQueue()
         return try block(db)
     }

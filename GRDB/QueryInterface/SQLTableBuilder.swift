@@ -23,7 +23,7 @@ extension Database {
     ///     - body: A closure that defines table columns and constraints.
     /// - throws: A DatabaseError whenever an SQLite error occurs.
     @available(iOS 8.2, OSX 10.10, *)
-    public func create(table name: String, temporary: Bool = false, ifNotExists: Bool = false, withoutRowID: Bool, body: @noescape (TableDefinition) -> Void) throws {
+    public func create(table name: String, temporary: Bool = false, ifNotExists: Bool = false, withoutRowID: Bool, body: (TableDefinition) -> Void) throws {
         // WITHOUT ROWID was added in SQLite 3.8.2 http://www.sqlite.org/changes.html#version_3_8_2
         // It is available from iOS 8.2 and OS X 10.10 https://github.com/yapstudios/YapDatabase/wiki/SQLite-version-(bundled-with-OS)
         let definition = TableDefinition(name: name, temporary: temporary, ifNotExists: ifNotExists, withoutRowID: withoutRowID)
@@ -50,7 +50,7 @@ extension Database {
     ///     - ifNotExists: If false, no error is thrown if table already exists.
     ///     - body: A closure that defines table columns and constraints.
     /// - throws: A DatabaseError whenever an SQLite error occurs.
-    public func create(table name: String, temporary: Bool = false, ifNotExists: Bool = false, body: @noescape (TableDefinition) -> Void) throws {
+    public func create(table name: String, temporary: Bool = false, ifNotExists: Bool = false, body: (TableDefinition) -> Void) throws {
         let definition = TableDefinition(name: name, temporary: temporary, ifNotExists: ifNotExists, withoutRowID: false)
         body(definition)
         let sql = try definition.sql(self)
@@ -78,7 +78,7 @@ extension Database {
     ///     - name: The table name.
     ///     - body: A closure that defines table alterations.
     /// - throws: A DatabaseError whenever an SQLite error occurs.
-    public func alter(table name: String, body: @noescape (TableAlteration) -> Void) throws {
+    public func alter(table name: String, body: (TableAlteration) -> Void) throws {
         let alteration = TableAlteration(name: name)
         body(alteration)
         let sql = try alteration.sql(self)
@@ -285,9 +285,18 @@ public final class TableDefinition {
         }
         chunks.append(name.quotedDatabaseIdentifier)
         
+        let primaryKeyColumns: [String]
+        if let (columns, _) = primaryKeyConstraint {
+            primaryKeyColumns = columns
+        } else if let index = columns.index(where: { $0.primaryKey != nil }) {
+            primaryKeyColumns = [columns[index].name]
+        } else {
+            primaryKeyColumns = []
+        }
+        
         do {
             var items: [String] = []
-            try items.append(contentsOf: columns.map { try $0.sql(db) })
+            try items.append(contentsOf: columns.map { try $0.sql(db, tableName: name, primaryKeyColumns: primaryKeyColumns) })
             
             if let (columns, conflictResolution) = primaryKeyConstraint {
                 var chunks: [String] = []
@@ -318,6 +327,8 @@ public final class TableDefinition {
                 chunks.append("REFERENCES")
                 if let destinationColumns = destinationColumns {
                     chunks.append("\(table.quotedDatabaseIdentifier)(\((destinationColumns.map { $0.quotedDatabaseIdentifier } as [String]).joined(separator: ", ")))")
+                } else if table == name {
+                    chunks.append("\(table.quotedDatabaseIdentifier)(\((primaryKeyColumns.map { $0.quotedDatabaseIdentifier } as [String]).joined(separator: ", ")))")
                 } else if let primaryKey = try db.primaryKey(table) {
                     chunks.append("\(table.quotedDatabaseIdentifier)(\((primaryKey.columns.map { $0.quotedDatabaseIdentifier } as [String]).joined(separator: ", ")))")
                 } else {
@@ -399,7 +410,7 @@ public final class TableAlteration {
             chunks.append("ALTER TABLE")
             chunks.append(name.quotedDatabaseIdentifier)
             chunks.append("ADD COLUMN")
-            try chunks.append(column.sql(db))
+            try chunks.append(column.sql(db, tableName: nil, primaryKeyColumns: nil))
             let statement = chunks.joined(separator: " ")
             statements.append(statement)
         }
@@ -423,15 +434,15 @@ public final class TableAlteration {
 /// See https://www.sqlite.org/lang_createtable.html and
 /// https://www.sqlite.org/lang_altertable.html
 public final class ColumnDefinition {
-    private let name: String
+    fileprivate let name: String
     private let type: SQLColumnType
-    private var primaryKey: (conflictResolution: SQLConflictResolution?, autoincrement: Bool)?
+    fileprivate var primaryKey: (conflictResolution: SQLConflictResolution?, autoincrement: Bool)?
     private var notNullConflictResolution: SQLConflictResolution?
     private var uniqueConflictResolution: SQLConflictResolution?
-    private var checkExpression: _SQLExpression?
+    private var checkConstraints: [_SQLExpression] = []
+    private var foreignKeyConstraints: [(table: String, column: String?, deleteAction: SQLForeignKeyAction?, updateAction: SQLForeignKeyAction?, deferred: Bool)] = []
     private var defaultExpression: _SQLExpression?
     private var collationName: String?
-    private var reference: (table: String, column: String?, deleteAction: SQLForeignKeyAction?, updateAction: SQLForeignKeyAction?, deferred: Bool)?
     
     init(name: String, type: SQLColumnType) {
         self.name = name
@@ -500,8 +511,8 @@ public final class ColumnDefinition {
     /// - parameter condition: A closure whose argument is an Column that
     ///   represents the defined column, and returns the expression to check.
     /// - returns: Self so that you can further refine the column definition.
-    @discardableResult public func check(_ condition: @noescape (Column) -> SQLExpressible) -> Self {
-        checkExpression = condition(Column(name)).sqlExpression
+    @discardableResult public func check(_ condition: (Column) -> SQLExpressible) -> Self {
+        checkConstraints.append(condition(Column(name)).sqlExpression)
         return self
     }
     
@@ -516,21 +527,21 @@ public final class ColumnDefinition {
     /// - parameter sql: An SQL snippet.
     /// - returns: Self so that you can further refine the column definition.
     @discardableResult public func check(sql: String) -> Self {
-        checkExpression = _SQLExpression.sqlLiteral(sql, nil)
+        checkConstraints.append(_SQLExpression.sqlLiteral(sql, nil))
         return self
     }
     
     /// Defines the default column value.
     ///
     ///     try db.create(table: "persons") { t in
-    ///         t.column("name", .text).defaults("Anonymous")
+    ///         t.column("name", .text).defaults(to: "Anonymous")
     ///     }
     ///
     /// See https://www.sqlite.org/lang_createtable.html#dfltval
     ///
     /// - parameter value: A DatabaseValueConvertible value.
     /// - returns: Self so that you can further refine the column definition.
-    @discardableResult public func defaults(_ value: DatabaseValueConvertible) -> Self {
+    @discardableResult public func defaults(to value: DatabaseValueConvertible) -> Self {
         defaultExpression = value.sqlExpression
         return self
     }
@@ -598,11 +609,11 @@ public final class ColumnDefinition {
     ///       See https://www.sqlite.org/foreignkeys.html#fk_deferred.
     /// - returns: Self so that you can further refine the column definition.
     @discardableResult public func references(_ table: String, column: String? = nil, onDelete deleteAction: SQLForeignKeyAction? = nil, onUpdate updateAction: SQLForeignKeyAction? = nil, deferred: Bool = false) -> Self {
-        reference = (table: table, column: column, deleteAction: deleteAction, updateAction: updateAction, deferred: deferred)
+        foreignKeyConstraints.append((table: table, column: column, deleteAction: deleteAction, updateAction: updateAction, deferred: deferred))
         return self
     }
     
-    fileprivate func sql(_ db: Database) throws -> String {
+    fileprivate func sql(_ db: Database, tableName: String?, primaryKeyColumns: [String]?) throws -> String {
         var chunks: [String] = []
         chunks.append(name.quotedDatabaseIdentifier)
         chunks.append(type.rawValue)
@@ -638,10 +649,10 @@ public final class ColumnDefinition {
             chunks.append(conflictResolution.rawValue)
         }
         
-        if let checkExpression = checkExpression {
+        for checkConstraint in checkConstraints {
             chunks.append("CHECK")
-            var arguments: StatementArguments? = nil // nil so that checkExpression.sql(&arguments) embeds literals
-            chunks.append("(" + checkExpression.sql(&arguments) + ")")
+            var arguments: StatementArguments? = nil // nil so that checkConstraint.sql(&arguments) embeds literals
+            chunks.append("(" + checkConstraint.sql(&arguments) + ")")
         }
         
         if let defaultExpression = defaultExpression {
@@ -655,10 +666,12 @@ public final class ColumnDefinition {
             chunks.append(collationName)
         }
         
-        if let (table, column, deleteAction, updateAction, deferred) = reference {
+        for (table, column, deleteAction, updateAction, deferred) in foreignKeyConstraints {
             chunks.append("REFERENCES")
             if let column = column {
                 chunks.append("\(table.quotedDatabaseIdentifier)(\(column.quotedDatabaseIdentifier))")
+            } else if let tableName = tableName, let primaryKeyColumns = primaryKeyColumns, table == tableName {
+                chunks.append("\(table.quotedDatabaseIdentifier)(\((primaryKeyColumns.map { $0.quotedDatabaseIdentifier } as [String]).joined(separator: ", ")))")
             } else if let primaryKey = try db.primaryKey(table) {
                 chunks.append("\(table.quotedDatabaseIdentifier)(\((primaryKey.columns.map { $0.quotedDatabaseIdentifier } as [String]).joined(separator: ", ")))")
             } else {
@@ -704,7 +717,7 @@ fileprivate struct IndexDefinition {
         chunks.append("\(table.quotedDatabaseIdentifier)(\((columns.map { $0.quotedDatabaseIdentifier } as [String]).joined(separator: ", ")))")
         if let condition = condition {
             chunks.append("WHERE")
-            var arguments: StatementArguments? = nil // nil so that checkExpression.sql(&arguments) embeds literals
+            var arguments: StatementArguments? = nil // nil so that condition.sql(&arguments) embeds literals
             chunks.append(condition.sql(&arguments))
         }
         return chunks.joined(separator: " ")

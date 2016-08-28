@@ -1,3 +1,5 @@
+import Foundation
+
 #if !USING_BUILTIN_SQLITE
     #if SWIFT_PACKAGE || Xcode
         import CSQLite
@@ -62,6 +64,15 @@ public final class DatabasePool {
                 // https://www.sqlite.org/pragma.html#pragma_synchronous
                 // > Many applications choose NORMAL when in WAL mode
                 try db.execute("PRAGMA synchronous = NORMAL")
+                
+                if !FileManager.default.fileExists(atPath: path + "-wal") {
+                    // Create the -wal file if it does not exist yet. This
+                    // avoids an SQLITE_CANTOPEN (14) error whenever a user
+                    // opens a pool to an existing non-WAL database, and
+                    // attempts to read from it.
+                    // See https://github.com/groue/GRDB.swift/issues/102
+                    try db.execute("CREATE TABLE grdb_issue_102 (id INTEGER PRIMARY KEY); DROP TABLE grdb_issue_102;")
+                }
             }
         }
         
@@ -270,7 +281,7 @@ extension DatabasePool : DatabaseReader {
     ///
     /// - parameter block: A block that accesses the database.
     /// - throws: The error thrown by the block.
-    public func read<T>(_ block: @noescape (_ db: Database) throws -> T) rethrows -> T {
+    public func read<T>(_ block: (Database) throws -> T) rethrows -> T {
         // The block isolation comes from the DEFERRED transaction.
         // See DatabasePoolTests.testReadMethodIsolationOfBlock().
         return try readerPool.get { reader in
@@ -305,7 +316,7 @@ extension DatabasePool : DatabaseReader {
     ///
     /// - parameter block: A block that accesses the database.
     /// - throws: The error thrown by the block.
-    public func nonIsolatedRead<T>(_ block: @noescape (_ db: Database) throws -> T) rethrows -> T {
+    public func nonIsolatedRead<T>(_ block: (Database) throws -> T) rethrows -> T {
         return try readerPool.get { reader in
             try reader.sync { db in
                 try block(db)
@@ -387,7 +398,7 @@ extension DatabasePool : DatabaseWriter {
     ///
     /// - parameter block: A block that accesses the database.
     /// - throws: The error thrown by the block.
-    public func write<T>(_ block: @noescape (_ db: Database) throws -> T) rethrows -> T {
+    public func write<T>(_ block: (Database) throws -> T) rethrows -> T {
         return try writer.sync(block)
     }
     
@@ -412,7 +423,7 @@ extension DatabasePool : DatabaseWriter {
     ///     - block: A block that executes SQL statements and return either
     ///       .commit or .rollback.
     /// - throws: The error thrown by the block.
-    public func writeInTransaction(_ kind: TransactionKind? = nil, _ block: @noescape (_ db: Database) throws -> TransactionCompletion) throws {
+    public func writeInTransaction(_ kind: TransactionKind? = nil, _ block: (Database) throws -> TransactionCompletion) throws {
         try writer.sync { db in
             try db.inTransaction(kind) {
                 try block(db)
@@ -446,7 +457,7 @@ extension DatabasePool : DatabaseWriter {
     ///
     /// The database pool releases the writing dispatch queue early, before the
     /// block has finished.
-    public func readFromWrite(_ block: @escaping (_ db: Database) -> Void) {
+    public func readFromWrite(_ block: @escaping (Database) -> Void) {
         writer.preconditionValidQueue()
         
         let semaphore = DispatchSemaphore(value: 0)

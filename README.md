@@ -3,9 +3,9 @@ GRDB.swift [![Swift](https://img.shields.io/badge/swift-3-orange.svg?style=flat)
 
 ### A Swift application toolkit for SQLite databases.
 
-**Requirements**: iOS 8.0+ / OSX 10.9+ &bull; Xcode Version 8.0 beta 4 (8S188o) &bull; Swift 3.
+**Requirements**: iOS 8.0+ / OSX 10.9+ &bull; Xcode Version 8.0 beta 6 (8S201h) &bull; Swift 3.
 
-The Swift3 branch has no version. It is currently synced with v0.78.0 of the Swift 2.2 [main branch](https://github.com/groue/GRDB.swift).
+The Swift3 branch has no version. It is currently synced with v0.79.4 of the Swift 2.2 [main branch](https://github.com/groue/GRDB.swift).
 
 Follow [@groue](http://twitter.com/groue) on Twitter for release announcements and usage tips.
 
@@ -115,10 +115,10 @@ try dbQueue.inDatabase { db in
         title: "Berlin",
         isFavorite: false,
         coordinate: CLLocationCoordinate2DMake(52.52437, 13.41053))
-
+    
     try berlin.insert(db)
     berlin.id // some value
-
+    
     berlin.isFavorite = true
     try berlin.update(db)
     
@@ -134,7 +134,7 @@ dbQueue.inDatabase { db in
     try db.create(table: "pointOfInterests") { t in
         t.column("id", .integer).primaryKey()
         t.column("title", .text).notNull()
-        t.column("favorite", .boolean).notNull().defaults(false)
+        t.column("favorite", .boolean).notNull().defaults(to: false)
         t.column("longitude", .double).notNull()
         t.column("latitude", .double).notNull()
     }
@@ -170,10 +170,13 @@ Documentation
 
 - [SQLite API](#sqlite-api): The low-level SQLite API &bull; [executing updates](#executing-updates) &bull; [fetch queries](#fetch-queries)
 
-**Application Tools**
+**Records and the Query Interface**
 
 - [Records](#records): Fetching and persistence methods for your custom structs and class hierarchies.
 - [Query Interface](#the-query-interface): A swift way to generate SQL &bull; [table creation](#database-schema) &bull; [fetch requests](#requests)
+
+**Application Tools**
+
 - [Migrations](#migrations): Transform your database as your application evolves.
 - [Database Changes Observation](#database-changes-observation): Perform post-commit and post-rollback actions.
 - [FetchedRecordsController](#fetchedrecordscontroller): Automatic database changes tracking, plus UITableView animations.
@@ -299,7 +302,7 @@ let dbQueue = try DatabaseQueue(
     configuration: config)
 ```
 
-See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Structs/Configuration.html) for more details.
+See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Structs/Configuration.html) for more details.
 
 
 ## Database Pools
@@ -379,7 +382,7 @@ let dbPool = try DatabasePool(
     configuration: config)
 ```
 
-See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Structs/Configuration.html) for more details.
+See [Configuration](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Structs/Configuration.html) for more details.
 
 
 Database pools are more memory-hungry than database queues. See [Memory Management](#memory-management) for more information.
@@ -588,7 +591,8 @@ Unlike row arrays that contain copies of the database rows, row sequences are cl
 
 ```swift
 let name: String = row.value(atIndex: 0)    // 0 is the leftmost column
-let name: String = row.value(named: "name") // leftmost matching column - lookup is case-insensitive
+let name: String = row.value(named: "name") // Leftmost matching column - lookup is case-insensitive
+let name: String = row.value(nameColumn)    // Using query interface's SQLColumn
 ```
 
 Make sure to ask for an optional when the value may be NULL:
@@ -906,17 +910,26 @@ Here is the support provided by GRDB for the various [date formats](https://www.
 
 #### Date
 
-**GRDB stores Date using the format "yyyy-MM-dd HH:mm:ss.SSS" in the UTC time zone.** It is precise to the millisecond.
-
-This format may not fit your needs. We provide below some sample code for [storing dates as timestamps](#custom-value-types) that you can adapt for your application.
-
-Date can be stored and fetched from the database just like other [value types](#values):
+**Date** can be stored and fetched from the database just like other [value types](#values):
 
 ```swift
 try db.execute(
     "INSERT INTO persons (creationDate, ...) VALUES (?, ...)",
     arguments: [Date(), ...])
+
+let creationDate: Date = row.value(named: "creationDate")
 ```
+
+Dates are stored using the format "YYYY-MM-DD HH:MM:SS.SSS" in the UTC time zone. It is precise to the millisecond.
+
+> :point_up: **Note**: this format was chosen because it is the only format that is:
+> 
+> - Comparable (`ORDER BY date` works)
+> - Comparable with the SQLite keyword NOW (`WHERE date > NOW` works)
+> - Able to feed [SQLite date & time functions](https://www.sqlite.org/lang_datefunc.html)
+> - Precise enough
+> 
+> Yet this format may not fit your needs. For example, you may want to store dates as timestamps. In this case, store and load Doubles instead of Date, and perform the required conversions.
 
 
 #### DateComponents
@@ -1032,9 +1045,8 @@ row.value(atIndex: 0) as Grape?  // fatal error: could not convert "syrah" to Gr
 row.value(atIndex: 0) as Grape   // fatal error: could not convert "syrah" to Grape.
 
 let dbv = row.databaseValue(atIndex: 0)
-dbv.value() as String           // "syrah"
-dbv.value() as Grape?           // fatal error: could not convert "syrah" to Grape.
-Grape.fromDatabaseValue(dbv)    // nil
+String.fromDatabaseValue(dbv) // "Syrah"
+Grape.fromDatabaseValue(dbv)  // nil
 ```
 
 
@@ -1163,8 +1175,6 @@ All types that adopt this protocol can be used like all other [value types](#val
 The `databaseValue` property returns [DatabaseValue](#databasevalue), a type that wraps the five values supported by SQLite: NULL, Int64, Double, String and Data. DatabaseValue has no public initializer: to create one, use `DatabaseValue.null`, or another type that already adopts the protocol: `1.databaseValue`, `"foo".databaseValue`, etc.
 
 The `fromDatabaseValue()` factory method returns an instance of your custom type if the databaseValue contains a suitable value. If the databaseValue does not contain a suitable value, such as "foo" for Date, the method returns nil.
-
-As an example, see [DatabaseTimestamp.playground](Playgrounds/DatabaseTimestamp.playground/Contents.swift): it shows how to store dates as timestamps, unlike the built-in [Date](#date-and-datecomponents).
 
 
 ## Prepared Statements
@@ -1467,10 +1477,10 @@ for person in Person.fetch(db, sql, adapter: adapter) {
 
 For more information about row adapters, see the documentation of:
 
-- [RowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Protocols/RowAdapter.html): the protocol that lets you define your custom row adapters
-- [ColumnMapping](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Structs/ColumnMapping.html): a row adapter that renames row columns
-- [SuffixRowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Structs/SuffixRowAdapter.html): a row adapter that hides the first columns of a row
-- [ScopeAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Structs/ScopeAdapter.html): the row adapter that groups several adapters together to define scopes
+- [RowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Protocols/RowAdapter.html): the protocol that lets you define your custom row adapters
+- [ColumnMapping](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Structs/ColumnMapping.html): a row adapter that renames row columns
+- [SuffixRowAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Structs/SuffixRowAdapter.html): a row adapter that hides the first columns of a row
+- [ScopeAdapter](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Structs/ScopeAdapter.html): the row adapter that groups several adapters together to define scopes
 
 
 ## Raw SQLite Pointers
@@ -1525,21 +1535,8 @@ Before jumping in the low-level wagon, here is a reminder of most SQLite APIs us
     - [sqlite3_set_authorizer](https://www.sqlite.org/c3ref/set_authorizer.html)
 
 
-Application Tools
-=================
-
-On top of the SQLite API described above, GRDB provides a toolkit for applications. While none of those are mandatory, all of them help dealing with the database:
-
-- [Records](#records): Fetching and persistence methods for your custom structs and class hierarchies.
-- [Query Interface](#the-query-interface): A swift way to generate SQL.
-- [Migrations](#migrations): Transform your database as your application evolves.
-- [Database Changes Observation](#database-changes-observation): Perform post-commit and post-rollback actions.
-- [FetchedRecordsController](#fetchedrecordscontroller): Automatic database changes tracking, plus UITableView animations.
-- [Encryption](#encryption): Encrypt your database with SQLCipher.
-- [Backup](#backup): Dump the content of a database to another.
-
-
-## Records
+Records
+=======
 
 **On top of the [SQLite API](#sqlite-api), GRDB provides protocols and a class** that help manipulating database rows as regular objects named "records":
 
@@ -1555,7 +1552,7 @@ Your custom structs and classes can adopt each protocol individually, and opt in
 > :point_up: **Note**: if you are familiar with Core Data's NSManagedObject or Realm's Object, you may experience a cultural shock: GRDB records are not uniqued, and do not auto-update. This is both a purpose, and a consequence of protocol-oriented programming. You should read [How to build an iOS application with SQLite and GRDB.swift](https://medium.com/@gwendal.roue/how-to-build-an-ios-application-with-sqlite-and-grdb-swift-d023a06c29b3) for a general introduction.
 
 
-#### Inserting Records
+### Inserting Records
 
 To insert a record in the database, subclass the [Record](#record-class) class or adopt the [Persistable](#persistable-protocol) protocol, and call the `insert` method:
 
@@ -1569,7 +1566,7 @@ try person.insert(db)
 Of course, you need to open a [database connection](#database-connections), and [create a database table](#database-schema) first.
 
 
-#### Fetching Records
+### Fetching Records
 
 [Record](#record-class) subclasses and types that adopt the [RowConvertible](#rowconvertible-protocol) protocol can be fetched from the database:
 
@@ -1590,7 +1587,7 @@ let countries = Country.fetchAll(db, keys: ["FR", "US"])
 To learn more about querying records, check the [query interface](#the-query-interface).
 
 
-#### Updating Records
+### Updating Records
 
 [Record](#record-class) subclasses and types that adopt the [Persistable](#persistable-protocol) protocol can be updated in the database:
 
@@ -1617,7 +1614,7 @@ try db.execute("UPDATE persons SET synchronized = 1")
 ```
 
 
-#### Deleting Records
+### Deleting Records
 
 [Record](#record-class) subclasses and types that adopt the [Persistable](#persistable-protocol) protocol can be deleted from the database:
 
@@ -1641,7 +1638,7 @@ try db.execute("DELETE FROM persons")
 ```
 
 
-#### Counting Records
+### Counting Records
 
 [Record](#record-class) subclasses and types that adopt the [TableMapping](#tablemapping-protocol) protocol can be counted:
 
@@ -1659,7 +1656,7 @@ You can now jump to:
 - [The Query Interface](#the-query-interface)
 
 
-### RowConvertible Protocol
+## RowConvertible Protocol
 
 **The RowConvertible protocol grants fetching methods to any type** that can be built from a database row:
 
@@ -1709,7 +1706,7 @@ PointOfInterest.fetchOne(db, "SELECT ...", arguments:...) // PointOfInterest?
 See [fetching methods](#fetching-methods) for information about the `fetch`, `fetchAll` and `fetchOne` methods. See [fetching rows](#fetching-rows) for more information about the query arguments.
 
 
-#### RowConvertible and Row Adapters
+### RowConvertible and Row Adapters
 
 RowConvertible types usually consume rows by column name:
 
@@ -1728,7 +1725,7 @@ extension PointOfInterest : RowConvertible {
 Occasionnally, you'll want to write a complex SQL query that uses different column names. In this case, [row adapters](#row-adapters) are there to help you mapping raw column names to the names expected by your RowConvertible types.
 
 
-### TableMapping Protocol
+## TableMapping Protocol
 
 **Adopt the TableMapping protocol** on top of [RowConvertible](#rowconvertible-protocol), and you are granted with the full [query interface](#the-query-interface).
 
@@ -1784,7 +1781,7 @@ Person.fetchOne(db, key: ["name": "Arthur"]) // fatal error: table persons has n
 ```
 
 
-### Persistable Protocol
+## Persistable Protocol
 
 **GRDB provides two protocols that let adopting types store themselves in the database:**
 
@@ -1851,7 +1848,7 @@ paris.id   // some value
 ```
 
 
-#### Persistence Methods
+### Persistence Methods
 
 [Record](#record-class) subclasses and types that adopt [Persistable](#persistable-protocol) are given default implementations for methods that insert, update, and delete:
 
@@ -1881,7 +1878,7 @@ pointOfInterest.exists(db)                   // Bool
 **All primary keys are supported**, including primary keys that span several columns.
 
 
-#### Customizing the Persistence Methods
+### Customizing the Persistence Methods
 
 Your custom type may want to perform extra work when the persistence methods are invoked.
 
@@ -1931,7 +1928,7 @@ struct Link : Persistable {
 > :point_up: **Note**: it is recommended that you do not implement your own version of the `save` method. Its default implementation forwards the job to `update` or `insert`: these are the methods that may need customization, not `save`.
 
 
-### Record Class
+## Record Class
 
 **Record** is a class that is designed to be subclassed, and provides the full GRDB Record toolkit in one go:
 
@@ -2037,7 +2034,7 @@ try poi.delete(db)
 ```
 
 
-#### Changes Tracking
+### Changes Tracking
 
 **The [Record](#record-class) class provides changes tracking.**
 
@@ -2072,7 +2069,8 @@ person.persistentChangedValues    // ["age": 35]
 For an efficient algorithm which synchronizes the content of a database table with a JSON payload, check [JSONSynchronization.playground](Playgrounds/JSONSynchronization.playground/Contents.swift).
 
 
-## The Query Interface
+The Query Interface
+===================
 
 **The query interface lets you write pure Swift instead of SQL:**
 
@@ -2102,7 +2100,7 @@ So don't miss the [SQL API](#sqlite-api).
 - [Fetching Aggregated Values](#fetching-aggregated-values)
 
 
-### Database Schema
+## Database Schema
 
 Once granted with a [database connection](#database-connections), you can setup your database schema without writing SQL:
 
@@ -2112,7 +2110,7 @@ Once granted with a [database connection](#database-connections), you can setup 
 - [Create Indexes](#create-indexes)
 
 
-#### Create Tables
+### Create Tables
 
 ```swift
 // CREATE TABLE pointOfInterests (
@@ -2125,7 +2123,7 @@ Once granted with a [database connection](#database-connections), you can setup 
 try db.create(table: "pointOfInterests") { t in
     t.column("id", .integer).primaryKey()
     t.column("title", .text)
-    t.column("favorite", .boolean).notNull().defaults(false)
+    t.column("favorite", .boolean).notNull().defaults(to: false)
     t.column("longitude", .double).notNull()
     t.column("latitude", .double).notNull()
 }
@@ -2167,7 +2165,7 @@ Define **not null** columns, and set **default** values:
     t.column("email", .text).notNull()
     
     // name TEXT NOT NULL DEFAULT 'Anonymous',
-    t.column("name", .text).notNull().defaults("Anonymous")
+    t.column("name", .text).notNull().defaults(to: "Anonymous")
 ```
     
 Use an individual column as **primary**, **unique**, or **foreign key**. When defining a foreign key, the referenced column is the primary key of the referenced table (unless you specify otherwise):
@@ -2201,8 +2199,8 @@ Other **table constraints** can involve several columns:
     // UNIQUE (a, b) ON CONFLICT REPLACE,
     t.uniqueKey(["a", "b"], onConfict: .replace)
     
-    // FOREIGN KEY (c, d) REFERENCES parents(a, b),
-    t.foreignKey(["c", "d"], references: "parent")
+    // FOREIGN KEY (a, b) REFERENCES parents(c, d),
+    t.foreignKey(["a", "b"], references: "parent")
     
     // CHECK (a + b < 10),
     t.check(Column("a") + Column("b") < 10)
@@ -2212,7 +2210,7 @@ Other **table constraints** can involve several columns:
 }
 ```
 
-#### Modify Tables
+### Modify Tables
 
 SQLite lets you rename tables, and add columns to existing tables:
 
@@ -2229,7 +2227,7 @@ try db.alter(table: "persons") { t in
 > :point_up: **Note**: SQLite restricts the possible table alterations, and may require you to recreate dependent triggers or views. See the documentation of the [ALTER TABLE](https://www.sqlite.org/lang_altertable.html) for details. See [Advanced Database Schema Changes](#advanced-database-schema-changes) for a way to lift restrictions.
 
 
-#### Drop Tables
+### Drop Tables
 
 Drop tables with the `drop(table:)` method:
 
@@ -2237,7 +2235,7 @@ Drop tables with the `drop(table:)` method:
 try db.drop(table: "obsolete")
 ```
 
-#### Create Indexes
+### Create Indexes
 
 Create indexes with the `create(index:)` method:
 
@@ -2253,7 +2251,7 @@ Relevant SQLite documentation:
 - [Partial Indexes](https://www.sqlite.org/partialindex.html)
 
 
-### Requests
+## Requests
 
 **The query interface requests** let you fetch values from the database:
 
@@ -2403,12 +2401,12 @@ Person
 ```
 
 
-### Expressions
+## Expressions
 
 Feed [requests](#requests) with SQL expressions built from your Swift code:
 
 
-#### SQL Operators
+### SQL Operators
 
 - `=`, `<>`, `<`, `<=`, `>`, `>=`, `IS`, `IS NOT`
     
@@ -2501,7 +2499,7 @@ Feed [requests](#requests) with SQL expressions built from your Swift code:
     ```
 
 
-#### SQL Functions
+### SQL Functions
 
 - `ABS`, `AVG`, `COUNT`, `LENGTH`, `MAX`, `MIN`, `SUM`:
     
@@ -2554,7 +2552,7 @@ Feed [requests](#requests) with SQL expressions built from your Swift code:
     ```
 
     
-### Fetching from Requests
+## Fetching from Requests
 
 Once you have a request, you can fetch the records at the origin of the request:
 
@@ -2593,7 +2591,7 @@ let maxHeight = row.value(atIndex: 1) as Double?
 ```
 
 
-### Fetching By Primary Key
+## Fetching By Primary Key
 
 **Fetching records according to their primary key** is a very common task. It has a shortcut which accepts any single-column primary key:
 
@@ -2625,7 +2623,7 @@ Person.fetchOne(db, key: ["email": "arthur@example.com"]) // Person?
 ```
 
 
-### Fetching Aggregated Values
+## Fetching Aggregated Values
 
 **Requests can count.** The `fetchCount()` method returns the number of rows that would be returned by a fetch request:
 
@@ -2655,6 +2653,18 @@ let row = Row.fetchOne(db, request)!
 let minHeight = row.value(atIndex: 0) as Double?
 let maxHeight = row.value(atIndex: 1) as Double?
 ```
+
+
+Application Tools
+=================
+
+On top of the APIs described above, GRDB provides a toolkit for applications. While none of those are mandatory, all of them help dealing with the database:
+
+- [Migrations](#migrations): Transform your database as your application evolves.
+- [Database Changes Observation](#database-changes-observation): Perform post-commit and post-rollback actions.
+- [FetchedRecordsController](#fetchedrecordscontroller): Automatic database changes tracking, plus UITableView animations.
+- [Encryption](#encryption): Encrypt your database with SQLCipher.
+- [Backup](#backup): Dump the content of a database to another.
 
 
 ## Migrations
@@ -3332,7 +3342,7 @@ do {
 ```swift
 do {
     try person.update(db)
-} catch PersistenceError.NotFound {
+} catch PersistenceError.recordNotFound {
     // There was nothing to update
 }
 ```
@@ -3353,7 +3363,7 @@ They uncover programmer errors, false assumptions, and prevent misuses. Here are
     Row.fetchAll(db, "SELECT * FROM boooks")
     ```
     
-    Solution: fix the SQL query.
+    Solution: fix the SQL query:
     
     ```swift
     Row.fetchAll(db, "SELECT * FROM books")
@@ -3361,7 +3371,7 @@ They uncover programmer errors, false assumptions, and prevent misuses. Here are
     
     If you do have to run untrusted SQL queries, jump to [untrusted databases](#how-to-deal-with-untrusted-inputs).
 
-- The code asks for a non-optional values, when the database contains NULL:
+- The code asks for a non-optional value, when the database contains NULL:
     
     ```swift
     // fatal error: could not convert NULL to String.
@@ -3374,7 +3384,7 @@ They uncover programmer errors, false assumptions, and prevent misuses. Here are
     let name: String? = row.value(named: "name")
     ```
 
-- The code asks for an Date, when the database contains garbage:
+- The code asks for a Date, when the database contains garbage:
     
     ```swift
     // fatal error: could not convert "Mom's birthday" to Date.
@@ -3495,7 +3505,7 @@ Person.select(nameColumn.uppercased)
 
 SQLite compares strings in many occasions: when you sort rows according to a string column, or when you use a comparison operator such as `=` and `<=`.
 
-The comparison result comes from a *collating function*, or *collation*. SQLite comes with [three built-in collations](https://www.sqlite.org/datatype3.html#collation) that do not support Unicode: binary, nocase, and rtrim.
+The comparison result comes from a *collating function*, or *collation*. SQLite comes with three built-in collations that do not support Unicode: [binary, nocase, and rtrim](https://www.sqlite.org/datatype3.html#collation).
 
 GRDB comes with five extra collations that leverage unicode-aware comparisons based on the standard Swift String comparison functions and operators:
 
@@ -3620,7 +3630,7 @@ let count2 = dbQueue.inDatabase { db in
 
 SQLite concurrency is a wiiide topic.
 
-First have a detailed look at the full API of [DatabaseQueue](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Classes/DatabaseQueue.html) and [DatabasePool](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Classes/DatabasePool.html). Both adopt the [DatabaseReader](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Protocols/DatabaseReader.html) and [DatabaseWriter](http://cocoadocs.org/docsets/GRDB.swift/0.78.0/Protocols/DatabaseWriter.html) protocols, so that you can write code that targets both classes.
+First have a detailed look at the full API of [DatabaseQueue](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Classes/DatabaseQueue.html) and [DatabasePool](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Classes/DatabasePool.html). Both adopt the [DatabaseReader](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Protocols/DatabaseReader.html) and [DatabaseWriter](http://cocoadocs.org/docsets/GRDB.swift/0.79.4/Protocols/DatabaseWriter.html) protocols, so that you can write code that targets both classes.
 
 If the built-in queues and pools do not fit your needs, or if you can not guarantee that a single queue or pool is accessing your database file, you may have a look at:
 
@@ -3945,7 +3955,6 @@ Sample Code
 - The [Documentation](#documentation) is full of GRDB snippets.
 - [GRDBDemoiOS](DemoApps/GRDBDemoiOS): A sample iOS application.
 - Check `GRDB.xcworkspace`: it contains GRDB-enabled playgrounds to play with.
-- How to read and write Date as timestamp: [DatabaseTimestamp.playground](Playgrounds/DatabaseTimestamp.playground/Contents.swift)
 - How to synchronize a database table with a JSON payload: [JSONSynchronization.playground](Playgrounds/JSONSynchronization.playground/Contents.swift)
 - A class that behaves like NSUserDefaults, but backed by SQLite: [UserDefaults.playground](Playgrounds/UserDefaults.playground/Contents.swift)
 - How to notify view controllers of database changes: [TableChangeObserver.swift](https://gist.github.com/groue/2e21172719e634657dfd)

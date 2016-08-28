@@ -189,7 +189,7 @@ public final class Database {
         guard configuration.trace != nil else {
             return
         }
-        let dbPointer = unsafeBitCast(self, to: UnsafeMutablePointer<Void>.self)
+        let dbPointer = unsafeBitCast(self, to: UnsafeMutableRawPointer.self)
         sqlite3_trace(sqliteConnection, { (dbPointer, sql) in
             guard let sql = sql else { return }
             let database = unsafeBitCast(dbPointer, to: Database.self)
@@ -207,12 +207,11 @@ public final class Database {
             sqlite3_busy_timeout(sqliteConnection, milliseconds)
             
         case .callback(let callback):
-            let dbPointer = unsafeBitCast(self, to: UnsafeMutablePointer<Void>.self)
             busyCallback = callback
-            
+            let dbPointer = unsafeBitCast(self, to: UnsafeMutableRawPointer.self)
             sqlite3_busy_handler(
                 sqliteConnection,
-                { (dbPointer: UnsafeMutableRawPointer?, numberOfTries: Int32) in
+                { (dbPointer, numberOfTries) in
                     let database = unsafeBitCast(dbPointer, to: Database.self)
                     let callback = database.busyCallback!
                     return callback(Int(numberOfTries)) ? 1 : 0
@@ -506,7 +505,7 @@ extension Database {
                 
                 guard sqliteStatement != nil else {
                     // The remaining string contains only whitespace
-                    assert(String(data: Data(bytesNoCopy: UnsafeMutablePointer<UInt8>(OpaquePointer(statementStart)), count: statementEnd! - statementStart, deallocator: .none), encoding: .utf8)!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    assert(String(data: Data(bytesNoCopy: UnsafeMutableRawPointer(mutating: statementStart), count: statementEnd! - statementStart, deallocator: .none), encoding: .utf8)!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     break
                 }
                 
@@ -559,7 +558,7 @@ extension Database {
     ///     Int.fetchOne(db, "SELECT succ(1)")! // 2
     public func add(function: DatabaseFunction) {
         functions.update(with: function)
-        let functionPointer = unsafeBitCast(function, to: UnsafeMutablePointer<Void>.self)
+        let functionPointer = unsafeBitCast(function, to: UnsafeMutableRawPointer.self)
         let code = sqlite3_create_function_v2(
             sqliteConnection,
             function.name,
@@ -686,7 +685,7 @@ extension Database {
     ///     try db.execute("CREATE TABLE files (name TEXT COLLATE localized_standard")
     public func add(collation: DatabaseCollation) {
         collations.update(with: collation)
-        let collationPointer = unsafeBitCast(collation, to: UnsafeMutablePointer<Void>.self)
+        let collationPointer = unsafeBitCast(collation, to: UnsafeMutableRawPointer.self)
         let code = sqlite3_create_collation_v2(
             sqliteConnection,
             collation.name,
@@ -732,8 +731,8 @@ public final class DatabaseCollation {
         self.name = name
         self.function = { (length1, buffer1, length2, buffer2) in
             // Buffers are not C strings: they do not end with \0.
-            let string1 = String(bytesNoCopy: UnsafeMutableRawPointer(OpaquePointer(buffer1.unsafelyUnwrapped)), length: Int(length1), encoding: .utf8, freeWhenDone: false)!
-            let string2 = String(bytesNoCopy: UnsafeMutableRawPointer(OpaquePointer(buffer2.unsafelyUnwrapped)), length: Int(length2), encoding: .utf8, freeWhenDone: false)!
+            let string1 = String(bytesNoCopy: UnsafeMutableRawPointer(mutating: buffer1.unsafelyUnwrapped), length: Int(length1), encoding: .utf8, freeWhenDone: false)!
+            let string2 = String(bytesNoCopy: UnsafeMutableRawPointer(mutating: buffer2.unsafelyUnwrapped), length: Int(length2), encoding: .utf8, freeWhenDone: false)!
             return function(string1, string2)
         }
     }
@@ -1142,7 +1141,7 @@ final class StatementCompilationObserver {
     
     // Call this method before calling sqlite3_prepare_v2()
     func start() {
-        let observerPointer = unsafeBitCast(self, to: UnsafeMutablePointer<Void>.self)
+        let observerPointer = unsafeBitCast(self, to: UnsafeMutableRawPointer.self)
         sqlite3_set_authorizer(database.sqliteConnection, { (observerPointer, actionCode, CString1, CString2, CString3, CString4) -> Int32 in
             switch actionCode {
             case SQLITE_DROP_TABLE, SQLITE_DROP_TEMP_TABLE, SQLITE_DROP_TEMP_VIEW, SQLITE_DROP_VIEW, SQLITE_DETACH, SQLITE_ALTER_TABLE, SQLITE_DROP_VTABLE, SQLITE_CREATE_INDEX, SQLITE_CREATE_TEMP_INDEX, SQLITE_DROP_INDEX, SQLITE_DROP_TEMP_INDEX:
@@ -1238,7 +1237,7 @@ extension Database {
     ///     - block: A block that executes SQL statements and return either
     ///       .commit or .rollback.
     /// - throws: The error thrown by the block.
-    public func inTransaction(_ kind: TransactionKind? = nil, _ block: @noescape() throws -> TransactionCompletion) throws {
+    public func inTransaction(_ kind: TransactionKind? = nil, _ block: () throws -> TransactionCompletion) throws {
         // Begin transaction
         try beginTransaction(kind ?? configuration.defaultTransactionKind)
         
@@ -1293,7 +1292,7 @@ extension Database {
     /// - parameter block: A block that executes SQL statements and return
     ///   either .commit or .rollback.
     /// - throws: The error thrown by the block.
-    public func inSavepoint(_ block: @noescape() throws -> TransactionCompletion) throws {
+    public func inSavepoint(_ block: () throws -> TransactionCompletion) throws {
         // By default, top level SQLite savepoints open a deferred transaction.
         //
         // But GRDB database configuration mandates a default transaction kind
@@ -1634,8 +1633,7 @@ extension Database {
     }
     
     private func installTransactionObserverHooks() {
-        let dbPointer = unsafeBitCast(self, to: UnsafeMutablePointer<Void>.self)
-        
+        let dbPointer = unsafeBitCast(self, to: UnsafeMutableRawPointer.self)
         sqlite3_update_hook(sqliteConnection, { (dbPointer, updateKind, databaseNameCString, tableNameCString, rowID) in
             let db = unsafeBitCast(dbPointer, to: Database.self)
             db.didChange(with: DatabaseEvent(
@@ -1674,15 +1672,16 @@ extension Database {
             }, dbPointer)
         
         #if SQLITE_ENABLE_PREUPDATE_HOOK
-        sqlite3_preupdate_hook(sqliteConnection, { (dbPointer, databaseConnection, updateKind, databaseNameCString, tableNameCString, initialRowID, finalRowID) in
-            let db = unsafeBitCast(dbPointer, to: Database.self)
-            db.willChange(with: DatabasePreUpdateEvent(connection: databaseConnection!,
-                kind: DatabasePreUpdateEvent.Kind(rawValue: updateKind)!,
-                initialRowID: initialRowID,
-                finalRowID: finalRowID,
-                databaseNameCString: databaseNameCString,
-                tableNameCString: tableNameCString))
-            }, dbPointer)
+            sqlite3_preupdate_hook(sqliteConnection, { (dbPointer, databaseConnection, updateKind, databaseNameCString, tableNameCString, initialRowID, finalRowID) in
+                let db = unsafeBitCast(dbPointer, to: Database.self)
+                db.willChange(with: DatabasePreUpdateEvent(
+                    connection: databaseConnection!,
+                    kind: DatabasePreUpdateEvent.Kind(rawValue: updateKind)!,
+                    initialRowID: initialRowID,
+                    finalRowID: finalRowID,
+                    databaseNameCString: databaseNameCString,
+                    tableNameCString: tableNameCString))
+                }, dbPointer)
         #endif
     }
     

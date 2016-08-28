@@ -135,17 +135,19 @@ class SQLTableBuilderTests: GRDBTestCase {
                 try db.create(table: "test") { t in
                     t.column("a", .integer).check { $0 > 0 }
                     t.column("b", .integer).check(sql: "b <> 2")
+                    t.column("c", .integer).check { $0 > 0 }.check { $0 < 10 }
                 }
                 XCTAssertEqual(self.lastSQLQuery,
                     "CREATE TABLE \"test\" (" +
                         "\"a\" INTEGER CHECK ((\"a\" > 0)), " +
-                        "\"b\" INTEGER CHECK (b <> 2)" +
+                        "\"b\" INTEGER CHECK (b <> 2), " +
+                        "\"c\" INTEGER CHECK ((\"c\" > 0)) CHECK ((\"c\" < 10))" +
                     ")")
                 
                 // Sanity check
-                try db.execute("INSERT INTO test (a, b) VALUES (1, 0)")
+                try db.execute("INSERT INTO test (a, b, c) VALUES (1, 0, 1)")
                 do {
-                    try db.execute("INSERT INTO test (a, b) VALUES (0, 0)")
+                    try db.execute("INSERT INTO test (a, b, c) VALUES (0, 0, 1)")
                     XCTFail()
                 } catch {
                 }
@@ -158,10 +160,10 @@ class SQLTableBuilderTests: GRDBTestCase {
             let dbQueue = try makeDatabaseQueue()
             try dbQueue.inDatabase { db in
                 try db.create(table: "test") { t in
-                    t.column("a", .integer).defaults(1)
-                    t.column("b", .integer).defaults(1.0)
-                    t.column("c", .integer).defaults("'fooéı👨👨🏿🇫🇷🇨🇮'")
-                    t.column("d", .integer).defaults("foo".data(using: .utf8)!)
+                    t.column("a", .integer).defaults(to: 1)
+                    t.column("b", .integer).defaults(to: 1.0)
+                    t.column("c", .integer).defaults(to: "'fooéı👨👨🏿🇫🇷🇨🇮'")
+                    t.column("d", .integer).defaults(to: "foo".data(using: .utf8)!)
                     t.column("e", .integer).defaults(sql: "NULL")
                 }
                 XCTAssertEqual(self.lastSQLQuery,
@@ -221,11 +223,13 @@ class SQLTableBuilderTests: GRDBTestCase {
                 try db.create(table: "child") { t in
                     t.column("parentName", .text).references("parent", onDelete: .cascade, onUpdate: .cascade)
                     t.column("parentEmail", .text).references("parent", column: "email", onDelete: .restrict, deferred: true)
+                    t.column("weird", .text).references("parent", column: "name").references("parent", column: "email")
                 }
                 XCTAssertEqual(self.lastSQLQuery,
                     "CREATE TABLE \"child\" (" +
                         "\"parentName\" TEXT REFERENCES \"parent\"(\"name\") ON DELETE CASCADE ON UPDATE CASCADE, " +
-                        "\"parentEmail\" TEXT REFERENCES \"parent\"(\"email\") ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED" +
+                        "\"parentEmail\" TEXT REFERENCES \"parent\"(\"email\") ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED, " +
+                        "\"weird\" TEXT REFERENCES \"parent\"(\"name\") REFERENCES \"parent\"(\"email\")" +
                     ")")
             }
         }
@@ -345,6 +349,53 @@ class SQLTableBuilderTests: GRDBTestCase {
         }
     }
     
+    func testAutoReferences() {
+        assertNoError {
+            let dbQueue = try makeDatabaseQueue()
+            try dbQueue.inDatabase { db in
+                try db.create(table: "test1") { t in
+                    t.column("id", .integer).primaryKey()
+                    t.column("id2", .integer).references("test1")
+                }
+                XCTAssertEqual(self.lastSQLQuery,
+                    "CREATE TABLE \"test1\" (" +
+                        "\"id\" INTEGER PRIMARY KEY, " +
+                        "\"id2\" INTEGER REFERENCES \"test1\"(\"id\")" +
+                    ")")
+                
+                try db.create(table: "test2") { t in
+                    t.column("id", .integer)
+                    t.column("id2", .integer).references("test2")
+                    t.primaryKey(["id"])
+                }
+                XCTAssertEqual(self.lastSQLQuery,
+                    "CREATE TABLE \"test2\" (" +
+                        "\"id\" INTEGER, " +
+                        "\"id2\" INTEGER REFERENCES \"test2\"(\"id\"), " +
+                        "PRIMARY KEY (\"id\")" +
+                    ")")
+                
+                try db.create(table: "test3") { t in
+                    t.column("a", .integer)
+                    t.column("b", .integer)
+                    t.column("c", .integer)
+                    t.column("d", .integer)
+                    t.foreignKey(["c", "d"], references: "test3")
+                    t.primaryKey(["a", "b"])
+                }
+                XCTAssertEqual(self.lastSQLQuery,
+                    "CREATE TABLE \"test3\" (" +
+                        "\"a\" INTEGER, " +
+                        "\"b\" INTEGER, " +
+                        "\"c\" INTEGER, " +
+                        "\"d\" INTEGER, " +
+                        "PRIMARY KEY (\"a\", \"b\"), " +
+                        "FOREIGN KEY (\"c\", \"d\") REFERENCES \"test3\"(\"a\", \"b\")" +
+                    ")")
+            }
+        }
+    }
+    
     func testRenameTable() {
         assertNoError {
             let dbQueue = try makeDatabaseQueue()
@@ -373,7 +424,7 @@ class SQLTableBuilderTests: GRDBTestCase {
                 self.sqlQueries.removeAll()
                 try db.alter(table: "test") { t in
                     t.add(column: "b", .text)
-                    t.add(column: "c", .integer).notNull().defaults(1)
+                    t.add(column: "c", .integer).notNull().defaults(to: 1)
                 }
                 
                 XCTAssertEqual(self.sqlQueries[0], "ALTER TABLE \"test\" ADD COLUMN \"b\" TEXT;")

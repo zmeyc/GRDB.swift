@@ -18,16 +18,16 @@ struct Migration {
     // It is available from iOS 8.2 and OS X 10.10 https://github.com/yapstudios/YapDatabase/wiki/SQLite-version-(bundled-with-OS)
     let identifier: String
     let disabledForeignKeyChecks: Bool
-    let migrate: (_ db: Database) throws -> Void
+    let migrate: (Database) throws -> Void
     
-    init(identifier: String, migrate: @escaping (_ db: Database) throws -> Void) {
+    init(identifier: String, migrate: @escaping (Database) throws -> Void) {
         self.identifier = identifier
         self.disabledForeignKeyChecks = false
         self.migrate = migrate
     }
     
     @available(iOS 8.2, OSX 10.10, *)
-    init(identifier: String, disabledForeignKeyChecks: Bool, migrate: @escaping (_ db: Database) throws -> Void) {
+    init(identifier: String, disabledForeignKeyChecks: Bool, migrate: @escaping (Database) throws -> Void) {
         self.identifier = identifier
         self.disabledForeignKeyChecks = disabledForeignKeyChecks
         self.migrate = migrate
