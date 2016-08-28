@@ -187,8 +187,8 @@ public final class FetchedRecordsController<Record: RowConvertible> {
     ///     - recordsWillChange: Invoked before records are updated.
     ///     - recordsDidChange: Invoked after records have been updated.
     public func trackChanges(
-        recordsWillChange: (@escaping (FetchedRecordsController<Record>) -> ())? = nil,
-        recordsDidChange: (@escaping (FetchedRecordsController<Record>) -> ())? = nil)
+        recordsWillChange: (/* @escaping */ (FetchedRecordsController<Record>) -> ())? = nil,
+        recordsDidChange: (/* @escaping */ (FetchedRecordsController<Record>) -> ())? = nil)
     {
         let recordsWillChangeWithVoidAlongside: ((FetchedRecordsController<Record>, Void) -> ())?
         if let recordsWillChange = recordsWillChange {
@@ -280,8 +280,8 @@ public final class FetchedRecordsController<Record: RowConvertible> {
     ///     - recordsDidChange: Invoked after records have been updated.
     public func trackChanges<T>(
         fetchAlongside: @escaping (Database) -> T,
-        recordsWillChange: (@escaping (FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())? = nil,
-        recordsDidChange: (@escaping (FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())? = nil)
+        recordsWillChange: (/* @escaping */ (FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())? = nil,
+        recordsDidChange: (/* @escaping */ (FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())? = nil)
     {
         // If some changes are currently processed, make sure they are
         // discarded because they would trigger previously set callbacks.
@@ -472,8 +472,8 @@ private class FetchedChangesController<Record: RowConvertible, T> {
     init(
         controller: FetchedRecordsController<Record>,
         fetchAlongside: @escaping (Database) -> T,
-        recordsWillChange: (@escaping (FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?,
-        recordsDidChange: (@escaping (FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?)
+        recordsWillChange: (/* @escaping */ (FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?,
+        recordsDidChange: (/* @escaping */ (FetchedRecordsController<Record>, _ fetchedAlongside: T) -> ())?)
     {
         self.controller = controller
         self.fetchAlongside = fetchAlongside
