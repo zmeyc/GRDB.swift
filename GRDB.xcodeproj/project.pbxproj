@@ -1766,6 +1766,11 @@
 		569C1EB11CF07DDD0042627B /* DatabaseSchedulerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseSchedulerTests.swift; sourceTree = "<group>"; };
 		569DF9701DB8E9280003D0CC /* Realm.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Realm.framework; path = "Tests/Performance/Realm/build/osx/swift-3.0/Realm.framework"; sourceTree = "<group>"; };
 		569DF9711DB8E9280003D0CC /* RealmSwift.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RealmSwift.framework; path = "Tests/Performance/Realm/build/osx/swift-3.0/RealmSwift.framework"; sourceTree = "<group>"; };
+		569E73641E38868000A30A81 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
+		569E73661E38868000A30A81 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
+		569E73681E38868000A30A81 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
+		569E736A1E38868000A30A81 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
+		569E736C1E38868000A30A81 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		56A238131B9C74A90082EB20 /* DatabaseTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseTests.swift; sourceTree = "<group>"; };
 		56A238141B9C74A90082EB20 /* InMemoryDatabaseTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InMemoryDatabaseTests.swift; sourceTree = "<group>"; };
 		56A238161B9C74A90082EB20 /* DatabaseErrorTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseErrorTests.swift; sourceTree = "<group>"; };
@@ -1845,7 +1850,6 @@
 		56BF6D2D1DEF47DA006039A3 /* Fixits-0-90-1.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Fixits-0-90-1.swift"; sourceTree = "<group>"; };
 		56BF6D2E1DEF47DA006039A3 /* Fixits-Swift2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Fixits-Swift2.swift"; sourceTree = "<group>"; };
 		56C3F7521CF9F12400F6A361 /* SavepointTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SavepointTests.swift; sourceTree = "<group>"; };
-		56C48E731C9A9923005DF1D9 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		56CA21FE1BB414FE009A04C5 /* SQLite.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SQLite.xcodeproj; path = SQLite.swift/SQLite.xcodeproj; sourceTree = "<group>"; };
 		56CA22211BB41565009A04C5 /* PerformanceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PerformanceTests.swift; sourceTree = "<group>"; };
 		56DAA2D11DE99DAB006E10C8 /* DatabaseCursorTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatabaseCursorTests.swift; sourceTree = "<group>"; };
@@ -2358,6 +2362,46 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		569E73631E38868000A30A81 /* iphoneos */ = {
+			isa = PBXGroup;
+			children = (
+				569E73641E38868000A30A81 /* module.modulemap */,
+			);
+			path = iphoneos;
+			sourceTree = "<group>";
+		};
+		569E73651E38868000A30A81 /* iphonesimulator */ = {
+			isa = PBXGroup;
+			children = (
+				569E73661E38868000A30A81 /* module.modulemap */,
+			);
+			path = iphonesimulator;
+			sourceTree = "<group>";
+		};
+		569E73671E38868000A30A81 /* macosx */ = {
+			isa = PBXGroup;
+			children = (
+				569E73681E38868000A30A81 /* module.modulemap */,
+			);
+			path = macosx;
+			sourceTree = "<group>";
+		};
+		569E73691E38868000A30A81 /* watchos */ = {
+			isa = PBXGroup;
+			children = (
+				569E736A1E38868000A30A81 /* module.modulemap */,
+			);
+			path = watchos;
+			sourceTree = "<group>";
+		};
+		569E736B1E38868000A30A81 /* watchsimulator */ = {
+			isa = PBXGroup;
+			children = (
+				569E736C1E38868000A30A81 /* module.modulemap */,
+			);
+			path = watchsimulator;
+			sourceTree = "<group>";
+		};
 		56A238111B9C74A90082EB20 /* Core */ = {
 			isa = PBXGroup;
 			children = (
@@ -2762,7 +2806,11 @@
 			isa = PBXGroup;
 			children = (
 				56B8F49A1B4E2F3600C24296 /* GRDB.xcconfig */,
-				56C48E731C9A9923005DF1D9 /* module.modulemap */,
+				569E73631E38868000A30A81 /* iphoneos */,
+				569E73651E38868000A30A81 /* iphonesimulator */,
+				569E73671E38868000A30A81 /* macosx */,
+				569E73691E38868000A30A81 /* watchos */,
+				569E736B1E38868000A30A81 /* watchsimulator */,
 				567D10621C9A911C00ACC500 /* GRDBiOS */,
 				567D10641C9A911C00ACC500 /* GRDBOSX */,
 				56F5ABDE1D817B91001F60CB /* GRDBwatchOS */,

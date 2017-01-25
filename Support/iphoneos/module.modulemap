@@ -1,0 +1,11 @@
+framework module GRDB {
+    umbrella header "GRDB.h"
+    
+    export *
+    module * { export * }
+}
+
+module SQLiteiPhoneOS [system] {
+    header "/Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/include/sqlite3.h"
+    export *
+}

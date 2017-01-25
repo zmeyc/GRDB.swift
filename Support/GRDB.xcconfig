@@ -1,4 +1,8 @@
 INFOPLIST_FILE = Support/Info.plist
 PRODUCT_NAME = GRDB
 PRODUCT_BUNDLE_IDENTIFIER = com.github.groue.$(PRODUCT_NAME:rfc1034identifier)
-MODULEMAP_FILE = $(SRCROOT)/Support/module.modulemap
+MODULEMAP_FILE[sdk=macosx*] = $(SRCROOT)/Support/macosx/module.modulemap
+MODULEMAP_FILE[sdk=iphoneos*] = $(SRCROOT)/Support/iphoneos/module.modulemap
+MODULEMAP_FILE[sdk=iphonesimulator*] = $(SRCROOT)/Support/iphonesimulator/module.modulemap
+MODULEMAP_FILE[sdk=watchos*] = $(SRCROOT)/Support/watchos/module.modulemap
+MODULEMAP_FILE[sdk=watchsimulator*] = $(SRCROOT)/Support/watchsimulator/module.modulemap

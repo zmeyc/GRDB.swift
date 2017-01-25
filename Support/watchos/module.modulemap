@@ -1,0 +1,11 @@
+framework module GRDB {
+    umbrella header "GRDB.h"
+    
+    export *
+    module * { export * }
+}
+
+module SQLiteWatchOS [system] {
+    header "/Applications/Xcode-beta.app/Contents/Developer/Platforms/WatchOS.platform/Developer/SDKs/WatchOS.sdk/usr/include/sqlite3.h"
+    export *
+}
