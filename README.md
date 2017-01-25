@@ -1604,11 +1604,13 @@ row.scoped(on: "remainder") // <Row c:2 d:3>
 
 The **setup** depends on the version of GRDB you are using.
 
-If you use a [custom SQLite build](Documentation/CustomSQLiteBuilds.md) or [SQLCipher](#encryption), then the C API is available right from the GRDB module:
+If you use a [custom SQLite build](Documentation/CustomSQLiteBuilds.md) or [SQLCipher](#encryption), then the C API is available right from GRDB:
 
 ```swift
-// Just enough for SQLCipher and custom SQLite builds:
-import GRDBCipher // or import GRDBCustomSQLite
+// For SQLCipher:
+import GRDBCipher
+// For custom SQLite builds:
+import GRDBCustomSQLite
 
 let sqliteVersion = String(cString: sqlite3_libversion())
 ```
@@ -1617,26 +1619,11 @@ Otherwise (the regular case):
 
 1. Link your application with the SQLite library that ships with your SDK: add `libsqlite3.tbd` to the **Linked Frameworks and Libraries** of the **General**  tab of your target.
 
-2. Import the SQLite module in the file that uses the SQLite C Interface. That module, unfortunately, changes name depending on your platform:
+2. Import the SQLiteSDK module:
     
     ```swift
-    // Necessary unless you use a custom SQLite build, or SQLCipher:
     import GRDB
-    #if os(OSX)
-        import SQLiteMacOSX
-    #elseif os(iOS)
-        #if (arch(i386) || arch(x86_64))
-            import SQLiteiPhoneSimulator
-        #else
-            import SQLiteiPhoneOS
-        #endif
-    #elseif os(watchOS)
-        #if (arch(i386) || arch(x86_64))
-            import SQLiteWatchSimulator
-        #else
-            import SQLiteWatchOS
-        #endif
-    #endif
+    import SQLiteSDK
     
     let sqliteVersion = String(cString: sqlite3_libversion())
     ```

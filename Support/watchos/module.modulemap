@@ -5,7 +5,7 @@ framework module GRDB {
     module * { export * }
 }
 
-module SQLiteWatchOS [system] {
+module SQLiteSDK [system] {
     header "/Applications/Xcode-beta.app/Contents/Developer/Platforms/WatchOS.platform/Developer/SDKs/WatchOS.sdk/usr/include/sqlite3.h"
     export *
 }
